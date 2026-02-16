@@ -84,8 +84,8 @@
         <div class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-100 hidden md:block">
             <span class="text-xs font-bold text-slate-600 tracking-wide uppercase">Bophelo Map View</span>
         </div>
-        <button onclick="toggleLoginState()" class="w-12 h-12 rounded-full bg-white shadow-lg border border-slate-200 overflow-hidden hover:scale-105 transition active:scale-95 flex items-center justify-center group">
-            <img id="user-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Profile" class="w-full h-full object-cover hidden">
+        <button onclick="handleSignOut()" class="w-12 h-12 rounded-full bg-white shadow-lg border border-slate-200 overflow-hidden hover:scale-105 transition active:scale-95 flex items-center justify-center group">
+            <img id="user-avatar" src="" alt="Profile" class="w-full h-full object-cover hidden">
             <i id="guest-icon" class="fa-solid fa-user text-slate-400 text-lg group-hover:text-emerald-500 transition"></i>
         </button>
     </div>
@@ -109,17 +109,17 @@
             </div>
 
             <div class="space-y-3">
-                <button onclick="toggleLoginState('GitHub')" class="w-full flex items-center justify-center gap-3 bg-slate-900 text-white p-4 rounded-2xl font-semibold hover:bg-slate-800 transition shadow-lg shadow-slate-200">
+                <button onclick="handleSignIn('github')" class="w-full flex items-center justify-center gap-3 bg-slate-900 text-white p-4 rounded-2xl font-semibold hover:bg-slate-800 transition shadow-lg shadow-slate-200">
                     <i class="fa-brands fa-github text-xl"></i>
                     Continue with GitHub
                 </button>
                 
-                <button onclick="toggleLoginState('Google')" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-semibold hover:bg-slate-50 transition">
+                <button onclick="handleSignIn('google')" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-semibold hover:bg-slate-50 transition">
                     <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
                     Continue with Google
                 </button>
 
-                <button onclick="toggleLoginState('Email')" class="w-full flex items-center justify-center gap-3 bg-emerald-50 text-emerald-700 border border-emerald-100 p-4 rounded-2xl font-semibold hover:bg-emerald-100 transition">
+                <button onclick="alert('Please enable Email/Password auth in Firebase Console')" class="w-full flex items-center justify-center gap-3 bg-emerald-50 text-emerald-700 border border-emerald-100 p-4 rounded-2xl font-semibold hover:bg-emerald-100 transition">
                     <i class="fa-solid fa-envelope"></i>
                     Continue with Email
                 </button>
@@ -243,6 +243,7 @@
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <script>
@@ -259,72 +260,99 @@
 
         // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const database = firebase.database();
 
-        // --- APP LOGIC ---
-        
-        let isLoggedIn = false;
-
+        // --- DOM ELEMENTS ---
         const loginView = document.getElementById('login-view');
         const appView = document.getElementById('app-view');
         const userAvatar = document.getElementById('user-avatar');
         const guestIcon = document.getElementById('guest-icon');
 
-        // Added 'method' parameter to track how they logged in
-        function toggleLoginState(method = 'Manual') {
-            isLoggedIn = !isLoggedIn;
-            
-            if (isLoggedIn) {
-                // If logging in, write data to Firebase
-                writeUserData(method);
+        // --- AUTHENTICATION LOGIC ---
+
+        // 1. Listen for Authentication State Changes
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in.
+                console.log("User detected:", user.uid);
+                renderLoggedInState(user);
+                writeUserPresence(user);
+            } else {
+                // User is signed out.
+                console.log("No user signed in.");
+                renderLoggedOutState();
             }
+        });
+
+        // 2. Handle Sign In
+        function handleSignIn(providerType) {
+            let provider;
             
-            render();
+            if (providerType === 'google') {
+                provider = new firebase.auth.GoogleAuthProvider();
+            } else if (providerType === 'github') {
+                provider = new firebase.auth.GithubAuthProvider();
+            } else {
+                alert('This auth provider is not yet configured.');
+                return;
+            }
+
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    // Success is handled by onAuthStateChanged
+                    console.log("Sign-in successful");
+                })
+                .catch((error) => {
+                    console.error("Auth Error:", error);
+                    alert("Authentication Failed: " + error.message + "\n\n(Ensure you enabled this provider in Firebase Console)");
+                });
         }
 
-        // --- FIREBASE WRITE FUNCTION ---
-        function writeUserData(loginMethod) {
-            // Create a unique entry for this session
-            const sessionID = Date.now(); 
-            
-            database.ref('users/session_' + sessionID).set({
-                status: "active",
-                login_method: loginMethod,
-                timestamp: new Date().toISOString(),
-                location: "Pretoria", // Simulating location
-                device: "Mobile/Web"
-            })
-            .then(() => {
-                console.log("Data successfully written to Firebase!");
-            })
-            .catch((error) => {
-                console.error("Firebase write error: ", error);
-                alert("Note: Data write failed. Check your Firebase Rules if this persists.");
+        // 3. Handle Sign Out
+        function handleSignOut() {
+            auth.signOut().then(() => {
+                console.log("User signed out");
+            }).catch((error) => {
+                console.error("Sign Out Error:", error);
             });
         }
 
-        function render() {
-            if (isLoggedIn) {
-                // Hide Login, Show App
-                loginView.classList.add('hidden');
-                appView.classList.remove('hidden');
-                
-                // Update Avatar
+        // --- DATABASE LOGIC ---
+        function writeUserPresence(user) {
+            const userRef = database.ref('users/' + user.uid);
+            userRef.update({
+                displayName: user.displayName,
+                email: user.email,
+                last_login: firebase.database.ServerValue.TIMESTAMP,
+                photoURL: user.photoURL,
+                status: "active"
+            });
+        }
+
+        // --- UI LOGIC ---
+        function renderLoggedInState(user) {
+            // Hide Login, Show App
+            loginView.classList.add('hidden');
+            appView.classList.remove('hidden');
+            
+            // Show Avatar
+            if (user.photoURL) {
+                userAvatar.src = user.photoURL;
                 userAvatar.classList.remove('hidden');
                 guestIcon.classList.add('hidden');
-            } else {
-                // Show Login, Hide App
-                loginView.classList.remove('hidden');
-                appView.classList.add('hidden');
-
-                // Update Avatar
-                userAvatar.classList.add('hidden');
-                guestIcon.classList.remove('hidden');
             }
         }
 
-        // Initialize (Start as logged out per requirements)
-        render();
+        function renderLoggedOutState() {
+            // Show Login, Hide App
+            loginView.classList.remove('hidden');
+            appView.classList.add('hidden');
+
+            // Hide Avatar, Show Icon
+            userAvatar.classList.add('hidden');
+            guestIcon.classList.remove('hidden');
+        }
     </script>
 </body>
 </html>
