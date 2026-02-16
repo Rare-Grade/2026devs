@@ -127,8 +127,9 @@
         let destMarker = null;
         let turnMarkers = [];
         let currentInstructions = [];
+        let watchId = null;
 
-        function initiatorMap() {
+        function initMap() {
             map = new mapboxgl.Map({
                 container: 'map',
                 style: 'mapbox://styles/mapbox/navigation-night-v1',
@@ -199,31 +200,51 @@
                 setInterval(updateWeatherOverlay, 600000);
             });
 
-            updateUserLocation();
+            startLocationTracking();
         }
 
-        function updateUserLocation() {
-            navigator.geolocation.getCurrentPosition(pos => {
-                userCoords = [pos.coords.longitude, pos.coords.latitude];
-                map.setCenter(userCoords);
-
-                if (window.userMarker) window.userMarker.remove();
-
-                const markerEl = document.createElement('div');
-                markerEl.innerHTML = `
-                    <div class="relative">
-                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-emerald-400 rounded-full opacity-75 animate-ping"></div>
-                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-emerald-400 rounded-full opacity-40"></div>
-                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-emerald-600 rounded-full shadow-2xl flex items-center justify-center">
-                            <i class="fa-solid fa-person text-white text-2xl"></i>
-                        </div>
+        function createUserMarker(coords) {
+            const markerEl = document.createElement('div');
+            markerEl.innerHTML = `
+                <div class="relative">
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-emerald-400 rounded-full opacity-75 animate-ping"></div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-emerald-400 rounded-full opacity-40"></div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-emerald-600 rounded-full shadow-2xl flex items-center justify-center">
+                        <i class="fa-solid fa-person text-white text-2xl"></i>
                     </div>
-                `;
-                window.userMarker = new mapboxgl.Marker({
-                    element: markerEl,
-                    anchor: 'center'
-                }).setLngLat(userCoords).addTo(map);
-            });
+                </div>
+            `;
+            window.userMarker = new mapboxgl.Marker({
+                element: markerEl,
+                anchor: 'center'
+            }).setLngLat(coords).addTo(map);
+        }
+
+        function startLocationTracking() {
+            if ('geolocation' in navigator) {
+                if (watchId !== null) {
+                    navigator.geolocation.clearWatch(watchId);
+                }
+                watchId = navigator.geolocation.watchPosition(
+                    (pos) => {
+                        const newCoords = [pos.coords.longitude, pos.coords.latitude];
+                        userCoords = newCoords;
+
+                        if (window.userMarker) {
+                            window.userMarker.setLngLat(newCoords);
+                        } else {
+                            createUserMarker(newCoords);
+                        }
+
+                        // Center on user only when no active route
+                        if (!currentDestCoords) {
+                            map.setCenter(newCoords);
+                        }
+                    },
+                    (err) => console.error('Geolocation error:', err),
+                    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+                );
+            }
         }
 
         async function searchAndRoute(query) {
@@ -237,8 +258,10 @@
                 currentDestCoords = destCoords;
                 currentDestName = target.text;
 
+                // Clear previous destination marker
                 if (destMarker) destMarker.remove();
 
+                // Destination marker with full details popup on click
                 const destEl = document.createElement('div');
                 destEl.innerHTML = `
                     <div class="relative">
@@ -254,16 +277,29 @@
                     anchor: 'center'
                 }).setLngLat(destCoords).addTo(map);
 
+                destMarker.setPopup(new mapboxgl.Popup({
+                    offset: 25,
+                    closeButton: true,
+                    closeOnClick: false
+                }).setHTML(`
+                    <div class="bg-white p-4 rounded-lg shadow-lg max-w-xs font-medium">
+                        <strong class="text-lg block mb-1">${target.text}</strong>
+                        <span class="text-sm text-slate-600">${target.place_name || 'No address available'}</span>
+                    </div>
+                `));
+
+                destMarker.getElement().addEventListener('click', () => destMarker.togglePopup());
+
                 document.getElementById('dest-name').innerText = target.text;
                 document.getElementById('route-info').classList.remove('hidden');
                 setActiveModeButtons();
                 updateModeIcon();
-                getRoute(destCoords, target.text);
+                getRoute(destCoords, target.text, target.place_name);
             }
         }
 
-        async function getRoute(end, name) {
-            // Clear previous route and turn markers
+        async function getRoute(end, name, fullName) {
+            // Clear previous route and markers
             if (map.getLayer('route')) map.removeLayer('route');
             if (map.getSource('route')) map.removeSource('route');
             turnMarkers.forEach(m => m.remove());
@@ -289,28 +325,41 @@
                 paint: { 'line-color': '#ffffff', 'line-width': 10, 'line-opacity': 0.8 }
             });
 
-            // Add turn-by-turn markers with popups
+            // Starting instruction
             currentInstructions = [`Starting navigation to ${name}. Distance ${(data.distance / 1000).toFixed(1)} km, estimated time ${Math.floor(data.duration / 60)} minutes.`];
+
+            // Turn-by-turn markers with detailed popups on click
             data.legs[0].steps.forEach((step, index) => {
                 if (step.maneuver && step.maneuver.location) {
                     const coords = step.maneuver.location.coordinates;
                     const instruction = step.maneuver.instruction || 'Continue straight';
+                    const stepDist = step.distance ? (step.distance / 1000).toFixed(1) + ' km' : 'short distance';
+                    const stepTime = step.duration ? '~' + Math.round(step.duration / 60) + ' min' : '';
 
                     currentInstructions.push(instruction);
 
                     const el = document.createElement('div');
-                    el.className = 'bg-white text-emerald-600 w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shadow-lg border-2 border-emerald-600';
+                    el.className = 'bg-white text-emerald-600 w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shadow-lg border-2 border-emerald-600 cursor-pointer';
                     el.innerText = index + 1;
+
+                    const popup = new mapboxgl.Popup({
+                        offset: 35,
+                        closeButton: true,
+                        closeOnClick: false
+                    }).setHTML(`
+                        <div  class="bg-white p-4 rounded-lg shadow-lg max-w-xs">
+                            <strong class="block mb-1">Step ${index + 1}</strong>
+                            <p class="font-medium">${instruction}</p>
+                            ${stepDist || stepTime ? `<p class="text-sm text-slate-600 mt-2">${stepDist} • ${stepTime}</p>` : ''}
+                        </div>
+                    `);
 
                     const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
                         .setLngLat(coords)
-                        .setPopup(new mapboxgl.Popup({ offset: 35, closeButton: false, className: 'text-sm' })
-                            .setHTML(`<div class="bg-white p-3 rounded-lg shadow-lg max-w-xs"><strong>${index + 1}.</strong> ${instruction}</div>`))
+                        .setPopup(popup)
                         .addTo(map);
 
-                    // Hover to open/close popup
-                    marker.getElement().addEventListener('mouseenter', () => marker.togglePopup());
-                    marker.getElement().addEventListener('mouseleave', () => marker.togglePopup());
+                    marker.getElement().addEventListener('click', () => marker.togglePopup());
 
                     turnMarkers.push(marker);
                 }
@@ -415,7 +464,7 @@
             }
         });
 
-        initiatorMap();
+        initMap();
     </script>
 </body>
 </html>
