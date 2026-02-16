@@ -7,10 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+  
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
-
     <style>
         :root { --medical-emerald: #10b981; }
         body { font-family: 'Inter', sans-serif; overflow: hidden; background-color: #e2e8f0; }
@@ -24,10 +23,8 @@
     </style>
 </head>
 <body class="h-screen w-screen relative">
-
     <div id="map"></div>
-
-    <div class="absolute top-4 right-4 md:right-8 z-20 flex items-center gap-3">
+    <div class="absolute устро top-4 right-4 md:right-8 z-20 flex items-center gap-3">
         <div class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-100 hidden md:block">
             <span id="location-status" class="text-[10px] font-bold text-emerald-600 tracking-wide uppercase">GPS Linked</span>
         </div>
@@ -36,9 +33,7 @@
             <i id="guest-icon" class="fa-solid fa-user text-slate-400 text-lg"></i>
         </button>
     </div>
-
     <div class="absolute z-30 bg-white w-full bottom-0 rounded-t-[30px] shadow-2xl md:top-0 md:left-0 md:w-[420px] md:h-full md:rounded-none flex flex-col overflow-hidden max-h-[85vh] md:max-h-full slide-up md:slide-in-left">
-
         <div id="login-view" class="p-8 flex flex-col h-full justify-center">
             <div class="mb-8 text-center md:text-left">
                 <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-4 mx-auto md:mx-0">
@@ -51,31 +46,52 @@
                 <button onclick="handleSignIn('google')" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-semibold hover:bg-slate-50 transition">
                     <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5"> Sign in with Google
                 </button>
+                <button onclick="handleSignIn('github')" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-semibold hover:bg-slate-50 transition">
+                    <img src="https://www.svgrepo.com/show/452229/github.svg" class="w-5 h-5"> Sign in with GitHub
+                </button>
             </div>
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-slate-200"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="bg-white px-4 text-slate-400">or</span>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <input id="email-input" type="email" placeholder="Enter your email" required class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all">
+                <input id="password-input" type="password" placeholder="Enter your password" required class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all">
+                <button onclick="handleEmailSignIn()" class="w-full bg-emerald-600 text-white p-4 rounded-2xl font-semibold hover:bg-emerald-700 transition">
+                    Continue with Email
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 text-center mt-4">New here? We'll create an account for you.</p>
         </div>
-
         <div id="app-view" class="flex flex-col h-full hidden">
             <div class="px-6 pt-8 pb-4 border-b border-slate-100">
                 <div class="relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input id="facility-search" type="text" placeholder="Search (e.g. Pharmacy, ER)" 
+                    <input id="facility-search" type="text" placeholder="Search (e.g. Pharmacy, ER)"
                         class="w-full bg-slate-50 p-4 pl-12 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all"
                         onkeypress="if(event.key === 'Enter') searchAndRoute(this.value)">
                 </div>
             </div>
-
             <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4 bg-slate-50/50">
                 <div id="route-info" class="hidden bg-emerald-600 text-white p-5 rounded-3xl shadow-lg mb-4">
                     <h4 class="text-xs font-bold uppercase opacity-80 mb-1">Active Destination</h4>
                     <p id="dest-name" class="font-bold text-lg leading-tight">Finding route...</p>
                     <div class="flex gap-4 mt-3 text-sm font-medium">
-                        <span><i class="fa-solid fa-car mr-1"></i> <span id="route-dist">0 km</span></span>
+                        <span><i id="mode-icon" class="fa-solid fa-car mr-1"></i> <span id="route-dist">0 km</span></span>
                         <span><i class="fa-solid fa-clock mr-1"></i> <span id="route-time">0 min</span></span>
                     </div>
+                    <div class="flex justify-center gap-4 mt-5">
+                        <button data-mode="driving" onclick="setMode('driving')" class="mode-btn p-3 rounded-xl bg-white/40 hover:bg-white/50 transition text-2xl"><i class="fa-solid fa-car"></i></button>
+                        <button data-mode="driving-traffic" onclick="setMode('driving-traffic')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-bus"></i></button>
+                        <button data-mode="cycling" onclick="setMode('cycling')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-bicycle"></i></button>
+                        <button data-mode="walking" onclick="setMode('walking')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-person-walking"></i></button>
+                    </div>
                 </div>
-
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Recommended</h3>
-                
                 <div onclick="searchAndRoute('Hospital')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-truck-medical"></i></div>
@@ -85,14 +101,12 @@
             </div>
         </div>
     </div>
-
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-
     <script>
         mapboxgl.accessToken = 'pk.eyJ1Ijoia2F0bGVnb3BoYXNoYSIsImEiOiJjbTlpOTdzbmYwMGNsMmpzYWJtZzN4d3pqIn0.Zt-aSMEoahrV3zkiVVHbOw';
-        
+      
         const firebaseConfig = {
             apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
             authDomain: "pinotp-d7ef5.firebaseapp.com",
@@ -102,16 +116,18 @@
             messagingSenderId: "708458917827",
             appId: "1:708458917827:web:375de278577df0adcf9776"
         };
-
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const database = firebase.database();
-        let map, userCoords = [28.2293, -25.7479]; 
+        let map, userCoords = [28.2293, -25.7479];
+        let currentMode = 'driving';
+        let currentDestCoords = null;
+        let currentDestName = null;
 
         function initMap() {
             map = new mapboxgl.Map({
                 container: 'map',
-                style: 'mapbox://styles/mapbox/navigation-day-v1',
+                style: 'mapbox://styles/mapbox/navigation-night-v1',
                 center: userCoords,
                 zoom: 14
             });
@@ -122,7 +138,23 @@
             navigator.geolocation.getCurrentPosition(pos => {
                 userCoords = [pos.coords.longitude, pos.coords.latitude];
                 map.setCenter(userCoords);
-                new mapboxgl.Marker({ color: '#10b981' }).setLngLat(userCoords).addTo(map);
+
+                if (window.userMarker) window.userMarker.remove();
+
+                const markerEl = document.createElement('div');
+                markerEl.innerHTML = `
+                    <div class="relative">
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-emerald-400 rounded-full opacity-75 animate-ping"></div>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-emerald-400 rounded-full opacity-40"></div>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-emerald-600 rounded-full shadow-2xl flex items-center justify-center">
+                            <i class="fa-solid fa-person text-white text-2xl"></i>
+                        </div>
+                    </div>
+                `;
+                window.userMarker = new mapboxgl.Marker({
+                    element: markerEl,
+                    anchor: 'center'
+                }).setLngLat(userCoords).addTo(map);
             });
         }
 
@@ -130,32 +162,37 @@
             const searchUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?proximity=${userCoords[0]},${userCoords[1]}&access_token=${mapboxgl.accessToken}`;
             const res = await fetch(searchUrl);
             const data = await res.json();
-            
+          
             if (data.features.length > 0) {
                 const target = data.features[0];
                 const destCoords = target.center;
+                currentDestCoords = destCoords;
+                currentDestName = target.text;
                 document.getElementById('dest-name').innerText = target.text;
                 document.getElementById('route-info').classList.remove('hidden');
+                setActiveModeButtons();
+                updateModeIcon();
                 getRoute(destCoords, target.text);
             }
         }
 
         async function getRoute(end, name) {
-            const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${userCoords[0]},${userCoords[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`);
+            const profile = currentMode;
+            const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/${profile}/${userCoords[0]},${userCoords[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`);
             const json = await query.json();
+            if (!json.routes || json.routes.length === 0) return;
             const data = json.routes[0];
-            
+          
             document.getElementById('route-dist').innerText = (data.distance / 1000).toFixed(1) + ' km';
             document.getElementById('route-time').innerText = Math.floor(data.duration / 60) + ' min';
-
+            updateModeIcon();
             const geojson = { type: 'Feature', geometry: data.geometry };
             if (map.getSource('route')) { map.getSource('route').setData(geojson); }
             else {
                 map.addLayer({ id: 'route', type: 'line', source: { type: 'geojson', data: geojson }, paint: { 'line-color': '#10b981', 'line-width': 6, 'line-opacity': 0.8 }});
             }
-            
+          
             map.fitBounds([userCoords, end], { padding: 80 });
-
             if (auth.currentUser) {
                 database.ref('users/' + auth.currentUser.uid + '/active_route').set({
                     destination: name,
@@ -165,11 +202,65 @@
             }
         }
 
+        function setMode(mode) {
+            currentMode = mode;
+            setActiveModeButtons();
+            updateModeIcon();
+            if (currentDestCoords) {
+                getRoute(currentDestCoords, currentDestName);
+            }
+        }
+
+        function setActiveModeButtons() {
+            document.querySelectorAll('#route-info .mode-btn').forEach(btn => {
+                btn.classList.toggle('bg-white/40', btn.dataset.mode === currentMode);
+                btn.classList.toggle('bg-white/20', btn.dataset.mode !== currentMode);
+            });
+        }
+
+        function updateModeIcon() {
+            const iconMap = {
+                'driving': 'fa-car',
+                'driving-traffic': 'fa-bus',
+                'cycling': 'fa-bicycle',
+                'walking': 'fa-person-walking'
+            };
+            const iconEl = document.getElementById('mode-icon');
+            if (iconEl) iconEl.className = `fa-solid ${iconMap[currentMode]} mr-1`;
+        }
+
+        function handleSignIn(provider) {
+            let prov;
+            if (provider === 'google') prov = new firebase.auth.GoogleAuthProvider();
+            else if (provider === 'github') prov = new firebase.auth.GithubAuthProvider();
+            auth.signInWithPopup(prov);
+        }
+
+        function handleEmailSignIn() {
+            const email = document.getElementById('email-input').value.trim();
+            const password = document.getElementById('password-input').value;
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(err => {
+                    if (err.code === 'auth/user-not-found') {
+                        auth.createUserWithEmailAndPassword(email, password)
+                            .catch(createErr => alert(createErr.message));
+                    } else {
+                        alert(err.message);
+                    }
+                });
+        }
+
+        function handleSignOut() { auth.signOut(); }
+
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('login-view').classList.add('hidden');
                 document.getElementById('app-view').classList.remove('hidden');
-                document.getElementById('user-avatar').src = user.photoURL;
+                document.getElementById('user-avatar').src = user.photoURL || '';
                 document.getElementById('user-avatar').classList.remove('hidden');
                 document.getElementById('guest-icon').classList.add('hidden');
             } else {
@@ -177,9 +268,6 @@
                 document.getElementById('app-view').classList.add('hidden');
             }
         });
-
-        function handleSignIn(p) { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-        function handleSignOut() { auth.signOut(); }
 
         initMap();
     </script>
