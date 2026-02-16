@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+ 
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
     <style>
@@ -16,13 +16,13 @@
         #map { position: absolute; inset: 0; z-index: 0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
+       
         /* Mobile Bottom Sheet Transitions */
         .sheet-transition { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        
+       
         /* Collapsed state for mobile: pushes down leaving only top ~80px visible */
         .sheet-collapsed { transform: translateY(calc(100% - 85px)); }
-        
+       
         @media (min-width: 768px) {
             .sheet-collapsed { transform: none; }
         }
@@ -30,7 +30,6 @@
 </head>
 <body class="h-screen w-screen relative">
     <div id="map"></div>
-
     <div class="absolute top-4 right-4 md:right-8 z-20 flex items-center gap-3">
         <div class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-100 hidden md:block">
             <span id="location-status" class="text-[10px] font-bold text-emerald-600 tracking-wide uppercase">GPS Linked</span>
@@ -40,7 +39,6 @@
             <i id="guest-icon" class="fa-solid fa-user text-slate-400 text-lg"></i>
         </button>
     </div>
-
     <div id="location-modal" class="hidden absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm text-center shadow-2xl scale-100">
             <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -53,13 +51,11 @@
             </button>
         </div>
     </div>
-
     <div id="bottom-panel" class="absolute z-30 bg-white w-full bottom-0 rounded-t-[30px] shadow-2xl md:top-0 md:left-0 md:w-[420px] md:h-full md:rounded-none flex flex-col overflow-hidden max-h-[85vh] md:max-h-full sheet-transition">
-        
+       
         <div class="w-full flex justify-center pt-3 pb-1 md:hidden" onclick="expandBottomSheet()">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
         </div>
-
         <div id="login-view" class="p-8 flex flex-col h-full justify-center overflow-y-auto">
             <div class="mb-8 text-center md:text-left">
                 <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-4 mx-auto md:mx-0">
@@ -93,7 +89,6 @@
             </div>
             <p class="text-xs text-slate-500 text-center mt-4">New here? We'll create an account for you.</p>
         </div>
-
         <div id="app-view" class="flex flex-col h-full hidden">
             <div class="px-6 pt-2 pb-4 border-b border-slate-100 bg-white z-10" onclick="expandBottomSheet()">
                 <div class="relative">
@@ -104,7 +99,7 @@
                         onkeypress="if(event.key === 'Enter') searchAndRoute(this.value)">
                 </div>
             </div>
-            
+           
             <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4 bg-slate-50/50">
                 <div id="route-info" class="hidden bg-emerald-600 text-white p-5 rounded-3xl shadow-lg mb-4">
                     <h4 class="text-xs font-bold uppercase opacity-80 mb-1">Active Destination</h4>
@@ -128,22 +123,57 @@
                         <div><h4 class="font-bold">Nearest Emergency ER</h4><p class="text-xs text-slate-500">Auto-route to highest rated</p></div>
                     </div>
                 </div>
-                 <div onclick="searchAndRoute('Pharmacy')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                <div onclick="searchAndRoute('Pharmacy')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-pills"></i></div>
                         <div><h4 class="font-bold">24/7 Pharmacy</h4><p class="text-xs text-slate-500">Find medication nearby</p></div>
                     </div>
                 </div>
+                <div onclick="searchAndRoute('Clinic')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-hospital"></i></div>
+                        <div><h4 class="font-bold">General Clinic</h4><p class="text-xs text-slate-500">Primary care facilities</p></div>
+                    </div>
+                </div>
+                <div onclick="searchAndRoute('General Practitioner')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-stethoscope"></i></div>
+                        <div><h4 class="font-bold">Family Doctor</h4><p class="text-xs text-slate-500">Find a GP nearby</p></div>
+                    </div>
+                </div>
+                <div onclick="searchAndRoute('Dentist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-tooth"></i></div>
+                        <div><h4 class="font-bold">Dentist</h4><p class="text-xs text-slate-500">Dental care services</p></div>
+                    </div>
+                </div>
+                <div onclick="searchAndRoute('Laboratory')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-vial"></i></div>
+                        <div><h4 class="font-bold">Medical Laboratory</h4><p class="text-xs text-slate-500">Testing and diagnostics</p></div>
+                    </div>
+                </div>
+                <div onclick="searchAndRoute('Physiotherapy')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-teal-50 text-teal-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-person-walking-arrow-loop-left"></i></div>
+                        <div><h4 class="font-bold">Physiotherapy</h4><p class="text-xs text-slate-500">Rehabilitation services</p></div>
+                    </div>
+                </div>
+                <div onclick="searchAndRoute('Optometrist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-eye"></i></div>
+                        <div><h4 class="font-bold">Optometrist</h4><p class="text-xs text-slate-500">Eye care and vision testing</p></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script>
         mapboxgl.accessToken = 'pk.eyJ1Ijoia2F0bGVnb3BoYXNoYSIsImEiOiJjbTlpOTdzbmYwMGNsMmpzYWJtZzN4d3pqIn0.Zt-aSMEoahrV3zkiVVHbOw';
-      
+     
         const firebaseConfig = {
             apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
             authDomain: "pinotp-d7ef5.firebaseapp.com",
@@ -164,7 +194,6 @@
         let turnMarkers = [];
         let currentInstructions = [];
         let watchId = null;
-
         function initMap() {
             map = new mapboxgl.Map({
                 container: 'map',
@@ -172,14 +201,12 @@
                 center: userCoords,
                 zoom: 14
             });
-
             map.on('load', () => {
                 // Real-time traffic overlay
                 map.addSource('mapbox-traffic', {
                     type: 'vector',
                     url: 'mapbox://mapbox.mapbox-traffic-v1'
                 });
-
                 map.addLayer({
                     id: 'traffic',
                     type: 'line',
@@ -199,19 +226,15 @@
                         ]
                     }
                 }, 'road-label');
-
                 updateWeatherOverlay();
                 setInterval(updateWeatherOverlay, 600000);
             });
-
             // INTERACTION: Collapse bottom sheet when interacting with map
             map.on('dragstart', collapseBottomSheet);
             map.on('click', collapseBottomSheet);
             map.on('touchstart', collapseBottomSheet);
-
             startLocationTracking();
         }
-
         // --- Bottom Sheet Logic ---
         function collapseBottomSheet() {
             // Only collapse on mobile widths
@@ -219,16 +242,13 @@
                 document.getElementById('bottom-panel').classList.add('sheet-collapsed');
             }
         }
-
         function expandBottomSheet() {
             document.getElementById('bottom-panel').classList.remove('sheet-collapsed');
         }
-
         function requestLocation() {
             document.getElementById('location-modal').classList.add('hidden');
             startLocationTracking();
         }
-
         // --- Weather & User Marker Logic ---
         const updateWeatherOverlay = async () => {
             try {
@@ -239,7 +259,6 @@
                     ts = data.radar.past[data.radar.past.length - 1].time;
                 }
                 const tileUrl = `${data.host}/v2/radar/${ts}/256/{z}/{x}/{y}/2/1_1.png`;
-
                 if (map.getSource('radar')) {
                     map.getSource('radar').setTiles([tileUrl]);
                 } else {
@@ -260,7 +279,6 @@
                 console.error('Weather overlay update failed:', err);
             }
         };
-
         function createUserMarker(coords) {
             const markerEl = document.createElement('div');
             markerEl.innerHTML = `
@@ -277,7 +295,6 @@
                 anchor: 'center'
             }).setLngLat(coords).addTo(map);
         }
-
         function startLocationTracking() {
             if ('geolocation' in navigator) {
                 if (watchId !== null) {
@@ -289,13 +306,11 @@
                         document.getElementById('location-modal').classList.add('hidden');
                         const newCoords = [pos.coords.longitude, pos.coords.latitude];
                         userCoords = newCoords;
-
                         if (window.userMarker) {
                             window.userMarker.setLngLat(newCoords);
                         } else {
                             createUserMarker(newCoords);
                         }
-
                         // Center on user only when no active route
                         if (!currentDestCoords) {
                             map.setCenter(newCoords);
@@ -313,22 +328,19 @@
                 document.getElementById('location-modal').classList.remove('hidden');
             }
         }
-
         async function searchAndRoute(query) {
             expandBottomSheet(); // Ensure results are visible
             const searchUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?proximity=${userCoords[0]},${userCoords[1]}&access_token=${mapboxgl.accessToken}`;
             const res = await fetch(searchUrl);
             const data = await res.json();
-          
+         
             if (data.features.length > 0) {
                 const target = data.features[0];
                 const destCoords = target.center;
                 currentDestCoords = destCoords;
                 currentDestName = target.text;
-
                 // Clear previous destination marker
                 if (destMarker) destMarker.remove();
-
                 const destEl = document.createElement('div');
                 destEl.innerHTML = `
                     <div class="relative">
@@ -343,7 +355,6 @@
                     element: destEl,
                     anchor: 'center'
                 }).setLngLat(destCoords).addTo(map);
-
                 destMarker.setPopup(new mapboxgl.Popup({
                     offset: 25,
                     closeButton: true,
@@ -354,87 +365,72 @@
                         <span class="text-sm text-slate-600">${target.place_name || 'No address available'}</span>
                     </div>
                 `));
-
                 destMarker.getElement().addEventListener('click', () => destMarker.togglePopup());
-
                 document.getElementById('dest-name').innerText = target.text;
                 document.getElementById('route-info').classList.remove('hidden');
                 setActiveModeButtons();
                 updateModeIcon();
                 getRoute(destCoords, target.text, target.place_name);
-                
+               
                 // On mobile, after finding a route, collapse sheet to show map
-                setTimeout(collapseBottomSheet, 1500); 
+                setTimeout(collapseBottomSheet, 1500);
             }
         }
-
         async function getRoute(end, name, fullName) {
             if (map.getLayer('route')) map.removeLayer('route');
             if (map.getSource('route')) map.removeSource('route');
             turnMarkers.forEach(m => m.remove());
             turnMarkers = [];
             currentInstructions = [];
-
             const profile = currentMode;
             const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/${profile}/${userCoords[0]},${userCoords[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`);
             const json = await query.json();
             if (!json.routes || json.routes.length === 0) return;
             const data = json.routes[0];
-          
+         
             document.getElementById('route-dist').innerText = (data.distance / 1000).toFixed(1) + ' km';
             document.getElementById('route-time').innerText = Math.floor(data.duration / 60) + ' min';
             updateModeIcon();
-
             const geojson = { type: 'Feature', geometry: data.geometry };
             map.addSource('route', { type: 'geojson', data: geojson });
-            map.addLayer({ 
-                id: 'route', 
-                type: 'line', 
-                source: 'route', 
+            map.addLayer({
+                id: 'route',
+                type: 'line',
+                source: 'route',
                 paint: { 'line-color': '#ffffff', 'line-width': 10, 'line-opacity': 0.8 }
             });
-
             currentInstructions = [`Starting navigation to ${name}. Distance ${(data.distance / 1000).toFixed(1)} km, estimated time ${Math.floor(data.duration / 60)} minutes.`];
-
             data.legs[0].steps.forEach((step, index) => {
                 if (step.maneuver && step.maneuver.location) {
                     const coords = step.maneuver.location.coordinates;
                     const instruction = step.maneuver.instruction || 'Continue straight';
                     const stepDist = step.distance ? (step.distance / 1000).toFixed(1) + ' km' : 'short distance';
                     const stepTime = step.duration ? '~' + Math.round(step.duration / 60) + ' min' : '';
-
                     currentInstructions.push(instruction);
-
                     const el = document.createElement('div');
                     el.className = 'bg-white text-emerald-600 w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shadow-lg border-2 border-emerald-600 cursor-pointer';
                     el.innerText = index + 1;
-
                     const popup = new mapboxgl.Popup({
                         offset: 35,
                         closeButton: true,
                         closeOnClick: false
                     }).setHTML(`
-                        <div  class="bg-white p-4 rounded-lg shadow-lg max-w-xs">
+                        <div class="bg-white p-4 rounded-lg shadow-lg max-w-xs">
                             <strong class="block mb-1">Step ${index + 1}</strong>
                             <p class="font-medium">${instruction}</p>
                             ${stepDist || stepTime ? `<p class="text-sm text-slate-600 mt-2">${stepDist} • ${stepTime}</p>` : ''}
                         </div>
                     `);
-
                     const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
                         .setLngLat(coords)
                         .setPopup(popup)
                         .addTo(map);
-
                     marker.getElement().addEventListener('click', () => marker.togglePopup());
-
                     turnMarkers.push(marker);
                 }
             });
             currentInstructions.push(`You have arrived at your destination: ${name}`);
-
             map.fitBounds([userCoords, end], { padding: 80 });
-
             if (auth.currentUser) {
                 database.ref('users/' + auth.currentUser.uid + '/active_route').set({
                     destination: name,
@@ -443,7 +439,6 @@
                 });
             }
         }
-
         function setMode(mode) {
             currentMode = mode;
             setActiveModeButtons();
@@ -452,14 +447,12 @@
                 getRoute(currentDestCoords, currentDestName);
             }
         }
-
         function setActiveModeButtons() {
             document.querySelectorAll('#route-info .mode-btn').forEach(btn => {
                 btn.classList.toggle('bg-white/40', btn.dataset.mode === currentMode);
                 btn.classList.toggle('bg-white/20', btn.dataset.mode !== currentMode);
             });
         }
-
         function updateModeIcon() {
             const iconMap = {
                 'driving': 'fa-car',
@@ -470,7 +463,6 @@
             const iconEl = document.getElementById('mode-icon');
             if (iconEl) iconEl.className = `fa-solid ${iconMap[currentMode]} mr-1`;
         }
-
         function startVoiceNavigation() {
             if ('speechSynthesis' in window && currentInstructions.length > 0) {
                 speechSynthesis.cancel();
@@ -490,14 +482,12 @@
                 speakNext();
             }
         }
-
         function handleSignIn(provider) {
             let prov;
             if (provider === 'google') prov = new firebase.auth.GoogleAuthProvider();
             else if (provider === 'github') prov = new firebase.auth.GithubAuthProvider();
             auth.signInWithPopup(prov);
         }
-
         function handleEmailSignIn() {
             const email = document.getElementById('email-input').value.trim();
             const password = document.getElementById('password-input').value;
@@ -515,9 +505,7 @@
                     }
                 });
         }
-
         function handleSignOut() { auth.signOut(); }
-
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('login-view').classList.add('hidden');
@@ -530,7 +518,6 @@
                 document.getElementById('app-view').classList.add('hidden');
             }
         });
-
         initMap();
     </script>
 </body>
