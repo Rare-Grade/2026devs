@@ -17,6 +17,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .slide-in-left { animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
@@ -24,7 +25,7 @@
 </head>
 <body class="h-screen w-screen relative">
     <div id="map"></div>
-    <div class="absolute устро top-4 right-4 md:right-8 z-20 flex items-center gap-3">
+    <div class="absolute top-4 right-4 md:right-8 z-20 flex items-center gap-3">
         <div class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-100 hidden md:block">
             <span id="location-status" class="text-[10px] font-bold text-emerald-600 tracking-wide uppercase">GPS Linked</span>
         </div>
@@ -123,6 +124,7 @@
         let currentMode = 'driving';
         let currentDestCoords = null;
         let currentDestName = null;
+        let destMarker = null;
 
         function initMap() {
             map = new mapboxgl.Map({
@@ -131,6 +133,73 @@
                 center: userCoords,
                 zoom: 14
             });
+
+            map.on('load', () => {
+                // Real-time traffic overlay (Mapbox Traffic)
+                map.addSource('mapbox-traffic', {
+                    type: 'vector',
+                    url: 'mapbox://mapbox.mapbox-traffic-v1'
+                });
+
+                map.addLayer({
+                    id: 'traffic',
+                    type: 'line',
+                    source: 'mapbox-traffic',
+                    'source-layer': 'traffic',
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-width': 4,
+                        'line-color': [
+                            'match',
+                            ['get', 'congestion'],
+                            'low', '#00b300',
+                            'moderate', '#ffaa00',
+                            'heavy', '#ff6600',
+                            'severe', '#ff0000',
+                            '#aaaaaa'
+                        ]
+                    }
+                }, 'road-label');
+
+                // Real-time weather radar overlay (RainViewer)
+                const updateWeatherOverlay = async () => {
+                    try {
+                        const resp = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+                        const data = await resp.json();
+                        let ts = data.generated;
+                        if (data.radar.past && data.radar.past.length > 0) {
+                            ts = data.radar.past[data.radar.past.length - 1].time;
+                        }
+                        const tileUrl = `${data.host}/v2/radar/${ts}/256/{z}/{x}/{y}/2/1_1.png`;
+
+                        if (map.getSource('radar')) {
+                            map.getSource('radar').setTiles([tileUrl]);
+                        } else {
+                            map.addSource('radar', {
+                                type: 'raster',
+                                tiles: [tileUrl],
+                                tileSize: 256,
+                                attribution: '© RainViewer'
+                            });
+                            map.addLayer({
+                                id: 'radar-layer',
+                                type: 'raster',
+                                source: 'radar',
+                                paint: { 'raster-opacity': 0.45 }
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Weather overlay update failed:', err);
+                    }
+                };
+
+                updateWeatherOverlay();
+                setInterval(updateWeatherOverlay, 600000);
+            });
+
             updateUserLocation();
         }
 
@@ -168,6 +237,26 @@
                 const destCoords = target.center;
                 currentDestCoords = destCoords;
                 currentDestName = target.text;
+
+                // Remove previous destination marker
+                if (destMarker) destMarker.remove();
+
+                // Add new destination marker (red pulsing location dot)
+                const destEl = document.createElement('div');
+                destEl.innerHTML = `
+                    <div class="relative">
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-red-400 rounded-full opacity-75 animate-ping"></div>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-red-400 rounded-full opacity-40"></div>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-red-600 rounded-full shadow-2xl flex items-center justify-center">
+                            <i class="fa-solid fa-location-dot text-white text-3xl"></i>
+                        </div>
+                    </div>
+                `;
+                destMarker = new mapboxgl.Marker({
+                    element: destEl,
+                    anchor: 'center'
+                }).setLngLat(destCoords).addTo(map);
+
                 document.getElementById('dest-name').innerText = target.text;
                 document.getElementById('route-info').classList.remove('hidden');
                 setActiveModeButtons();
@@ -187,9 +276,16 @@
             document.getElementById('route-time').innerText = Math.floor(data.duration / 60) + ' min';
             updateModeIcon();
             const geojson = { type: 'Feature', geometry: data.geometry };
-            if (map.getSource('route')) { map.getSource('route').setData(geojson); }
+            if (map.getSource('route')) { 
+                map.getSource('route').setData(geojson); 
+            }
             else {
-                map.addLayer({ id: 'route', type: 'line', source: { type: 'geojson', data: geojson }, paint: { 'line-color': '#10b981', 'line-width': 6, 'line-opacity': 0.8 }});
+                map.addLayer({ 
+                    id: 'route', 
+                    type: 'line', 
+                    source: { type: 'geojson', data: geojson }, 
+                    paint: { 'line-color': '#ffffff', 'line-width': 6, 'line-opacity': 0.8 }
+                });
             }
           
             map.fitBounds([userCoords, end], { padding: 80 });
@@ -250,6 +346,7 @@
                             .catch(createErr => alert(createErr.message));
                     } else {
                         alert(err.message);
+                    alert(err.message);
                     }
                 });
         }
