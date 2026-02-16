@@ -177,70 +177,90 @@
                         <button data-mode="walking" onclick="setMode('walking')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-person-walking"></i></button>
                         <button onclick="startVoiceNavigation()" class="p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-volume-high"></i></button>
                     </div>
-                </div>
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Recommended</h3>
-                <div onclick="searchAndRoute('Hospital')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-truck-medical"></i></div>
-                        <div><h4 class="font-bold">Nearest Emergency ER</h4><p class="text-xs text-slate-500">Auto-route to highest rated</p></div>
-                    </div>
-                </div>
-                <div onclick="searchAndRoute('Pharmacy')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-pills"></i></div>
-                        <div><h4 class="font-bold">24/7 Pharmacy</h4><p class="text-xs text-slate-500">Find medication nearby</p></div>
-                    </div>
-                </div>
-                <div onclick="searchAndRoute('Clinic')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-hospital"></i></div>
-                        <div><h4 class="font-bold">General Clinic</h4><p class="text-xs text-slate-500">Primary care facilities</p></div>
-                    </div>
-                </div>
-                <div onclick="searchAndRoute('General Practitioner')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-stethoscope"></i></div>
-                        <div><h4 class="font-bold">Family Doctor / GP</h4><p class="text-xs text-slate-500">General practitioners</p></div>
-                    </div>
-                </div>
-                <div onclick="searchAndRoute('Dentist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-tooth"></i></div>
-                        <div><h4 class="font-bold">Dentist</h4><p class="text-xs text-slate-500">Dental care services</p></div>
-                    </div>
-                </div>
-                <div onclick="searchAndRoute('Optometrist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-eye"></i></div>
-                        <div><h4 class="font-bold">Optometrist</h4><p class="text-xs text-slate-500">Eye care & vision testing</p></div>
-                    </div>
-                </div>
-                <div onclick="searchAndRoute('Physiotherapy')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-teal-50 text-teal-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-person-walking-arrow-loop-left"></i></div>
-                        <div><h4 class="font-bold">Physiotherapy</h4><p class="text-xs text-slate-500">Rehabilitation services</p></div>
-                    </div>
-                </div>
-                <div onclick="searchAndRoute('Laboratory')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-vial"></i></div>
-                        <div><h4 class="font-bold">Medical Laboratory</h4><p class="text-xs text-slate-500">Testing & diagnostics</p></div>
-                    </div>
-                </div>
-                <div onclick="searchAndRoute('Psychologist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-gray-50 text-gray-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-brain"></i></div>
-                        <div><h4 class="font-bold">Psychologist</h4><p class="text-xs text-slate-500">Mental health support</p></div>
-                    </div>
-                </div>
-                <div onclick="searchAndRoute('Pediatrician')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-yellow-50 text-yellow-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-baby"></i></div>
-                        <div><h4 class="font-bold">Pediatrician</h4><p class="text-xs text-slate-500">Child health specialists</p></div>
-                    </div>
+               <div class="fixed bottom-0 left-0 w-full bg-white z-50 rounded-t-[30px] shadow-[0_-5px_30px_rgba(0,0,0,0.1)] max-h-[75vh] overflow-y-auto overscroll-contain">
+
+    <div class="sticky top-0 left-0 w-full bg-white/95 backdrop-blur-sm z-10 pt-4 pb-2 flex justify-center rounded-t-[30px] border-b border-transparent">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+    </div>
+
+    <div class="px-6 pb-20">
+        
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 mt-2">Recommended</h3>
+        
+        <div class="grid grid-cols-1 gap-4">
+            
+            <div onclick="searchAndRoute('Hospital')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-truck-medical"></i></div>
+                    <div><h4 class="font-bold">Nearest Emergency ER</h4><p class="text-xs text-slate-500">Auto-route to highest rated</p></div>
                 </div>
             </div>
-        </div>
+
+            <div onclick="searchAndRoute('Pharmacy')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-pills"></i></div>
+                    <div><h4 class="font-bold">24/7 Pharmacy</h4><p class="text-xs text-slate-500">Find medication nearby</p></div>
+                </div>
+            </div>
+
+            <div onclick="searchAndRoute('Clinic')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-hospital"></i></div>
+                    <div><h4 class="font-bold">General Clinic</h4><p class="text-xs text-slate-500">Primary care facilities</p></div>
+                </div>
+            </div>
+
+            <div onclick="searchAndRoute('General Practitioner')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-stethoscope"></i></div>
+                    <div><h4 class="font-bold">Family Doctor / GP</h4><p class="text-xs text-slate-500">General practitioners</p></div>
+                </div>
+            </div>
+
+            <div onclick="searchAndRoute('Dentist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-tooth"></i></div>
+                    <div><h4 class="font-bold">Dentist</h4><p class="text-xs text-slate-500">Dental care services</p></div>
+                </div>
+            </div>
+
+            <div onclick="searchAndRoute('Optometrist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-eye"></i></div>
+                    <div><h4 class="font-bold">Optometrist</h4><p class="text-xs text-slate-500">Eye care & vision testing</p></div>
+                </div>
+            </div>
+
+             <div onclick="searchAndRoute('Physiotherapy')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-teal-50 text-teal-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-person-walking-arrow-loop-left"></i></div>
+                    <div><h4 class="font-bold">Physiotherapy</h4><p class="text-xs text-slate-500">Rehabilitation services</p></div>
+                </div>
+            </div>
+
+            <div onclick="searchAndRoute('Laboratory')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-vial"></i></div>
+                    <div><h4 class="font-bold">Medical Laboratory</h4><p class="text-xs text-slate-500">Testing & diagnostics</p></div>
+                </div>
+            </div>
+
+            <div onclick="searchAndRoute('Psychologist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-gray-50 text-gray-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-brain"></i></div>
+                    <div><h4 class="font-bold">Psychologist</h4><p class="text-xs text-slate-500">Mental health support</p></div>
+                </div>
+            </div>
+            
+            <div onclick="searchAndRoute('Pediatrician')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-yellow-50 text-yellow-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-baby"></i></div>
+                    <div><h4 class="font-bold">Pediatrician</h4><p class="text-xs text-slate-500">Child health specialists</p></div>
+                </div>
+            </div>
+            </div>
+    </div>
+</div>
     </div>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
