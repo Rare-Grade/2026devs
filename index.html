@@ -17,7 +17,6 @@
             background-image: radial-gradient(#E2E8F0 1px, transparent 1px);
             background-size: 40px 40px;
         }
-
         /* Entrance Animations */
         .reveal {
             opacity: 0;
@@ -28,7 +27,6 @@
             opacity: 1;
             transform: translateY(0);
         }
-
         .glow-effect {
             position: absolute;
             width: 1000px;
@@ -36,14 +34,12 @@
             background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, rgba(248, 250, 252, 0) 70%);
             z-index: -1;
         }
-
         .hero-text {
             background: linear-gradient(180deg, #0F172A 30%, #475569 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -0.04em;
         }
-
         /* Typing Cursor Effect */
         #typing-text::after {
             content: '|';
@@ -53,12 +49,10 @@
             animation: blink 0.8s infinite;
             -webkit-text-fill-color: var(--medical-emerald);
         }
-
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
         }
-
         .medical-card {
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(12px);
@@ -72,15 +66,16 @@
             border-color: var(--medical-emerald);
             box-shadow: 0 40px 80px -15px rgba(16, 185, 129, 0.12);
         }
-
+        .medical-card:active {
+            transform: translateY(-8px) scale(0.98);
+        }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        
+       
         .pulse { animation: pulse-animation 2s infinite; }
         @keyframes pulse-animation {
             0% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0.4); }
             100% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
         }
-
         /* Button Shine Animation */
         @keyframes shine {
             100% { left: 125%; }
@@ -88,7 +83,6 @@
         .animate-shine {
             animation: shine 0.75s;
         }
-
         /* Animated Navigation Underline */
         .nav-link {
             position: relative;
@@ -102,7 +96,6 @@
             transition: width 0.3s ease;
         }
         .nav-link:hover::after { width: 100%; }
-
         /* HERO SECTION ANIMATED BACKGROUND */
         .hero-bg {
             position: absolute;
@@ -114,7 +107,6 @@
             z-index: -1;
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
         }
-
         /* Floating Particles */
         .particle {
             position: absolute;
@@ -122,7 +114,6 @@
             background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, rgba(16, 185, 129, 0) 70%);
             animation: float-up 20s infinite linear;
         }
-
         .particle:nth-child(1) {
             width: 80px;
             height: 80px;
@@ -131,7 +122,6 @@
             animation-duration: 25s;
             animation-delay: 0s;
         }
-
         .particle:nth-child(2) {
             width: 120px;
             height: 120px;
@@ -141,7 +131,6 @@
             animation-delay: 2s;
             background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0) 70%);
         }
-
         .particle:nth-child(3) {
             width: 60px;
             height: 60px;
@@ -150,7 +139,6 @@
             animation-duration: 22s;
             animation-delay: 4s;
         }
-
         .particle:nth-child(4) {
             width: 100px;
             height: 100px;
@@ -160,7 +148,6 @@
             animation-delay: 1s;
             background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0) 70%);
         }
-
         .particle:nth-child(5) {
             width: 140px;
             height: 140px;
@@ -169,7 +156,6 @@
             animation-duration: 35s;
             animation-delay: 3s;
         }
-
         .particle:nth-child(6) {
             width: 50px;
             height: 50px;
@@ -178,7 +164,6 @@
             animation-duration: 18s;
             animation-delay: 5s;
         }
-
         @keyframes float-up {
             0% {
                 transform: translateY(0) scale(1);
@@ -195,7 +180,6 @@
                 opacity: 0;
             }
         }
-
         /* DNA Helix Animation */
         .dna-container {
             position: absolute;
@@ -206,13 +190,11 @@
             height: 400px;
             opacity: 0.15;
         }
-
         .dna-strand {
             position: absolute;
             width: 100%;
             height: 100%;
         }
-
         .dna-dot {
             position: absolute;
             width: 12px;
@@ -221,16 +203,13 @@
             border-radius: 50%;
             animation: dna-wave 3s ease-in-out infinite;
         }
-
         .dna-dot:nth-child(odd) {
             left: 0;
         }
-
         .dna-dot:nth-child(even) {
             right: 0;
             animation-delay: 1.5s;
         }
-
         @keyframes dna-wave {
             0%, 100% {
                 transform: translateY(0) scale(1);
@@ -241,7 +220,6 @@
                 opacity: 1;
             }
         }
-
         /* Neural Network Lines */
         .neural-lines {
             position: absolute;
@@ -250,42 +228,36 @@
             top: 0;
             left: 0;
         }
-
         .neural-line {
             position: absolute;
             height: 1px;
             background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.3), transparent);
             animation: pulse-line 4s ease-in-out infinite;
         }
-
         .neural-line:nth-child(1) {
             width: 300px;
             top: 20%;
             left: -300px;
             animation-delay: 0s;
         }
-
         .neural-line:nth-child(2) {
             width: 400px;
             top: 40%;
             right: -400px;
             animation-delay: 1s;
         }
-
         .neural-line:nth-child(3) {
             width: 250px;
             top: 60%;
             left: -250px;
             animation-delay: 2s;
         }
-
         .neural-line:nth-child(4) {
             width: 350px;
             top: 80%;
             right: -350px;
             animation-delay: 3s;
         }
-
         @keyframes pulse-line {
             0%, 100% {
                 transform: translateX(0);
@@ -296,7 +268,6 @@
                 opacity: 0.6;
             }
         }
-
         /* Hexagon Grid Animation */
         .hex-grid {
             position: absolute;
@@ -305,7 +276,6 @@
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%2310b981' fill-opacity='0.03'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
             animation: hex-drift 60s linear infinite;
         }
-
         @keyframes hex-drift {
             0% {
                 transform: translateY(0);
@@ -314,7 +284,6 @@
                 transform: translateY(-50px);
             }
         }
-
         /* Heartbeat Pulse Ring */
         .pulse-ring {
             position: absolute;
@@ -322,7 +291,6 @@
             border-radius: 50%;
             animation: heartbeat 4s ease-out infinite;
         }
-
         .pulse-ring:nth-child(1) {
             width: 100px;
             height: 100px;
@@ -330,7 +298,6 @@
             left: 15%;
             animation-delay: 0s;
         }
-
         .pulse-ring:nth-child(2) {
             width: 150px;
             height: 150px;
@@ -338,7 +305,6 @@
             right: 20%;
             animation-delay: 1.3s;
         }
-
         .pulse-ring:nth-child(3) {
             width: 80px;
             height: 80px;
@@ -346,7 +312,6 @@
             right: 30%;
             animation-delay: 2.6s;
         }
-
         @keyframes heartbeat {
             0% {
                 transform: scale(0.8);
@@ -360,7 +325,6 @@
                 opacity: 0;
             }
         }
-
         /* ECG Line Animation */
         .ecg-line {
             position: absolute;
@@ -371,7 +335,6 @@
             overflow: hidden;
             opacity: 0.1;
         }
-
         .ecg-path {
             stroke: #10b981;
             stroke-width: 2;
@@ -380,7 +343,6 @@
             stroke-dashoffset: 2000;
             animation: draw-ecg 5s linear infinite;
         }
-
         @keyframes draw-ecg {
             0% {
                 stroke-dashoffset: 2000;
@@ -392,81 +354,76 @@
     </style>
 </head>
 <body>
-
     <div class="glow-effect top-[-400px] left-[-300px]"></div>
-
     <nav class="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-slate-100">
-        <div class="flex justify-between items-center px-10 py-5 max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center px-6 md:px-10 py-5 max-w-7xl mx-auto gap-4 md:gap-0">
             <div class="text-2xl font-bold tracking-tighter flex items-center gap-3 text-slate-900">
                 <div class="w-9 h-9 bg-emerald-500 rounded-lg rotate-12 flex items-center justify-center shadow-lg shadow-emerald-200">
                     <div class="w-3 h-3 bg-white rounded-full pulse"></div>
                 </div>
                 <span class="tracking-tight">BOPHELO <span class="text-emerald-600 font-light italic">BOT</span></span>
             </div>
-            
+           
             <div class="hidden md:flex gap-10 text-[12px] font-bold uppercase tracking-widest text-slate-500">
                 <a href="find.html" class="nav-link hover:text-emerald-600 transition">Find nearby Health Care</a>
-                
+               
             </div>
-
-            <button class="bg-slate-900 text-white px-6 py-2 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-emerald-600 transition-all duration-300 shadow-lg shadow-slate-200">
+            <button class="bg-slate-900 text-white px-8 py-4 md:px-6 md:py-2 rounded-full text-sm md:text-xs font-bold uppercase tracking-wider hover:bg-emerald-600 transition-all duration-300 shadow-lg shadow-slate-200 active:scale-95 w-full md:w-auto">
                 Try Bophelo Bot
             </button>
         </div>
     </nav>
-
     <section class="mt-20 px-6 text-center max-w-5xl mx-auto reveal relative min-h-[600px] flex flex-col justify-center">
         <div class="hero-bg">
             <div class="hex-grid"></div>
-            
+           
             <div class="particle"></div>
             <div class="particle"></div>
             <div class="particle"></div>
             <div class="particle"></div>
             <div class="particle"></div>
             <div class="particle"></div>
-            
+           
             <div class="neural-lines">
                 <div class="neural-line"></div>
                 <div class="neural-line"></div>
                 <div class="neural-line"></div>
                 <div class="neural-line"></div>
             </div>
-            
+           
             <div class="pulse-ring"></div>
             <div class="pulse-ring"></div>
             <div class="pulse-ring"></div>
-            
+           
             <div class="ecg-line">
                 <svg width="100%" height="100%" viewBox="0 0 1200 100" preserveAspectRatio="none">
                     <path class="ecg-path" d="M0,50 L100,50 L120,20 L140,80 L160,50 L200,50 L220,50 L240,10 L260,90 L280,50 L400,50 L420,50 L440,20 L460,80 L480,50 L600,50 L620,50 L640,20 L660,80 L680,50 L800,50 L820,50 L840,20 L860,80 L880,50 L1000,50 L1020,50 L1040,20 L1060,80 L1080,50 L1200,50" />
                 </svg>
             </div>
         </div>
-
         <div class="relative z-10">
             <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 text-[11px] font-bold tracking-[0.2em] text-emerald-700 uppercase bg-emerald-100/50 border border-emerald-200 rounded-full backdrop-blur-sm">
                 <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
                 Interface Version 4.0.2 Stable
             </div>
-            <h1 class="text-6xl md:text-8xl font-bold hero-text leading-[1.1] min-h-[1.2em]">
+            <h1 class="text-5xl md:text-8xl font-bold hero-text leading-[1.1] min-h-[1.2em]">
                 <span id="typing-text"></span>
             </h1>
-            <p class="mt-10 text-lg md:text-xl text-slate-500 leading-relaxed max-w-2xl mx-auto font-light">
-                Integrating advanced neural telemetry with molecular biological data. 
+            <p class="mt-10 text-base md:text-xl text-slate-500 leading-relaxed max-w-2xl mx-auto font-light">
+                Integrating advanced neural telemetry with molecular biological data.
                 <span class="font-semibold text-slate-800">Bophelo Bot</span> is your autonomous health architect, predicting vitals before they manifest.
             </p>
-            
-            <div class="mt-14 flex flex-col md:flex-row gap-6 justify-center items-center">
-                <a href="find.html" class="group relative bg-emerald-600 text-white font-bold px-12 py-5 rounded-full hover:bg-emerald-500 transition-all duration-300 shadow-2xl shadow-emerald-200 hover:shadow-emerald-400 hover:-translate-y-1 overflow-hidden">
+           
+            <div class="mt-14 flex flex-col md:flex-row gap-8 justify-center items-center">
+                <a href="find.html" class="group relative bg-emerald-600 text-white font-bold px-12 py-6 rounded-full hover:bg-emerald-500 transition-all duration-300 shadow-2xl shadow-emerald-200 hover:shadow-emerald-400 hover:-translate-y-1 active:scale-95 overflow-hidden">
                     <div class="absolute top-0 -left-[100%] w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg] group-hover:animate-shine"></div>
-                    
+                   
                     <span class="relative z-10 flex items-center gap-2">
                         Find nearby Health Care
-                        <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        <svg class="w-6 h-6 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </span>
                 </a>
-                
+               
                 <div class="flex flex-col items-start border-l-2 border-emerald-500 pl-4">
                     <span class="mono text-[10px] text-slate-400 uppercase tracking-tighter">Diagnostic Readiness</span>
                     <span class="text-slate-900 font-bold">99.98% Accuracy</span>
@@ -474,9 +431,8 @@
             </div>
         </div>
     </section>
-
-    <section id="about" class="mt-40 max-w-7xl mx-auto px-8 grid md:grid-cols-3 gap-10 pb-32">
-        <div class="medical-card p-10 rounded-[40px] reveal" style="transition-delay: 0.1s;">
+    <section id="about" class="mt-40 max-w-7xl mx-auto px-6 md:px-8 grid md:grid-cols-3 gap-10 pb-32">
+        <div class="medical-card p-10 rounded-[40px] reveal cursor-pointer" style="transition-delay: 0.1s;">
             <div class="mono text-[10px] text-emerald-500 mb-6 font-bold tracking-widest uppercase">Encryption Node</div>
             <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-8 border border-emerald-100">
                 <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
@@ -484,8 +440,7 @@
             <h3 class="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Molecular Privacy</h3>
             <p class="text-slate-500 text-sm leading-relaxed font-light">Advanced zero-knowledge proofs applied to genomic sequencing. Your identity remains fragmented and decentralized.</p>
         </div>
-
-        <div class="medical-card p-10 rounded-[40px] reveal" style="transition-delay: 0.2s;">
+        <div class="medical-card p-10 rounded-[40px] reveal cursor-pointer" style="transition-delay: 0.2s;">
             <div class="mono text-[10px] text-emerald-500 mb-6 font-bold tracking-widest uppercase">Predictive Core</div>
             <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-8 border border-emerald-100">
                 <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -493,8 +448,7 @@
             <h3 class="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Biotic Telemetry</h3>
             <p class="text-slate-500 text-sm leading-relaxed font-light">Sub-second monitoring of metabolic fluctuations using high-fidelity neural models trained on clinical datasets.</p>
         </div>
-
-        <div class="medical-card p-10 rounded-[40px] reveal" style="transition-delay: 0.3s;">
+        <div class="medical-card p-10 rounded-[40px] reveal cursor-pointer" style="transition-delay: 0.3s;">
             <div class="mono text-[10px] text-emerald-500 mb-6 font-bold tracking-widest uppercase">Adaptive Logic</div>
             <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-8 border border-emerald-100">
                 <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -503,9 +457,8 @@
             <p class="text-slate-500 text-sm leading-relaxed font-light">Dynamic lifestyle calibration based on circadian rhythms and real-time cortisol analysis for peak performance.</p>
         </div>
     </section>
-
     <footer class="bg-white border-t border-slate-200 pt-16 pb-8 reveal">
-        <div class="max-w-7xl mx-auto px-10">
+        <div class="max-w-7xl mx-auto px-6 md:px-10">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
                 <div class="col-span-1 md:col-span-1">
                     <div class="flex items-center gap-2 mb-6">
@@ -517,12 +470,11 @@
                     <p class="text-slate-500 text-sm leading-relaxed mb-6 font-light">
                         The world's first autonomous health architect. Precision medicine meeting machine learning for extended human longevity.
                     </p>
-                    <div class="flex gap-4">
-                        <a href="#" class="text-slate-400 hover:text-emerald-600 transition"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg></a>
-                        <a href="#" class="text-slate-400 hover:text-emerald-600 transition"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg></a>
+                    <div class="flex gap-6">
+                        <a href="#" class="text-slate-400 hover:text-emerald-600 transition active:scale-95"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg></a>
+                        <a href="#" class="text-slate-400 hover:text-emerald-600 transition active:scale-95"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg></a>
                     </div>
                 </div>
-
                 <div class="col-span-1">
                     <h4 class="font-bold text-slate-900 text-xs uppercase tracking-widest mb-6">Platform</h4>
                     <ul class="space-y-4 text-sm text-slate-500 font-medium">
@@ -532,7 +484,6 @@
                         <li><a href="#" class="hover:text-emerald-600 transition">Data Integrations</a></li>
                     </ul>
                 </div>
-
                 <div class="col-span-1">
                     <h4 class="font-bold text-slate-900 text-xs uppercase tracking-widest mb-6">Research</h4>
                     <ul class="space-y-4 text-sm text-slate-500 font-medium">
@@ -542,7 +493,6 @@
                         <li><a href="#" class="hover:text-emerald-600 transition">Partnerships</a></li>
                     </ul>
                 </div>
-
                 <div class="col-span-1">
                     <h4 class="font-bold text-slate-900 text-xs uppercase tracking-widest mb-6">System Status</h4>
                     <div class="bg-slate-50 border border-slate-100 p-4 rounded-xl mb-6">
@@ -559,24 +509,22 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-400 font-medium">
+           
+            <div class="border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-slate-400 font-medium">
                  <p>&copy; 2026 Bophelo Bot Labs Inc. All rights reserved.</p>
-                 <div class="flex gap-8 mt-4 md:mt-0">
-                    <a href="#" class="hover:text-emerald-600 transition">Privacy Policy</a>
-                    <a href="#" class="hover:text-emerald-600 transition">Terms of Service</a>
-                    <a href="#" class="hover:text-emerald-600 transition">Cookie Settings</a>
+                 <div class="flex gap-6 md:gap-8 mt-6 md:mt-0">
+                    <a href="#" class="hover:text-emerald-600 transition active:scale-95 py-2">Privacy Policy</a>
+                    <a href="#" class="hover:text-emerald-600 transition active:scale-95 py-2">Terms of Service</a>
+                    <a href="#" class="hover:text-emerald-600 transition active:scale-95 py-2">Cookie Settings</a>
                  </div>
             </div>
         </div>
     </footer>
-
     <script>
         // Reveal Animation Logic
         const observerOptions = {
             threshold: 0.1
         };
-
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -584,19 +532,16 @@
                 }
             });
         }, observerOptions);
-
         document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
-
         // Looping Typing Effect Logic
         const textElement = document.getElementById('typing-text');
         const textContent = "The Precision Health Interface.";
         let index = 0;
         let isDeleting = false;
         let typeSpeed = 100;
-
         function typeLoop() {
             const currentText = textElement.textContent;
-            
+           
             if (isDeleting) {
                 // Remove character
                 textElement.textContent = textContent.substring(0, index - 1);
@@ -608,7 +553,6 @@
                 index++;
                 typeSpeed = 100; // Normal typing speed
             }
-
             // Logic to switch states
             if (!isDeleting && index === textContent.length) {
                 isDeleting = true;
@@ -617,12 +561,9 @@
                 isDeleting = false;
                 typeSpeed = 500; // Brief pause before restarting
             }
-
             setTimeout(typeLoop, typeSpeed);
         }
-
         window.onload = () => setTimeout(typeLoop, 500);
     </script>
-
 </body>
 </html>
