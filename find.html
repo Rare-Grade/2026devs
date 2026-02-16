@@ -5,239 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bophelo Bot | Facility Finder</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+
     <style>
         :root { --medical-emerald: #10b981; }
         body { font-family: 'Inter', sans-serif; overflow: hidden; background-color: #e2e8f0; }
-        
-        /* Map Pattern Simulation */
-        .map-bg {
-            background-color: #f1f5f9;
-            background-image: 
-                linear-gradient(rgba(203, 213, 225, 0.6) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(203, 213, 225, 0.6) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-        
-        .map-block {
-            background-color: #fff;
-            opacity: 0.4;
-        }
-
-        /* Scrollbar Hiding for sleek UI */
+        #map { position: absolute; inset: 0; z-index: 0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Animations */
         .slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
         .slide-in-left { animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-
-        /* Map Pin Pulse */
-        .pin-pulse {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background: rgba(16, 185, 129, 0.2);
-            border-radius: 50%;
-            animation: pulse-ring 2s infinite;
-        }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.5); opacity: 1; }
-            100% { transform: scale(2.5); opacity: 0; }
-        }
-
-        .floating-panel {
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.05), 0 0 15px rgba(0,0,0,0.05);
-        }
     </style>
 </head>
 <body class="h-screen w-screen relative">
 
-    <div id="map-container" class="absolute inset-0 z-0 map-bg overflow-hidden cursor-grab active:cursor-grabbing">
-        <div class="absolute top-[20%] left-[20%] w-32 h-32 map-block"></div>
-        <div class="absolute top-[40%] left-[50%] w-48 h-24 map-block"></div>
-        <div class="absolute bottom-[30%] right-[20%] w-40 h-40 map-block"></div>
-        
-        <div class="absolute top-[30%] left-[45%] flex flex-col items-center group cursor-pointer transition-transform hover:-translate-y-2">
-            <div class="pin-pulse"></div>
-            <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg border-2 border-white z-10">
-                <i class="fa-solid fa-hospital"></i>
-            </div>
-            <div class="bg-white px-3 py-1 rounded-full shadow-md text-xs font-bold mt-1 opacity-0 group-hover:opacity-100 transition-opacity">MediClinic</div>
-        </div>
-
-        <div class="absolute top-[50%] left-[60%] flex flex-col items-center group cursor-pointer transition-transform hover:-translate-y-2">
-            <div class="w-8 h-8 bg-white text-emerald-600 rounded-full flex items-center justify-center shadow-lg border-2 border-emerald-500 z-10">
-                <i class="fa-solid fa-user-doctor"></i>
-            </div>
-            <div class="bg-white px-3 py-1 rounded-full shadow-md text-xs font-bold mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Dr. Nkosi</div>
-        </div>
-        
-        <div class="absolute top-[45%] left-[30%] w-6 h-6 bg-blue-500 rounded-full border-4 border-white shadow-xl z-10 animate-pulse"></div>
-    </div>
+    <div id="map"></div>
 
     <div class="absolute top-4 right-4 md:right-8 z-20 flex items-center gap-3">
         <div class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-100 hidden md:block">
-            <span class="text-xs font-bold text-slate-600 tracking-wide uppercase">Bophelo Map View</span>
+            <span id="location-status" class="text-[10px] font-bold text-emerald-600 tracking-wide uppercase">GPS Linked</span>
         </div>
-        <button onclick="handleSignOut()" class="w-12 h-12 rounded-full bg-white shadow-lg border border-slate-200 overflow-hidden hover:scale-105 transition active:scale-95 flex items-center justify-center group">
+        <button onclick="handleSignOut()" class="w-12 h-12 rounded-full bg-white shadow-lg border border-slate-200 overflow-hidden hover:scale-105 transition active:scale-95 flex items-center justify-center">
             <img id="user-avatar" src="" alt="Profile" class="w-full h-full object-cover hidden">
-            <i id="guest-icon" class="fa-solid fa-user text-slate-400 text-lg group-hover:text-emerald-500 transition"></i>
+            <i id="guest-icon" class="fa-solid fa-user text-slate-400 text-lg"></i>
         </button>
     </div>
 
-    <div class="absolute z-30 bg-white 
-        w-full bottom-0 rounded-t-[30px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-all duration-500 ease-in-out
-        md:top-0 md:left-0 md:w-[420px] md:h-full md:rounded-none md:shadow-[10px_0_40px_rgba(0,0,0,0.05)]
-        flex flex-col overflow-hidden max-h-[85vh] md:max-h-full slide-up md:slide-in-left">
-
-        <div class="w-full flex justify-center pt-3 pb-1 md:hidden">
-            <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
-        </div>
+    <div class="absolute z-30 bg-white w-full bottom-0 rounded-t-[30px] shadow-2xl md:top-0 md:left-0 md:w-[420px] md:h-full md:rounded-none flex flex-col overflow-hidden max-h-[85vh] md:max-h-full slide-up md:slide-in-left">
 
         <div id="login-view" class="p-8 flex flex-col h-full justify-center">
             <div class="mb-8 text-center md:text-left">
                 <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-4 mx-auto md:mx-0">
-                    <i class="fa-solid fa-location-dot text-xl"></i>
+                    <i class="fa-solid fa-location-crosshairs text-xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-900 mb-2">Find Care Nearby</h2>
-                <p class="text-slate-500 text-sm">Log in to view waiting times, book appointments, and access your health telemetry.</p>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Bophelo Bot</h2>
+                <p class="text-slate-500 text-sm">Real-time facility routing and medical assistance.</p>
             </div>
-
             <div class="space-y-3">
-                <button onclick="handleSignIn('github')" class="w-full flex items-center justify-center gap-3 bg-slate-900 text-white p-4 rounded-2xl font-semibold hover:bg-slate-800 transition shadow-lg shadow-slate-200">
-                    <i class="fa-brands fa-github text-xl"></i>
-                    Continue with GitHub
-                </button>
-                
                 <button onclick="handleSignIn('google')" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-semibold hover:bg-slate-50 transition">
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
-                    Continue with Google
-                </button>
-
-                <button onclick="alert('Please enable Email/Password auth in Firebase Console')" class="w-full flex items-center justify-center gap-3 bg-emerald-50 text-emerald-700 border border-emerald-100 p-4 rounded-2xl font-semibold hover:bg-emerald-100 transition">
-                    <i class="fa-solid fa-envelope"></i>
-                    Continue with Email
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5"> Sign in with Google
                 </button>
             </div>
-
-            <p class="text-center text-xs text-slate-400 mt-8">
-                By continuing, you agree to Bophelo Bot's <a href="#" class="underline">Bio-Privacy Policy</a>.
-            </p>
         </div>
 
         <div id="app-view" class="flex flex-col h-full hidden">
-            
-            <div class="px-6 pt-2 pb-4 border-b border-slate-100">
-                <div class="relative group">
-                    <div class="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </div>
-                    <input type="text" placeholder="Where to? (e.g. Cardiologist)" 
-                        class="w-full bg-slate-50 text-slate-800 p-4 pl-12 rounded-2xl border-none outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all group-hover:bg-slate-100">
-                </div>
-
-                <div class="flex gap-3 mt-4 overflow-x-auto no-scrollbar pb-1">
-                    <button class="whitespace-nowrap px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-full shadow-md">
-                        <i class="fa-solid fa-star mr-1 text-emerald-400"></i> Best Match
-                    </button>
-                    <button class="whitespace-nowrap px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-full hover:border-emerald-500 hover:text-emerald-600 transition">
-                        Hospitals
-                    </button>
-                    <button class="whitespace-nowrap px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-full hover:border-emerald-500 hover:text-emerald-600 transition">
-                        Pharmacies
-                    </button>
-                    <button class="whitespace-nowrap px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-full hover:border-emerald-500 hover:text-emerald-600 transition">
-                        Dentists
-                    </button>
+            <div class="px-6 pt-8 pb-4 border-b border-slate-100">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input id="facility-search" type="text" placeholder="Search (e.g. Pharmacy, ER)" 
+                        class="w-full bg-slate-50 p-4 pl-12 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all"
+                        onkeypress="if(event.key === 'Enter') searchAndRoute(this.value)">
                 </div>
             </div>
 
             <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4 bg-slate-50/50">
+                <div id="route-info" class="hidden bg-emerald-600 text-white p-5 rounded-3xl shadow-lg mb-4">
+                    <h4 class="text-xs font-bold uppercase opacity-80 mb-1">Active Destination</h4>
+                    <p id="dest-name" class="font-bold text-lg leading-tight">Finding route...</p>
+                    <div class="flex gap-4 mt-3 text-sm font-medium">
+                        <span><i class="fa-solid fa-car mr-1"></i> <span id="route-dist">0 km</span></span>
+                        <span><i class="fa-solid fa-clock mr-1"></i> <span id="route-time">0 min</span></span>
+                    </div>
+                </div>
+
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Recommended</h3>
                 
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Nearest Facilities</h3>
-
-                <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md hover:border-emerald-200 transition cursor-pointer group">
-                    <div class="flex justify-between items-start">
-                        <div class="flex gap-4">
-                            <div class="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 shrink-0">
-                                <i class="fa-solid fa-hospital-user"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-slate-900 group-hover:text-emerald-600 transition">Pretoria Heart Hospital</h4>
-                                <div class="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                                    <span><i class="fa-solid fa-location-arrow text-emerald-500"></i> 1.2km</span>
-                                    <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                    <span><i class="fa-solid fa-clock text-amber-500"></i> 15m wait</span>
-                                </div>
-                            </div>
-                        </div>
-                        <span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-full">OPEN</span>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-slate-50 flex justify-between items-center">
-                        <span class="text-xs font-mono text-slate-400">EMERGENCY: LEVEL 1</span>
-                        <div class="flex text-emerald-500 text-xs">
-                            <i class="fa-solid fa-star"></i>
-                            <i class="fa-solid fa-star"></i>
-                            <i class="fa-solid fa-star"></i>
-                            <i class="fa-solid fa-star"></i>
-                            <i class="fa-regular fa-star-half-stroke"></i>
-                        </div>
+                <div onclick="searchAndRoute('Hospital')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-truck-medical"></i></div>
+                        <div><h4 class="font-bold">Nearest Emergency ER</h4><p class="text-xs text-slate-500">Auto-route to highest rated</p></div>
                     </div>
                 </div>
-
-                <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md hover:border-emerald-200 transition cursor-pointer group">
-                    <div class="flex justify-between items-start">
-                        <div class="flex gap-4">
-                            <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shrink-0">
-                                <i class="fa-solid fa-prescription-bottle-medical"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-slate-900 group-hover:text-blue-600 transition">Medi-Rite Pharmacy</h4>
-                                <div class="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                                    <span><i class="fa-solid fa-location-arrow text-blue-500"></i> 0.4km</span>
-                                    <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                    <span class="text-emerald-600 font-semibold">Stock Available</span>
-                                </div>
-                            </div>
-                        </div>
-                        <span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-full">OPEN</span>
-                    </div>
-                </div>
-
-                <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md hover:border-emerald-200 transition cursor-pointer group">
-                    <div class="flex justify-between items-start">
-                        <div class="flex gap-4">
-                            <div class="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 shrink-0">
-                                <i class="fa-solid fa-user-doctor"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-slate-900 group-hover:text-purple-600 transition">Dr. S. Naidoo (GP)</h4>
-                                <div class="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                                    <span><i class="fa-solid fa-location-arrow text-purple-500"></i> 2.1km</span>
-                                    <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                    <span>Closes 17:00</span>
-                                </div>
-                            </div>
-                        </div>
-                        <span class="bg-red-50 text-red-700 text-[10px] font-bold px-2 py-1 rounded-full">BUSY</span>
-                    </div>
-                </div>
-                
-                <div class="bg-gradient-to-r from-slate-900 to-slate-800 p-5 rounded-3xl shadow-lg mt-4 text-white relative overflow-hidden">
-                    <div class="relative z-10">
-                        <h4 class="font-bold text-sm mb-1">Premium Telemetry</h4>
-                        <p class="text-xs text-slate-300 mb-3">Share your real-time vitals with ER upon arrival.</p>
-                        <button class="bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold px-4 py-2 rounded-full transition">Activate</button>
-                    </div>
-                    <div class="absolute -right-5 -bottom-10 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
-                </div>
-
-                <div class="h-10 md:hidden"></div>
             </div>
         </div>
     </div>
@@ -247,7 +91,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <script>
-        // --- FIREBASE CONFIGURATION ---
+        mapboxgl.accessToken = 'pk.eyJ1Ijoia2F0bGVnb3BoYXNoYSIsImEiOiJjbTlpOTdzbmYwMGNsMmpzYWJtZzN4d3pqIn0.Zt-aSMEoahrV3zkiVVHbOw';
+        
         const firebaseConfig = {
             apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
             authDomain: "pinotp-d7ef5.firebaseapp.com",
@@ -258,102 +103,85 @@
             appId: "1:708458917827:web:375de278577df0adcf9776"
         };
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const database = firebase.database();
+        let map, userCoords = [28.2293, -25.7479]; 
 
-        // --- DOM ELEMENTS ---
-        const loginView = document.getElementById('login-view');
-        const appView = document.getElementById('app-view');
-        const userAvatar = document.getElementById('user-avatar');
-        const guestIcon = document.getElementById('guest-icon');
+        function initMap() {
+            map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/navigation-day-v1',
+                center: userCoords,
+                zoom: 14
+            });
+            updateUserLocation();
+        }
 
-        // --- AUTHENTICATION LOGIC ---
+        function updateUserLocation() {
+            navigator.geolocation.getCurrentPosition(pos => {
+                userCoords = [pos.coords.longitude, pos.coords.latitude];
+                map.setCenter(userCoords);
+                new mapboxgl.Marker({ color: '#10b981' }).setLngLat(userCoords).addTo(map);
+            });
+        }
 
-        // 1. Listen for Authentication State Changes
-        auth.onAuthStateChanged((user) => {
+        async function searchAndRoute(query) {
+            const searchUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?proximity=${userCoords[0]},${userCoords[1]}&access_token=${mapboxgl.accessToken}`;
+            const res = await fetch(searchUrl);
+            const data = await res.json();
+            
+            if (data.features.length > 0) {
+                const target = data.features[0];
+                const destCoords = target.center;
+                document.getElementById('dest-name').innerText = target.text;
+                document.getElementById('route-info').classList.remove('hidden');
+                getRoute(destCoords, target.text);
+            }
+        }
+
+        async function getRoute(end, name) {
+            const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${userCoords[0]},${userCoords[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`);
+            const json = await query.json();
+            const data = json.routes[0];
+            
+            document.getElementById('route-dist').innerText = (data.distance / 1000).toFixed(1) + ' km';
+            document.getElementById('route-time').innerText = Math.floor(data.duration / 60) + ' min';
+
+            const geojson = { type: 'Feature', geometry: data.geometry };
+            if (map.getSource('route')) { map.getSource('route').setData(geojson); }
+            else {
+                map.addLayer({ id: 'route', type: 'line', source: { type: 'geojson', data: geojson }, paint: { 'line-color': '#10b981', 'line-width': 6, 'line-opacity': 0.8 }});
+            }
+            
+            map.fitBounds([userCoords, end], { padding: 80 });
+
+            if (auth.currentUser) {
+                database.ref('users/' + auth.currentUser.uid + '/active_route').set({
+                    destination: name,
+                    eta_mins: Math.floor(data.duration / 60),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
+        }
+
+        auth.onAuthStateChanged(user => {
             if (user) {
-                // User is signed in.
-                console.log("User detected:", user.uid);
-                renderLoggedInState(user);
-                writeUserPresence(user);
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('app-view').classList.remove('hidden');
+                document.getElementById('user-avatar').src = user.photoURL;
+                document.getElementById('user-avatar').classList.remove('hidden');
+                document.getElementById('guest-icon').classList.add('hidden');
             } else {
-                // User is signed out.
-                console.log("No user signed in.");
-                renderLoggedOutState();
+                document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('app-view').classList.add('hidden');
             }
         });
 
-        // 2. Handle Sign In
-        function handleSignIn(providerType) {
-            let provider;
-            
-            if (providerType === 'google') {
-                provider = new firebase.auth.GoogleAuthProvider();
-            } else if (providerType === 'github') {
-                provider = new firebase.auth.GithubAuthProvider();
-            } else {
-                alert('This auth provider is not yet configured.');
-                return;
-            }
+        function handleSignIn(p) { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        function handleSignOut() { auth.signOut(); }
 
-            auth.signInWithPopup(provider)
-                .then((result) => {
-                    // Success is handled by onAuthStateChanged
-                    console.log("Sign-in successful");
-                })
-                .catch((error) => {
-                    console.error("Auth Error:", error);
-                    alert("Authentication Failed: " + error.message + "\n\n(Ensure you enabled this provider in Firebase Console)");
-                });
-        }
-
-        // 3. Handle Sign Out
-        function handleSignOut() {
-            auth.signOut().then(() => {
-                console.log("User signed out");
-            }).catch((error) => {
-                console.error("Sign Out Error:", error);
-            });
-        }
-
-        // --- DATABASE LOGIC ---
-        function writeUserPresence(user) {
-            const userRef = database.ref('users/' + user.uid);
-            userRef.update({
-                displayName: user.displayName,
-                email: user.email,
-                last_login: firebase.database.ServerValue.TIMESTAMP,
-                photoURL: user.photoURL,
-                status: "active"
-            });
-        }
-
-        // --- UI LOGIC ---
-        function renderLoggedInState(user) {
-            // Hide Login, Show App
-            loginView.classList.add('hidden');
-            appView.classList.remove('hidden');
-            
-            // Show Avatar
-            if (user.photoURL) {
-                userAvatar.src = user.photoURL;
-                userAvatar.classList.remove('hidden');
-                guestIcon.classList.add('hidden');
-            }
-        }
-
-        function renderLoggedOutState() {
-            // Show Login, Hide App
-            loginView.classList.remove('hidden');
-            appView.classList.add('hidden');
-
-            // Hide Avatar, Show Icon
-            userAvatar.classList.add('hidden');
-            guestIcon.classList.remove('hidden');
-        }
+        initMap();
     </script>
 </body>
 </html>
-//pk.eyJ1Ijoia2F0bGVnb3BoYXNoYSIsImEiOiJjbTlpOTdzbmYwMGNsMmpzYWJtZzN4d3pqIn0.Zt-aSMEoahrV3zkiVVHbOw
