@@ -17,7 +17,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes slideUp0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .slide-in-left { animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
@@ -90,6 +89,7 @@
                         <button data-mode="driving-traffic" onclick="setMode('driving-traffic')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-bus"></i></button>
                         <button data-mode="cycling" onclick="setMode('cycling')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-bicycle"></i></button>
                         <button data-mode="walking" onclick="setMode('walking')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-person-walking"></i></button>
+                        <button onclick="startVoiceNavigation()" class="p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-volume-high"></i></button>
                     </div>
                 </div>
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Recommended</h3>
@@ -125,8 +125,10 @@
         let currentDestCoords = null;
         let currentDestName = null;
         let destMarker = null;
+        let turnMarkers = [];
+        let currentInstructions = [];
 
-        function initMap() {
+        function initiatorMap() {
             map = new mapboxgl.Map({
                 container: 'map',
                 style: 'mapbox://styles/mapbox/navigation-night-v1',
@@ -135,7 +137,7 @@
             });
 
             map.on('load', () => {
-                // Real-time traffic overlay (Mapbox Traffic)
+                // Real-time traffic overlay
                 map.addSource('mapbox-traffic', {
                     type: 'vector',
                     url: 'mapbox://mapbox.mapbox-traffic-v1'
@@ -146,10 +148,7 @@
                     type: 'line',
                     source: 'mapbox-traffic',
                     'source-layer': 'traffic',
-                    layout: {
-                        'line-join': 'round',
-                        'line-cap': 'round'
-                    },
+                    layout: { 'line-join': 'round', 'line-cap': 'round' },
                     paint: {
                         'line-width': 4,
                         'line-color': [
@@ -164,7 +163,7 @@
                     }
                 }, 'road-label');
 
-                // Real-time weather radar overlay (RainViewer)
+                // Weather radar overlay
                 const updateWeatherOverlay = async () => {
                     try {
                         const resp = await fetch('https://api.rainviewer.com/public/weather-maps.json');
@@ -238,10 +237,8 @@
                 currentDestCoords = destCoords;
                 currentDestName = target.text;
 
-                // Remove previous destination marker
                 if (destMarker) destMarker.remove();
 
-                // Add new destination marker (red pulsing location dot)
                 const destEl = document.createElement('div');
                 destEl.innerHTML = `
                     <div class="relative">
@@ -266,6 +263,13 @@
         }
 
         async function getRoute(end, name) {
+            // Clear previous route and turn markers
+            if (map.getLayer('route')) map.removeLayer('route');
+            if (map.getSource('route')) map.removeSource('route');
+            turnMarkers.forEach(m => m.remove());
+            turnMarkers = [];
+            currentInstructions = [];
+
             const profile = currentMode;
             const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/${profile}/${userCoords[0]},${userCoords[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`);
             const json = await query.json();
@@ -275,20 +279,46 @@
             document.getElementById('route-dist').innerText = (data.distance / 1000).toFixed(1) + ' km';
             document.getElementById('route-time').innerText = Math.floor(data.duration / 60) + ' min';
             updateModeIcon();
+
             const geojson = { type: 'Feature', geometry: data.geometry };
-            if (map.getSource('route')) { 
-                map.getSource('route').setData(geojson); 
-            }
-            else {
-                map.addLayer({ 
-                    id: 'route', 
-                    type: 'line', 
-                    source: { type: 'geojson', data: geojson }, 
-                    paint: { 'line-color': '#ffffff', 'line-width': 6, 'line-opacity': 0.8 }
-                });
-            }
-          
+            map.addSource('route', { type: 'geojson', data: geojson });
+            map.addLayer({ 
+                id: 'route', 
+                type: 'line', 
+                source: 'route', 
+                paint: { 'line-color': '#ffffff', 'line-width': 10, 'line-opacity': 0.8 }
+            });
+
+            // Add turn-by-turn markers with popups
+            currentInstructions = [`Starting navigation to ${name}. Distance ${(data.distance / 1000).toFixed(1)} km, estimated time ${Math.floor(data.duration / 60)} minutes.`];
+            data.legs[0].steps.forEach((step, index) => {
+                if (step.maneuver && step.maneuver.location) {
+                    const coords = step.maneuver.location.coordinates;
+                    const instruction = step.maneuver.instruction || 'Continue straight';
+
+                    currentInstructions.push(instruction);
+
+                    const el = document.createElement('div');
+                    el.className = 'bg-white text-emerald-600 w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shadow-lg border-2 border-emerald-600';
+                    el.innerText = index + 1;
+
+                    const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+                        .setLngLat(coords)
+                        .setPopup(new mapboxgl.Popup({ offset: 35, closeButton: false, className: 'text-sm' })
+                            .setHTML(`<div class="bg-white p-3 rounded-lg shadow-lg max-w-xs"><strong>${index + 1}.</strong> ${instruction}</div>`))
+                        .addTo(map);
+
+                    // Hover to open/close popup
+                    marker.getElement().addEventListener('mouseenter', () => marker.togglePopup());
+                    marker.getElement().addEventListener('mouseleave', () => marker.togglePopup());
+
+                    turnMarkers.push(marker);
+                }
+            });
+            currentInstructions.push(`You have arrived at your destination: ${name}`);
+
             map.fitBounds([userCoords, end], { padding: 80 });
+
             if (auth.currentUser) {
                 database.ref('users/' + auth.currentUser.uid + '/active_route').set({
                     destination: name,
@@ -325,6 +355,26 @@
             if (iconEl) iconEl.className = `fa-solid ${iconMap[currentMode]} mr-1`;
         }
 
+        function startVoiceNavigation() {
+            if ('speechSynthesis' in window && currentInstructions.length > 0) {
+                speechSynthesis.cancel();
+                let index = 0;
+                const speakNext = () => {
+                    if (index < currentInstructions.length) {
+                        const utterance = new SpeechSynthesisUtterance(currentInstructions[index]);
+                        utterance.lang = 'en-US';
+                        utterance.rate = 0.9;
+                        utterance.onend = () => {
+                            index++;
+                            speakNext();
+                        };
+                        speechSynthesis.speak(utterance);
+                    }
+                };
+                speakNext();
+            }
+        }
+
         function handleSignIn(provider) {
             let prov;
             if (provider === 'google') prov = new firebase.auth.GoogleAuthProvider();
@@ -346,7 +396,6 @@
                             .catch(createErr => alert(createErr.message));
                     } else {
                         alert(err.message);
-                    alert(err.message);
                     }
                 });
         }
@@ -366,7 +415,7 @@
             }
         });
 
-        initMap();
+        initiatorMap();
     </script>
 </body>
 </html>
