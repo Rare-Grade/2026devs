@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bophelo Bot | Facility Finder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -25,6 +25,52 @@
        
         @media (min-width: 768px) {
             .sheet-collapsed { transform: none; }
+        }
+
+        /* Search Bar Animations */
+        .search-container {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .search-container:focus-within {
+            transform: scale(1.02);
+            box-shadow: 0 10px 40px -10px rgba(16, 185, 129, 0.3);
+        }
+        .search-input {
+            transition: all 0.3s ease;
+        }
+        .search-container:focus-within .search-input {
+            background-color: #ffffff;
+        }
+
+        /* Autocomplete Dropdown */
+        .autocomplete-dropdown {
+            animation: slideDown 0.2s ease-out;
+            transform-origin: top;
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scaleY(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scaleY(1);
+            }
+        }
+
+        /* Voice Pulse Animation */
+        .voice-pulse {
+            animation: voicePulse 1.5s ease-in-out infinite;
+        }
+        @keyframes voicePulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+        }
+
+        /* Touch-friendly scroll area */
+        .touch-scroll {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
         }
     </style>
 </head>
@@ -56,7 +102,7 @@
         <div class="w-full flex justify-center pt-3 pb-1 md:hidden" onclick="expandBottomSheet()">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
         </div>
-        <div id="login-view" class="p-8 flex flex-col h-full justify-center overflow-y-auto">
+        <div id="login-view" class="p-8 flex flex-col h-full justify-center overflow-y-auto touch-scroll">
             <div class="mb-8 text-center md:text-left">
                 <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-4 mx-auto md:mx-0">
                     <i class="fa-solid fa-location-crosshairs text-xl"></i>
@@ -90,21 +136,33 @@
             <p class="text-xs text-slate-500 text-center mt-4">New here? We'll create an account for you.</p>
         </div>
         <div id="app-view" class="flex flex-col h-full hidden">
-            <div class="px-6 pt-2 pb-4 border-b border-slate-100 bg-white z-10 sticky top-0" onclick="expandBottomSheet()">
-                <div class="relative">
+            <div class="px-6 pt-2 pb-4 border-b border-slate-100 bg-white z-20 sticky top-0" onclick="expandBottomSheet()">
+                <div class="relative search-container rounded-2xl">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 peer-focus:text-emerald-600 transition-colors z-10"></i>
                     <input id="facility-search" type="text" placeholder="Search (e.g. Pharmacy, ER)"
-                        class="w-full bg-slate-50 p-4 pl-12 pr-12 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all peer"
-                        oninput="toggleClearButton(this)"
-                        onfocus="expandBottomSheet()"
+                        class="search-input w-full bg-slate-50 p-4 pl-12 pr-24 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all peer"
+                        oninput="handleSearchInput(this)"
+                        onfocus="expandBottomSheet(); showSuggestions()"
                         onkeypress="if(event.key === 'Enter') searchAndRoute(this.value)">
+                    
+                    <!-- Voice Search Button -->
+                    <button id="voice-search-btn" class="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 transition z-10 p-2" onclick="toggleVoiceSearch()">
+                        <i class="fa-solid fa-microphone text-lg"></i>
+                    </button>
+                    
+                    <!-- Clear Button -->
                     <button id="clear-search-btn" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 hidden z-10" onclick="clearFacilitySearch()">
                         <i class="fa-solid fa-xmark text-lg"></i>
                     </button>
                 </div>
+                
+                <!-- Autocomplete Suggestions -->
+                <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden absolute left-6 right-6 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-30 max-h-64 overflow-y-auto">
+                    <!-- Suggestions will be populated here -->
+                </div>
             </div>
            
-            <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4 bg-slate-50/50" style="-webkit-overflow-scrolling: touch;">
+            <div class="flex-1 overflow-y-auto touch-scroll no-scrollbar p-6 space-y-4 bg-slate-50/50">
                 <div id="route-info" class="hidden bg-emerald-600 text-white p-5 rounded-3xl shadow-lg mb-4">
                     <h4 class="text-xs font-bold uppercase opacity-80 mb-1">Active Destination</h4>
                     <p id="dest-name" class="font-bold text-lg leading-tight">Finding route...</p>
@@ -210,6 +268,124 @@
         let turnMarkers = [];
         let currentInstructions = [];
         let watchId = null;
+        let recognition = null;
+        let isListening = false;
+
+        // Initialize speech recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+            
+            recognition.onstart = function() {
+                isListening = true;
+                document.getElementById('voice-search-btn').classList.add('voice-pulse', 'text-emerald-600');
+                document.getElementById('facility-search').placeholder = 'Listening...';
+            };
+            
+            recognition.onend = function() {
+                isListening = false;
+                document.getElementById('voice-search-btn').classList.remove('voice-pulse', 'text-emerald-600');
+                document.getElementById('facility-search').placeholder = 'Search (e.g. Pharmacy, ER)';
+            };
+            
+            recognition.onresult = function(event) {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0])
+                    .map(result => result.transcript)
+                    .join('');
+                
+                document.getElementById('facility-search').value = transcript;
+                toggleClearButton(document.getElementById('facility-search'));
+                
+                if (event.results[0].isFinal) {
+                    setTimeout(() => {
+                        searchAndRoute(transcript);
+                    }, 500);
+                }
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                isListening = false;
+                document.getElementById('voice-search-btn').classList.remove('voice-pulse', 'text-emerald-600');
+            };
+        }
+
+        function toggleVoiceSearch() {
+            if (!recognition) {
+                alert('Voice search is not supported in your browser');
+                return;
+            }
+            
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        // Autocomplete suggestions
+        const medicalSuggestions = [
+            'Hospital', 'Emergency Room', 'Pharmacy', 'Clinic', 'General Practitioner',
+            'Family Doctor', 'Dentist', 'Optometrist', 'Eye Doctor', 'Physiotherapy',
+            'Physical Therapy', 'Medical Laboratory', 'Blood Test', 'Psychologist',
+            'Mental Health', 'Pediatrician', 'Children Doctor', 'Cardiologist',
+            'Dermatologist', 'Orthopedic', 'Gynecologist', 'Urgent Care', 'Walk-in Clinic'
+        ];
+
+        function handleSearchInput(input) {
+            toggleClearButton(input);
+            showSuggestions();
+        }
+
+        function showSuggestions() {
+            const input = document.getElementById('facility-search');
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            const value = input.value.toLowerCase();
+            
+            if (value.length < 1) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+            
+            const filtered = medicalSuggestions.filter(s => 
+                s.toLowerCase().includes(value) && s.toLowerCase() !== value
+            ).slice(0, 5);
+            
+            if (filtered.length === 0) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+            
+            dropdown.innerHTML = filtered.map(suggestion => `
+                <div onclick="selectSuggestion('${suggestion}')" 
+                     class="px-4 py-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0">
+                    <i class="fa-solid fa-magnifying-glass text-slate-400 text-sm"></i>
+                    <span class="text-slate-700 font-medium">${suggestion}</span>
+                </div>
+            `).join('');
+            
+            dropdown.classList.remove('hidden');
+        }
+
+        function selectSuggestion(value) {
+            document.getElementById('facility-search').value = value;
+            document.getElementById('autocomplete-dropdown').classList.add('hidden');
+            toggleClearButton(document.getElementById('facility-search'));
+            searchAndRoute(value);
+        }
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            const searchContainer = document.querySelector('.search-container');
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            if (!searchContainer.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
 
         function initMap() {
             map = new mapboxgl.Map({
@@ -343,10 +519,13 @@
 
         function toggleClearButton(input) {
             const btn = document.getElementById('clear-search-btn');
+            const voiceBtn = document.getElementById('voice-search-btn');
             if (input.value.length > 0) {
                 btn.classList.remove('hidden');
+                voiceBtn.classList.add('hidden');
             } else {
                 btn.classList.add('hidden');
+                voiceBtn.classList.remove('hidden');
             }
         }
 
@@ -354,11 +533,13 @@
             const input = document.getElementById('facility-search');
             input.value = '';
             toggleClearButton(input);
+            document.getElementById('autocomplete-dropdown').classList.add('hidden');
             input.focus();
         }
 
         async function searchAndRoute(query) {
             expandBottomSheet();
+            document.getElementById('autocomplete-dropdown').classList.add('hidden');
             const searchUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?proximity=${userCoords[0]},${userCoords[1]}&access_token=${mapboxgl.accessToken}`;
             const res = await fetch(searchUrl);
             const data = await res.json();
