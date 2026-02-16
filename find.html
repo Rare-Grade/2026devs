@@ -16,14 +16,21 @@
         #map { position: absolute; inset: 0; z-index: 0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .slide-in-left { animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        
+        /* Mobile Bottom Sheet Transitions */
+        .sheet-transition { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        /* Collapsed state for mobile: pushes down leaving only top ~80px visible */
+        .sheet-collapsed { transform: translateY(calc(100% - 85px)); }
+        
+        @media (min-width: 768px) {
+            .sheet-collapsed { transform: none; }
+        }
     </style>
 </head>
 <body class="h-screen w-screen relative">
     <div id="map"></div>
+
     <div class="absolute top-4 right-4 md:right-8 z-20 flex items-center gap-3">
         <div class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-100 hidden md:block">
             <span id="location-status" class="text-[10px] font-bold text-emerald-600 tracking-wide uppercase">GPS Linked</span>
@@ -33,8 +40,27 @@
             <i id="guest-icon" class="fa-solid fa-user text-slate-400 text-lg"></i>
         </button>
     </div>
-    <div class="absolute z-30 bg-white w-full bottom-0 rounded-t-[30px] shadow-2xl md:top-0 md:left-0 md:w-[420px] md:h-full md:rounded-none flex flex-col overflow-hidden max-h-[85vh] md:max-h-full slide-up md:slide-in-left">
-        <div id="login-view" class="p-8 flex flex-col h-full justify-center">
+
+    <div id="location-modal" class="hidden absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm text-center shadow-2xl scale-100">
+            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-location-slash text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Location Required</h3>
+            <p class="text-slate-500 text-sm mb-6">Please enable location services to find medical facilities near you.</p>
+            <button onclick="requestLocation()" class="w-full bg-emerald-600 text-white p-3 rounded-xl font-semibold hover:bg-emerald-700 transition">
+                Enable Location
+            </button>
+        </div>
+    </div>
+
+    <div id="bottom-panel" class="absolute z-30 bg-white w-full bottom-0 rounded-t-[30px] shadow-2xl md:top-0 md:left-0 md:w-[420px] md:h-full md:rounded-none flex flex-col overflow-hidden max-h-[85vh] md:max-h-full sheet-transition">
+        
+        <div class="w-full flex justify-center pt-3 pb-1 md:hidden" onclick="expandBottomSheet()">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+        </div>
+
+        <div id="login-view" class="p-8 flex flex-col h-full justify-center overflow-y-auto">
             <div class="mb-8 text-center md:text-left">
                 <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-4 mx-auto md:mx-0">
                     <i class="fa-solid fa-location-crosshairs text-xl"></i>
@@ -47,7 +73,7 @@
                     <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5"> Sign in with Google
                 </button>
                 <button onclick="handleSignIn('github')" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-semibold hover:bg-slate-50 transition">
-                    <img src="https://www.svgrepo.com/show/452229/github.svg" class="w-5 h-5"> Sign in with GitHub
+                    <i class="fa-brands fa-github text-xl"></i> Sign in with GitHub
                 </button>
             </div>
             <div class="relative my-6">
@@ -59,23 +85,26 @@
                 </div>
             </div>
             <div class="space-y-4">
-                <input id="email-input" type="email" placeholder="Enter your email" required class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all">
-                <input id="password-input" type="password" placeholder="Enter your password" required class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all">
+                <input id="email-input" type="email" placeholder="Enter your email" required class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all" onclick="expandBottomSheet()">
+                <input id="password-input" type="password" placeholder="Enter your password" required class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all" onclick="expandBottomSheet()">
                 <button onclick="handleEmailSignIn()" class="w-full bg-emerald-600 text-white p-4 rounded-2xl font-semibold hover:bg-emerald-700 transition">
                     Continue with Email
                 </button>
             </div>
             <p class="text-xs text-slate-500 text-center mt-4">New here? We'll create an account for you.</p>
         </div>
+
         <div id="app-view" class="flex flex-col h-full hidden">
-            <div class="px-6 pt-8 pb-4 border-b border-slate-100">
+            <div class="px-6 pt-2 pb-4 border-b border-slate-100 bg-white z-10" onclick="expandBottomSheet()">
                 <div class="relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                     <input id="facility-search" type="text" placeholder="Search (e.g. Pharmacy, ER)"
                         class="w-full bg-slate-50 p-4 pl-12 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all"
+                        onfocus="expandBottomSheet()"
                         onkeypress="if(event.key === 'Enter') searchAndRoute(this.value)">
                 </div>
             </div>
+            
             <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4 bg-slate-50/50">
                 <div id="route-info" class="hidden bg-emerald-600 text-white p-5 rounded-3xl shadow-lg mb-4">
                     <h4 class="text-xs font-bold uppercase opacity-80 mb-1">Active Destination</h4>
@@ -99,9 +128,16 @@
                         <div><h4 class="font-bold">Nearest Emergency ER</h4><p class="text-xs text-slate-500">Auto-route to highest rated</p></div>
                     </div>
                 </div>
+                 <div onclick="searchAndRoute('Pharmacy')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-pills"></i></div>
+                        <div><h4 class="font-bold">24/7 Pharmacy</h4><p class="text-xs text-slate-500">Find medication nearby</p></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -164,44 +200,66 @@
                     }
                 }, 'road-label');
 
-                // Weather radar overlay
-                const updateWeatherOverlay = async () => {
-                    try {
-                        const resp = await fetch('https://api.rainviewer.com/public/weather-maps.json');
-                        const data = await resp.json();
-                        let ts = data.generated;
-                        if (data.radar.past && data.radar.past.length > 0) {
-                            ts = data.radar.past[data.radar.past.length - 1].time;
-                        }
-                        const tileUrl = `${data.host}/v2/radar/${ts}/256/{z}/{x}/{y}/2/1_1.png`;
-
-                        if (map.getSource('radar')) {
-                            map.getSource('radar').setTiles([tileUrl]);
-                        } else {
-                            map.addSource('radar', {
-                                type: 'raster',
-                                tiles: [tileUrl],
-                                tileSize: 256,
-                                attribution: '© RainViewer'
-                            });
-                            map.addLayer({
-                                id: 'radar-layer',
-                                type: 'raster',
-                                source: 'radar',
-                                paint: { 'raster-opacity': 0.45 }
-                            });
-                        }
-                    } catch (err) {
-                        console.error('Weather overlay update failed:', err);
-                    }
-                };
-
                 updateWeatherOverlay();
                 setInterval(updateWeatherOverlay, 600000);
             });
 
+            // INTERACTION: Collapse bottom sheet when interacting with map
+            map.on('dragstart', collapseBottomSheet);
+            map.on('click', collapseBottomSheet);
+            map.on('touchstart', collapseBottomSheet);
+
             startLocationTracking();
         }
+
+        // --- Bottom Sheet Logic ---
+        function collapseBottomSheet() {
+            // Only collapse on mobile widths
+            if (window.innerWidth < 768) {
+                document.getElementById('bottom-panel').classList.add('sheet-collapsed');
+            }
+        }
+
+        function expandBottomSheet() {
+            document.getElementById('bottom-panel').classList.remove('sheet-collapsed');
+        }
+
+        function requestLocation() {
+            document.getElementById('location-modal').classList.add('hidden');
+            startLocationTracking();
+        }
+
+        // --- Weather & User Marker Logic ---
+        const updateWeatherOverlay = async () => {
+            try {
+                const resp = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+                const data = await resp.json();
+                let ts = data.generated;
+                if (data.radar.past && data.radar.past.length > 0) {
+                    ts = data.radar.past[data.radar.past.length - 1].time;
+                }
+                const tileUrl = `${data.host}/v2/radar/${ts}/256/{z}/{x}/{y}/2/1_1.png`;
+
+                if (map.getSource('radar')) {
+                    map.getSource('radar').setTiles([tileUrl]);
+                } else {
+                    map.addSource('radar', {
+                        type: 'raster',
+                        tiles: [tileUrl],
+                        tileSize: 256,
+                        attribution: '© RainViewer'
+                    });
+                    map.addLayer({
+                        id: 'radar-layer',
+                        type: 'raster',
+                        source: 'radar',
+                        paint: { 'raster-opacity': 0.45 }
+                    });
+                }
+            } catch (err) {
+                console.error('Weather overlay update failed:', err);
+            }
+        };
 
         function createUserMarker(coords) {
             const markerEl = document.createElement('div');
@@ -227,6 +285,8 @@
                 }
                 watchId = navigator.geolocation.watchPosition(
                     (pos) => {
+                        // Success callback
+                        document.getElementById('location-modal').classList.add('hidden');
                         const newCoords = [pos.coords.longitude, pos.coords.latitude];
                         userCoords = newCoords;
 
@@ -241,13 +301,21 @@
                             map.setCenter(newCoords);
                         }
                     },
-                    (err) => console.error('Geolocation error:', err),
+                    (err) => {
+                        // Error callback: Show modal
+                        console.error('Geolocation error:', err);
+                        document.getElementById('location-modal').classList.remove('hidden');
+                    },
                     { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
                 );
+            } else {
+                // Browser doesn't support geolocation
+                document.getElementById('location-modal').classList.remove('hidden');
             }
         }
 
         async function searchAndRoute(query) {
+            expandBottomSheet(); // Ensure results are visible
             const searchUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?proximity=${userCoords[0]},${userCoords[1]}&access_token=${mapboxgl.accessToken}`;
             const res = await fetch(searchUrl);
             const data = await res.json();
@@ -261,7 +329,6 @@
                 // Clear previous destination marker
                 if (destMarker) destMarker.remove();
 
-                // Destination marker with full details popup on click
                 const destEl = document.createElement('div');
                 destEl.innerHTML = `
                     <div class="relative">
@@ -295,11 +362,13 @@
                 setActiveModeButtons();
                 updateModeIcon();
                 getRoute(destCoords, target.text, target.place_name);
+                
+                // On mobile, after finding a route, collapse sheet to show map
+                setTimeout(collapseBottomSheet, 1500); 
             }
         }
 
         async function getRoute(end, name, fullName) {
-            // Clear previous route and markers
             if (map.getLayer('route')) map.removeLayer('route');
             if (map.getSource('route')) map.removeSource('route');
             turnMarkers.forEach(m => m.remove());
@@ -325,10 +394,8 @@
                 paint: { 'line-color': '#ffffff', 'line-width': 10, 'line-opacity': 0.8 }
             });
 
-            // Starting instruction
             currentInstructions = [`Starting navigation to ${name}. Distance ${(data.distance / 1000).toFixed(1)} km, estimated time ${Math.floor(data.duration / 60)} minutes.`];
 
-            // Turn-by-turn markers with detailed popups on click
             data.legs[0].steps.forEach((step, index) => {
                 if (step.maneuver && step.maneuver.location) {
                     const coords = step.maneuver.location.coordinates;
