@@ -109,17 +109,17 @@
             </div>
 
             <div class="space-y-3">
-                <button onclick="toggleLoginState()" class="w-full flex items-center justify-center gap-3 bg-slate-900 text-white p-4 rounded-2xl font-semibold hover:bg-slate-800 transition shadow-lg shadow-slate-200">
+                <button onclick="toggleLoginState('GitHub')" class="w-full flex items-center justify-center gap-3 bg-slate-900 text-white p-4 rounded-2xl font-semibold hover:bg-slate-800 transition shadow-lg shadow-slate-200">
                     <i class="fa-brands fa-github text-xl"></i>
                     Continue with GitHub
                 </button>
                 
-                <button onclick="toggleLoginState()" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-semibold hover:bg-slate-50 transition">
+                <button onclick="toggleLoginState('Google')" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-semibold hover:bg-slate-50 transition">
                     <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
                     Continue with Google
                 </button>
 
-                <button onclick="toggleLoginState()" class="w-full flex items-center justify-center gap-3 bg-emerald-50 text-emerald-700 border border-emerald-100 p-4 rounded-2xl font-semibold hover:bg-emerald-100 transition">
+                <button onclick="toggleLoginState('Email')" class="w-full flex items-center justify-center gap-3 bg-emerald-50 text-emerald-700 border border-emerald-100 p-4 rounded-2xl font-semibold hover:bg-emerald-100 transition">
                     <i class="fa-solid fa-envelope"></i>
                     Continue with Email
                 </button>
@@ -242,8 +242,27 @@
         </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
     <script>
-        // Simple state management for demonstration
+        // --- FIREBASE CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
+            authDomain: "pinotp-d7ef5.firebaseapp.com",
+            databaseURL: "https://pinotp-d7ef5-default-rtdb.firebaseio.com",
+            projectId: "pinotp-d7ef5",
+            storageBucket: "pinotp-d7ef5.firebasestorage.app",
+            messagingSenderId: "708458917827",
+            appId: "1:708458917827:web:375de278577df0adcf9776"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // --- APP LOGIC ---
+        
         let isLoggedIn = false;
 
         const loginView = document.getElementById('login-view');
@@ -251,9 +270,37 @@
         const userAvatar = document.getElementById('user-avatar');
         const guestIcon = document.getElementById('guest-icon');
 
-        function toggleLoginState() {
+        // Added 'method' parameter to track how they logged in
+        function toggleLoginState(method = 'Manual') {
             isLoggedIn = !isLoggedIn;
+            
+            if (isLoggedIn) {
+                // If logging in, write data to Firebase
+                writeUserData(method);
+            }
+            
             render();
+        }
+
+        // --- FIREBASE WRITE FUNCTION ---
+        function writeUserData(loginMethod) {
+            // Create a unique entry for this session
+            const sessionID = Date.now(); 
+            
+            database.ref('users/session_' + sessionID).set({
+                status: "active",
+                login_method: loginMethod,
+                timestamp: new Date().toISOString(),
+                location: "Pretoria", // Simulating location
+                device: "Mobile/Web"
+            })
+            .then(() => {
+                console.log("Data successfully written to Firebase!");
+            })
+            .catch((error) => {
+                console.error("Firebase write error: ", error);
+                alert("Note: Data write failed. Check your Firebase Rules if this persists.");
+            });
         }
 
         function render() {
@@ -281,12 +328,3 @@
     </script>
 </body>
 </html>
-// const firebaseConfig = {
-  apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
-  authDomain: "pinotp-d7ef5.firebaseapp.com",
-  databaseURL: "https://pinotp-d7ef5-default-rtdb.firebaseio.com",
-  projectId: "pinotp-d7ef5",
-  storageBucket: "pinotp-d7ef5.firebasestorage.app",
-  messagingSenderId: "708458917827",
-  appId: "1:708458917827:web:375de278577df0adcf9776"
-};
