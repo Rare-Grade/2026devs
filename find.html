@@ -210,6 +210,66 @@
                             0 0 0 1px rgba(255, 255, 255, 0.5) inset;
             }
         }
+
+        /* Get Directions Button */
+        .directions-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 50px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .directions-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .directions-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .directions-btn i {
+            transition: transform 0.3s ease;
+        }
+
+        .directions-btn:hover i {
+            transform: translateX(4px);
+        }
+
+        /* Clear Selection Button */
+        .clear-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border-radius: 50px;
+            padding: 10px 20px;
+            color: white;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .clear-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Route line blue */
+        .mapboxgl-canvas {
+            outline: none;
+        }
     </style>
 </head>
 <body class="h-screen w-screen relative">
@@ -322,6 +382,24 @@
                 </div>
                
                 <div class="flex-1 overflow-y-auto touch-scroll no-scrollbar p-6 space-y-4 bg-slate-50/50">
+                    <!-- Selected Facility Info -->
+                    <div id="selected-facility-info" class="hidden bg-white p-5 rounded-3xl shadow-lg border border-slate-100">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <h4 id="selected-facility-name" class="font-bold text-lg text-slate-900">Facility Name</h4>
+                                <p id="selected-facility-address" class="text-sm text-slate-500 mt-1">Address</p>
+                            </div>
+                            <button onclick="clearSelection()" class="clear-btn">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                                <span>Clear</span>
+                            </button>
+                        </div>
+                        <button onclick="getDirections()" class="directions-btn w-full justify-center">
+                            <i class="fa-solid fa-diamond-turn-right"></i>
+                            <span>Get Directions</span>
+                        </button>
+                    </div>
+
                     <div id="route-info" class="hidden bg-emerald-600 text-white p-5 rounded-3xl shadow-lg mb-4">
                         <h4 class="text-xs font-bold uppercase opacity-80 mb-1">Active Destination</h4>
                         <p id="dest-name" class="font-bold text-lg leading-tight">Finding route...</p>
@@ -424,6 +502,7 @@
         let currentMode = 'driving';
         let currentDestCoords = null;
         let currentDestName = null;
+        let currentDestAddress = null;
         let destMarker = null;
         let turnMarkers = [];
         let currentInstructions = [];
@@ -431,6 +510,7 @@
         let recognition = null;
         let isListening = false;
         let sidebarCollapsed = false;
+        let selectedFacility = null;
 
         // Initialize speech recognition
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -709,6 +789,64 @@
             input.focus();
         }
 
+        function clearSelection() {
+            // Clear selected facility
+            selectedFacility = null;
+            currentDestCoords = null;
+            currentDestName = null;
+            currentDestAddress = null;
+            
+            // Hide facility info
+            document.getElementById('selected-facility-info').classList.add('hidden');
+            document.getElementById('route-info').classList.add('hidden');
+            
+            // Clear search input
+            clearFacilitySearch();
+            
+            // Remove markers
+            if (destMarker) {
+                destMarker.remove();
+                destMarker = null;
+            }
+            
+            // Remove route
+            if (map.getLayer('route')) map.removeLayer('route');
+            if (map.getSource('route')) map.removeSource('route');
+            
+            // Remove turn markers
+            turnMarkers.forEach(m => m.remove());
+            turnMarkers = [];
+            
+            // Reset map view to user location
+            if (window.userMarker) {
+                map.setCenter(userCoords);
+                map.setZoom(14);
+            }
+            
+            // Clear instructions
+            currentInstructions = [];
+        }
+
+        function getDirections() {
+            if (!selectedFacility) return;
+            
+            // Hide selected facility info and show route info
+            document.getElementById('selected-facility-info').classList.add('hidden');
+            
+            // Calculate and display route
+            calculateRoute(selectedFacility.coords, selectedFacility.name, selectedFacility.address);
+            
+            // Collapse sidebar on mobile to show full map
+            if (window.innerWidth < 768) {
+                collapseBottomSheet();
+            } else {
+                // On desktop, optionally collapse sidebar
+                if (!sidebarCollapsed) {
+                    toggleSidebar();
+                }
+            }
+        }
+
         async function searchAndRoute(query) {
             expandBottomSheet();
             document.getElementById('autocomplete-dropdown').classList.add('hidden');
@@ -719,17 +857,26 @@
             if (data.features.length > 0) {
                 const target = data.features[0];
                 const destCoords = target.center;
+                
+                // Store selected facility
+                selectedFacility = {
+                    coords: destCoords,
+                    name: target.text,
+                    address: target.place_name || 'No address available'
+                };
+                
                 currentDestCoords = destCoords;
                 currentDestName = target.text;
+                currentDestAddress = target.place_name;
 
                 if (destMarker) destMarker.remove();
 
                 const destEl = document.createElement('div');
                 destEl.innerHTML = `
                     <div class="relative">
-                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-red-400 rounded-full opacity-75 animate-ping"></div>
-                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-red-400 rounded-full opacity-40"></div>
-                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-red-600 rounded-full shadow-2xl flex items-center justify-center">
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-blue-400 rounded-full opacity-75 animate-ping"></div>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-blue-400 rounded-full opacity-40"></div>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-blue-600 rounded-full shadow-2xl flex items-center justify-center">
                             <i class="fa-solid fa-location-dot text-white text-3xl"></i>
                         </div>
                     </div>
@@ -752,17 +899,22 @@
 
                 destMarker.getElement().addEventListener('click', () => destMarker.togglePopup());
 
-                document.getElementById('dest-name').innerText = target.text;
-                document.getElementById('route-info').classList.remove('hidden');
-                setActiveModeButtons();
-                updateModeIcon();
-                getRoute(destCoords, target.text, target.place_name);
+                // Show selected facility info with Get Directions button
+                document.getElementById('selected-facility-name').innerText = target.text;
+                document.getElementById('selected-facility-address').innerText = target.place_name || 'No address available';
+                document.getElementById('selected-facility-info').classList.remove('hidden');
+                
+                // Hide route info until Get Directions is clicked
+                document.getElementById('route-info').classList.add('hidden');
+                
+                // Fit bounds to show both user and destination
+                map.fitBounds([userCoords, destCoords], { padding: 100 });
                
                 setTimeout(collapseBottomSheet, 1500);
             }
         }
 
-        async function getRoute(end, name, fullName) {
+        async function calculateRoute(end, name, fullName) {
             if (map.getLayer('route')) map.removeLayer('route');
             if (map.getSource('route')) map.removeSource('route');
             turnMarkers.forEach(m => m.remove());
@@ -775,8 +927,10 @@
             if (!json.routes || json.routes.length === 0) return;
             const data = json.routes[0];
          
+            document.getElementById('dest-name').innerText = name;
             document.getElementById('route-dist').innerText = (data.distance / 1000).toFixed(1) + ' km';
             document.getElementById('route-time').innerText = Math.floor(data.duration / 60) + ' min';
+            document.getElementById('route-info').classList.remove('hidden');
             updateModeIcon();
 
             const geojson = { type: 'Feature', geometry: data.geometry };
@@ -785,7 +939,12 @@
                 id: 'route',
                 type: 'line',
                 source: 'route',
-                paint: { 'line-color': '#ffffff', 'line-width': 10, 'line-opacity': 0.8 }
+                paint: { 
+                    'line-color': '#3b82f6', 
+                    'line-width': 8, 
+                    'line-opacity': 0.9,
+                    'line-blur': 2
+                }
             });
 
             currentInstructions = [`Starting navigation to ${name}. Distance ${(data.distance / 1000).toFixed(1)} km, estimated time ${Math.floor(data.duration / 60)} minutes.`];
@@ -800,18 +959,18 @@
                     currentInstructions.push(instruction);
 
                     const el = document.createElement('div');
-                    el.className = 'bg-white text-emerald-600 w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shadow-lg border-2 border-emerald-600 cursor-pointer';
+                    el.className = 'bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-lg border-2 border-white cursor-pointer';
                     el.innerText = index + 1;
 
                     const popup = new mapboxgl.Popup({
-                        offset: 35,
+                        offset: 30,
                         closeButton: true,
                         closeOnClick: false
                     }).setHTML(`
                         <div class="bg-white p-4 rounded-lg shadow-lg max-w-xs">
-                            <strong class="block mb-1">Step ${index + 1}</strong>
-                            <p class="font-medium">${instruction}</p>
-                            ${stepDist || stepTime ? `<p class="text-sm text-slate-600 mt-2">${stepDist} • ${stepTime}</p>` : ''}
+                            <strong class="block mb-1 text-blue-600">Step ${index + 1}</strong>
+                            <p class="font-medium text-slate-800">${instruction}</p>
+                            ${stepDist || stepTime ? `<p class="text-sm text-slate-500 mt-2">${stepDist} • ${stepTime}</p>` : ''}
                         </div>
                     `);
 
@@ -827,7 +986,8 @@
 
             currentInstructions.push(`You have arrived at your destination: ${name}`);
 
-            map.fitBounds([userCoords, end], { padding: 80 });
+            // Fit bounds with padding to show full route
+            map.fitBounds([userCoords, end], { padding: 100 });
 
             if (auth.currentUser) {
                 database.ref('users/' + auth.currentUser.uid + '/active_route').set({
@@ -843,7 +1003,7 @@
             setActiveModeButtons();
             updateModeIcon();
             if (currentDestCoords) {
-                getRoute(currentDestCoords, currentDestName);
+                calculateRoute(currentDestCoords, currentDestName, currentDestAddress);
             }
         }
 
