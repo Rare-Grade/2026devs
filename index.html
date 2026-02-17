@@ -168,7 +168,7 @@
                         <button onclick="downloadPersonalPDF()" class="pill-btn bg-blue-50 text-blue-600 px-6 py-3 text-xs font-black">
                             <i class="fa-solid fa-download mr-2"></i> EXPORT PDF
                         </button>
-                        <button onclick="toggleModal('statsModal')" class="pill-btn bg-gray-100 text-gray-500 px-6 py-3 text-xs font-black">CLOSE</button>
+                        <button onclick="closeStatsModal()" class="pill-btn bg-gray-100 text-gray-500 px-6 py-3 text-xs font-black">CLOSE</button>
                     </div>
                 </div>
                 <div class="grid grid-cols-4 gap-4 mb-10">
@@ -305,6 +305,8 @@
         let pendingDeleteId = null;
         let activeAdminId = null;
         let html5QrCode = null;
+        let statsListener = null; // reference to real-time listener
+
         const gCtx = document.getElementById('attendanceChart').getContext('2d');
 
         const globalChart = new Chart(gCtx, {
@@ -322,7 +324,7 @@
             options: { cutout: '80%', plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } } } }
         });
 
-        // Real-time employee list
+        // Real-time employee directory
         db.ref('employees').on('value', snap => {
             const list = document.getElementById('employeeList');
             const data = snap.val();
@@ -353,7 +355,7 @@
             });
         });
 
-        // Real-time today's attendance
+        // Real-time today's attendance feed
         db.ref('attendance/' + todayStr).on('value', snap => {
             const data = snap.val();
             const tbody = document.getElementById('attendanceTable');
@@ -409,6 +411,118 @@
             globalChart.data.datasets[0].data = [stats.working, stats.lunch, stats.out];
             globalChart.update();
         });
+
+        // Helpers
+        function timeToMinutes(timeStr) {
+            if (!timeStr || typeof timeStr !== 'string' || !/^\d{2}:\d{2}$/.test(timeStr)) return NaN;
+            const [h, m] = timeStr.split(':').map(Number);
+            if (isNaN(h) || isNaN(m)) return NaN;
+            return h * 60 + m;
+        }
+
+        function formatTime(minutes) {
+            if (isNaN(minutes) || minutes < 0) return "--:--";
+            const h = Math.floor(minutes / 60).toString().padStart(2, '0');
+            const m = Math.floor(minutes % 60).toString().padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        function calculateDuration(inT, outT) {
+            const inMin  = timeToMinutes(inT);
+            const outMin = timeToMinutes(outT);
+            if (isNaN(inMin) || isNaN(outMin) || outMin <= inMin) return 0;
+            return (outMin - inMin) / 60; // hours
+        }
+
+        // Real-time stats update function
+        function updateEmployeeStats(id, name, role) {
+            document.getElementById('statName').innerText = name;
+            document.getElementById('statIdRole').innerText = `${id} • ${role}`;
+            document.getElementById('statAvatar').innerText = name.charAt(0);
+
+            // Clean up previous listener
+            if (statsListener) {
+                statsListener.off();
+            }
+
+            // Listen to entire attendance path for real-time updates
+            statsListener = db.ref('attendance').on('value', snap => {
+                const allDays = snap.val() || {};
+
+                let totalHours = 0;
+                let daysWorked = 0;
+                let chartLabels = [];
+                let chartData = [];
+                let totalBreaks = 0;
+                let okBreaks = 0;
+                let punctDays = 0;
+                let clockInMinutes = [];
+
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dStr = d.toISOString().split('T')[0];
+                    chartLabels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
+
+                    const dayData = allDays[dStr]?.[id];
+                    if (dayData) {
+                        daysWorked++;
+
+                        const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut);
+                        totalHours += duration;
+                        chartData.push(duration);
+
+                        if (dayData.TimeIn && dayData.TimeIn <= LATE_THRESHOLD) punctDays++;
+
+                        if (dayData.LunchOut && dayData.LunchBack) {
+                            totalBreaks++;
+                            const breakMin = calculateDuration(dayData.LunchOut, dayData.LunchBack) * 60;
+                            if (breakMin <= 60 && breakMin > 0) okBreaks++;
+                        }
+
+                        const minutes = timeToMinutes(dayData.TimeIn);
+                        if (!isNaN(minutes)) clockInMinutes.push(minutes);
+                    } else {
+                        chartData.push(0);
+                    }
+                }
+
+                let avgClockInDisplay = "--:--";
+                if (clockInMinutes.length > 0) {
+                    const sum = clockInMinutes.reduce((a, b) => a + b, 0);
+                    const avgMinutes = sum / clockInMinutes.length;
+                    avgClockInDisplay = formatTime(avgMinutes);
+                }
+
+                // Update UI in real time
+                document.getElementById('statTotalHours').innerText   = totalHours.toFixed(1);
+                document.getElementById('statAvgClockIn').innerText   = avgClockInDisplay;
+                document.getElementById('statPunctuality').innerText  = daysWorked ? Math.round((punctDays / daysWorked) * 100) + '%' : '0%';
+                document.getElementById('statBreakComp').innerText    = totalBreaks ? Math.round((okBreaks / totalBreaks) * 100) + '%' : '0%';
+
+                // Update chart in real time
+                if (personalChart) personalChart.destroy();
+                personalChart = new Chart(document.getElementById('personalTrendChart').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: chartLabels, datasets: [{ label: 'Hours', data: chartData, backgroundColor: '#2563eb', borderRadius: 8 }] },
+                    options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            });
+        }
+
+        function fetchEmployeeHistory(id, name, role) {
+            selectedEmpId = id;
+            updateEmployeeStats(id, name, role);
+            toggleModal('statsModal');
+        }
+
+        function closeStatsModal() {
+            if (statsListener) {
+                statsListener.off();
+                statsListener = null;
+            }
+            toggleModal('statsModal');
+        }
 
         function startScanner() {
             toggleModal('scannerModal');
@@ -526,111 +640,6 @@
                 });
             }
         };
-
-        // Helper: Format minutes back to HH:MM
-        function formatTime(minutes) {
-            if (isNaN(minutes) || minutes < 0) return "--:--";
-            const h = Math.floor(minutes / 60).toString().padStart(2, '0');
-            const m = Math.floor(minutes % 60).toString().padStart(2, '0');
-            return `${h}:${m}`;
-        }
-
-        // Helper: Parse HH:MM to minutes (returns NaN if invalid)
-        function timeToMinutes(timeStr) {
-            if (!timeStr || typeof timeStr !== 'string' || !/^\d{2}:\d{2}$/.test(timeStr)) return NaN;
-            const [h, m] = timeStr.split(':').map(Number);
-            if (isNaN(h) || isNaN(m)) return NaN;
-            return h * 60 + m;
-        }
-
-        async function fetchEmployeeHistory(id, name, role) {
-            selectedEmpId = id;
-            document.getElementById('statName').innerText = name;
-            document.getElementById('statIdRole').innerText = `${id} • ${role}`;
-            document.getElementById('statAvatar').innerText = name.charAt(0);
-
-            const historySnap = await db.ref('attendance').once('value');
-            const allDays = historySnap.val() || {};
-
-            let totalHours = 0;
-            let daysWorked = 0;
-            let chartLabels = [];
-            let chartData = [];
-            let totalBreaks = 0;
-            let okBreaks = 0;
-            let punctDays = 0;
-            let clockInMinutes = [];
-
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const dStr = d.toISOString().split('T')[0];
-                chartLabels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
-
-                const dayData = allDays[dStr]?.[id];
-                if (dayData) {
-                    daysWorked++;
-
-                    // Total hours worked
-                    const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut);
-                    totalHours += duration;
-                    chartData.push(duration);
-
-                    // Punctuality (on time if clocked in ≤ 09:00)
-                    if (dayData.TimeIn && dayData.TimeIn <= LATE_THRESHOLD) {
-                        punctDays++;
-                    }
-
-                    // Lunch compliance
-                    if (dayData.LunchOut && dayData.LunchBack) {
-                        totalBreaks++;
-                        const breakMin = calculateDuration(dayData.LunchOut, dayData.LunchBack) * 60;
-                        if (breakMin <= 60 && breakMin > 0) okBreaks++;
-                    }
-
-                    // Collect valid clock-in times for average
-                    const minutes = timeToMinutes(dayData.TimeIn);
-                    if (!isNaN(minutes)) {
-                        clockInMinutes.push(minutes);
-                    }
-                } else {
-                    chartData.push(0);
-                }
-            }
-
-            // Calculate average clock-in time
-            let avgClockInDisplay = "--:--";
-            if (clockInMinutes.length > 0) {
-                const sum = clockInMinutes.reduce((a, b) => a + b, 0);
-                const avgMinutes = sum / clockInMinutes.length;
-                avgClockInDisplay = formatTime(avgMinutes);
-            }
-
-            // Update UI with real values
-            document.getElementById('statTotalHours').innerText   = totalHours.toFixed(1);
-            document.getElementById('statAvgClockIn').innerText   = avgClockInDisplay;
-            document.getElementById('statPunctuality').innerText  = daysWorked ? Math.round((punctDays / daysWorked) * 100) + '%' : '0%';
-            document.getElementById('statBreakComp').innerText    = totalBreaks ? Math.round((okBreaks / totalBreaks) * 100) + '%' : '0%';
-
-            toggleModal('statsModal');
-            renderPersonalChart(chartLabels, chartData);
-        }
-
-        function calculateDuration(inT, outT) {
-            const inMin  = timeToMinutes(inT);
-            const outMin = timeToMinutes(outT);
-            if (isNaN(inMin) || isNaN(outMin) || outMin <= inMin) return 0;
-            return (outMin - inMin) / 60; // hours
-        }
-
-        function renderPersonalChart(labels, data) {
-            if (personalChart) personalChart.destroy();
-            personalChart = new Chart(document.getElementById('personalTrendChart').getContext('2d'), {
-                type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'Hours', data: data, backgroundColor: '#2563eb', borderRadius: 8 }] },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-        }
 
         async function downloadPersonalPDF() {
             const canvas = await html2canvas(document.getElementById('statsContent'), { scale: 2 });
