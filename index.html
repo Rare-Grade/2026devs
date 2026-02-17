@@ -322,6 +322,7 @@
             options: { cutout: '80%', plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } } } }
         });
 
+        // Real-time employee list
         db.ref('employees').on('value', snap => {
             const list = document.getElementById('employeeList');
             const data = snap.val();
@@ -352,6 +353,7 @@
             });
         });
 
+        // Real-time today's attendance
         db.ref('attendance/' + todayStr).on('value', snap => {
             const data = snap.val();
             const tbody = document.getElementById('attendanceTable');
@@ -525,12 +527,20 @@
             }
         };
 
-        // Helper to format average time as HH:MM
-        function formatAverageTime(totalMinutes) {
-            if (!totalMinutes || totalMinutes <= 0) return "--:--";
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = Math.floor(totalMinutes % 60);
-            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        // Helper: Format minutes back to HH:MM
+        function formatTime(minutes) {
+            if (isNaN(minutes) || minutes < 0) return "--:--";
+            const h = Math.floor(minutes / 60).toString().padStart(2, '0');
+            const m = Math.floor(minutes % 60).toString().padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        // Helper: Parse HH:MM to minutes (returns NaN if invalid)
+        function timeToMinutes(timeStr) {
+            if (!timeStr || typeof timeStr !== 'string' || !/^\d{2}:\d{2}$/.test(timeStr)) return NaN;
+            const [h, m] = timeStr.split(':').map(Number);
+            if (isNaN(h) || isNaN(m)) return NaN;
+            return h * 60 + m;
         }
 
         async function fetchEmployeeHistory(id, name, role) {
@@ -541,6 +551,7 @@
 
             const historySnap = await db.ref('attendance').once('value');
             const allDays = historySnap.val() || {};
+
             let totalHours = 0;
             let daysWorked = 0;
             let chartLabels = [];
@@ -548,7 +559,7 @@
             let totalBreaks = 0;
             let okBreaks = 0;
             let punctDays = 0;
-            let clockInTimes = [];  // for average clock-in
+            let clockInMinutes = [];
 
             for (let i = 6; i >= 0; i--) {
                 const d = new Date();
@@ -556,54 +567,60 @@
                 const dStr = d.toISOString().split('T')[0];
                 chartLabels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
 
-                if (allDays[dStr] && allDays[dStr][id]) {
-                    const log = allDays[dStr][id];
+                const dayData = allDays[dStr]?.[id];
+                if (dayData) {
                     daysWorked++;
 
-                    const duration = calculateDuration(log.TimeIn, log.TimeOut);
+                    // Total hours worked
+                    const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut);
                     totalHours += duration;
                     chartData.push(duration);
 
-                    // Punctuality
-                    if (log.TimeIn && log.TimeIn <= LATE_THRESHOLD) punctDays++;
+                    // Punctuality (on time if clocked in ≤ 09:00)
+                    if (dayData.TimeIn && dayData.TimeIn <= LATE_THRESHOLD) {
+                        punctDays++;
+                    }
 
                     // Lunch compliance
-                    if (log.LunchOut && log.LunchBack) {
+                    if (dayData.LunchOut && dayData.LunchBack) {
                         totalBreaks++;
-                        if (calculateDuration(log.LunchOut, log.LunchBack) * 60 <= 60) okBreaks++;
+                        const breakMin = calculateDuration(dayData.LunchOut, dayData.LunchBack) * 60;
+                        if (breakMin <= 60 && breakMin > 0) okBreaks++;
                     }
 
                     // Collect valid clock-in times for average
-                    if (log.TimeIn) {
-                        const [h, m] = log.TimeIn.split(':').map(Number);
-                        clockInTimes.push(h * 60 + m);
+                    const minutes = timeToMinutes(dayData.TimeIn);
+                    if (!isNaN(minutes)) {
+                        clockInMinutes.push(minutes);
                     }
                 } else {
                     chartData.push(0);
                 }
             }
 
-            // Calculate average clock-in
-            let avgClockIn = "--:--";
-            if (clockInTimes.length > 0) {
-                const sumMinutes = clockInTimes.reduce((a, b) => a + b, 0);
-                const avgMinutes = sumMinutes / clockInTimes.length;
-                avgClockIn = formatAverageTime(avgMinutes);
+            // Calculate average clock-in time
+            let avgClockInDisplay = "--:--";
+            if (clockInMinutes.length > 0) {
+                const sum = clockInMinutes.reduce((a, b) => a + b, 0);
+                const avgMinutes = sum / clockInMinutes.length;
+                avgClockInDisplay = formatTime(avgMinutes);
             }
 
-            document.getElementById('statTotalHours').innerText = totalHours.toFixed(1);
-            document.getElementById('statAvgClockIn').innerText = avgClockIn;
-            document.getElementById('statPunctuality').innerText = daysWorked ? Math.round((punctDays / daysWorked) * 100) + '%' : '100%';
-            document.getElementById('statBreakComp').innerText = totalBreaks ? Math.round((okBreaks / totalBreaks) * 100) + '%' : '100%';
+            // Update UI with real values
+            document.getElementById('statTotalHours').innerText   = totalHours.toFixed(1);
+            document.getElementById('statAvgClockIn').innerText   = avgClockInDisplay;
+            document.getElementById('statPunctuality').innerText  = daysWorked ? Math.round((punctDays / daysWorked) * 100) + '%' : '0%';
+            document.getElementById('statBreakComp').innerText    = totalBreaks ? Math.round((okBreaks / totalBreaks) * 100) + '%' : '0%';
 
             toggleModal('statsModal');
             renderPersonalChart(chartLabels, chartData);
         }
 
         function calculateDuration(inT, outT) {
-            if (!inT || !outT || outT === '--:--') return 0;
-            const parse = (s) => { const [h, m] = s.split(':').map(Number); return h + (m / 60); };
-            return Math.abs(parse(outT) - parse(inT));
+            const inMin  = timeToMinutes(inT);
+            const outMin = timeToMinutes(outT);
+            if (isNaN(inMin) || isNaN(outMin) || outMin <= inMin) return 0;
+            return (outMin - inMin) / 60; // hours
         }
 
         function renderPersonalChart(labels, data) {
@@ -643,7 +660,6 @@
             }).then(() => {
                 toggleModal('addEmployeeModal');
                 document.getElementById('addEmployeeForm').reset();
-
                 showEmployeeQR(id, name);
             });
         });
