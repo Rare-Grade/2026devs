@@ -168,7 +168,7 @@
                         <button onclick="downloadPersonalPDF()" class="pill-btn bg-blue-50 text-blue-600 px-6 py-3 text-xs font-black">
                             <i class="fa-solid fa-download mr-2"></i> EXPORT PDF
                         </button>
-                        <button onclick="closeStatsModal()" class="pill-btn bg-gray-100 text-gray-500 px-6 py-3 text-xs font-black">CLOSE</button>
+                        <button onclick="toggleModal('statsModal')" class="pill-btn bg-gray-100 text-gray-500 px-6 py-3 text-xs font-black">CLOSE</button>
                     </div>
                 </div>
                 <div class="grid grid-cols-4 gap-4 mb-10">
@@ -305,8 +305,6 @@
         let pendingDeleteId = null;
         let activeAdminId = null;
         let html5QrCode = null;
-        let statsListener = null; // To store the real-time listener reference
-
         const gCtx = document.getElementById('attendanceChart').getContext('2d');
 
         const globalChart = new Chart(gCtx, {
@@ -324,7 +322,7 @@
             options: { cutout: '80%', plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } } } }
         });
 
-        // Employees real-time
+        // Real-time employee list
         db.ref('employees').on('value', snap => {
             const list = document.getElementById('employeeList');
             const data = snap.val();
@@ -355,7 +353,7 @@
             });
         });
 
-        // Today's attendance real-time
+        // Real-time today's attendance
         db.ref('attendance/' + todayStr).on('value', snap => {
             const data = snap.val();
             const tbody = document.getElementById('attendanceTable');
@@ -412,14 +410,124 @@
             globalChart.update();
         });
 
-        // Helper functions
-        function timeToMinutes(timeStr) {
-            if (!timeStr || typeof timeStr !== 'string' || !/^\d{2}:\d{2}$/.test(timeStr)) return NaN;
-            const [h, m] = timeStr.split(':').map(Number);
-            if (isNaN(h) || isNaN(m)) return NaN;
-            return h * 60 + m;
+        function startScanner() {
+            toggleModal('scannerModal');
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+                .catch(err => {
+                    document.getElementById('scanStatus').innerText = "Camera access denied or error.";
+                    console.error(err);
+                });
         }
 
+        function stopScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    toggleModal('scannerModal');
+                }).catch(err => console.log(err));
+            } else {
+                toggleModal('scannerModal');
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            html5QrCode.pause();
+            document.getElementById('scanStatus').innerText = `Processing: ${decodedText}...`;
+
+            db.ref('employees/' + decodedText).once('value').then(snap => {
+                if (snap.exists()) {
+                    const empData = snap.val();
+                    processScanLogic(decodedText, empData.name);
+                } else {
+                    alert("Invalid QR Code: Employee not found.");
+                    html5QrCode.resume();
+                }
+            });
+        }
+
+        function processScanLogic(id, name) {
+            const path = `attendance/${todayStr}/${id}`;
+            const now = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+            db.ref(path).once('value').then(snap => {
+                const data = snap.val() || {};
+                let update = { id: id, name: name };
+                let actionTaken = "";
+
+                if (!data.TimeIn) {
+                    update.TimeIn = now;
+                    update.lastAction = "Clock In";
+                    actionTaken = "CLOCKED IN";
+                } else if (data.TimeIn && !data.LunchOut) {
+                    update.LunchOut = now;
+                    update.lastAction = "Lunch Out";
+                    actionTaken = "LUNCH OUT";
+                } else if (data.LunchOut && !data.LunchBack) {
+                    update.LunchBack = now;
+                    update.lastAction = "Lunch Back";
+                    actionTaken = "LUNCH BACK";
+                } else if (data.LunchBack && !data.TimeOut) {
+                    update.TimeOut = now;
+                    update.lastAction = "Clock Out";
+                    actionTaken = "CLOCKED OUT";
+                } else {
+                    alert(`${name} has already completed all actions for today.`);
+                    html5QrCode.resume();
+                    document.getElementById('scanStatus').innerText = "Ready to scan...";
+                    return;
+                }
+
+                db.ref(path).update(update).then(() => {
+                    alert(`${actionTaken}: ${name}`);
+                    html5QrCode.resume();
+                    document.getElementById('scanStatus').innerText = "Ready to scan...";
+                });
+            });
+        }
+
+        function showAdminActions(e, id) {
+            e.stopPropagation();
+            activeAdminId = id;
+            const menu = document.getElementById('adminActionMenu');
+            menu.style.display = 'block';
+            menu.style.left = (e.pageX - 10) + 'px';
+            menu.style.top = (e.pageY + 10) + 'px';
+        }
+
+        window.onclick = () => document.getElementById('adminActionMenu').style.display = 'none';
+
+        function adminSetAction(action) {
+            if (!activeAdminId) return;
+            const now = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            const path = `attendance/${todayStr}/${activeAdminId}`;
+            let update = { lastAction: action };
+
+            if (action === 'Clock In') update.TimeIn = now;
+            else if (action === 'Lunch Out') update.LunchOut = now;
+            else if (action === 'Lunch Back') update.LunchBack = now;
+            else if (action === 'Clock Out') update.TimeOut = now;
+
+            db.ref(path).update(update);
+        }
+
+        function promptDelete(id, name) {
+            pendingDeleteId = id;
+            document.getElementById('deleteTargetName').innerText = name;
+            toggleModal('confirmDeleteModal');
+        }
+
+        document.getElementById('finalDeleteBtn').onclick = () => {
+            if (pendingDeleteId) {
+                db.ref('employees/' + pendingDeleteId).remove().then(() => {
+                    toggleModal('confirmDeleteModal');
+                    pendingDeleteId = null;
+                });
+            }
+        };
+
+        // Helper: Format minutes back to HH:MM
         function formatTime(minutes) {
             if (isNaN(minutes) || minutes < 0) return "--:--";
             const h = Math.floor(minutes / 60).toString().padStart(2, '0');
@@ -427,102 +535,178 @@
             return `${h}:${m}`;
         }
 
-        function calculateDuration(inT, outT) {
-            const inMin  = timeToMinutes(inT);
-            const outMin = timeToMinutes(outT);
-            if (isNaN(inMin) || isNaN(outMin) || outMin <= inMin) return 0;
-            return (outMin - inMin) / 60; // return hours
+        // Helper: Parse HH:MM to minutes (returns NaN if invalid)
+        function timeToMinutes(timeStr) {
+            if (!timeStr || typeof timeStr !== 'string' || !/^\d{2}:\d{2}$/.test(timeStr)) return NaN;
+            const [h, m] = timeStr.split(':').map(Number);
+            if (isNaN(h) || isNaN(m)) return NaN;
+            return h * 60 + m;
         }
 
-        // Real-time stats calculation & update
-        function updateEmployeeStats(id, name, role) {
+        async function fetchEmployeeHistory(id, name, role) {
+            selectedEmpId = id;
             document.getElementById('statName').innerText = name;
             document.getElementById('statIdRole').innerText = `${id} • ${role}`;
             document.getElementById('statAvatar').innerText = name.charAt(0);
 
-            // Remove previous listener if exists
-            if (statsListener) {
-                statsListener.off();
+            const historySnap = await db.ref('attendance').once('value');
+            const allDays = historySnap.val() || {};
+
+            let totalHours = 0;
+            let daysWorked = 0;
+            let chartLabels = [];
+            let chartData = [];
+            let totalBreaks = 0;
+            let okBreaks = 0;
+            let punctDays = 0;
+            let clockInMinutes = [];
+
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dStr = d.toISOString().split('T')[0];
+                chartLabels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
+
+                const dayData = allDays[dStr]?.[id];
+                if (dayData) {
+                    daysWorked++;
+
+                    // Total hours worked
+                    const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut);
+                    totalHours += duration;
+                    chartData.push(duration);
+
+                    // Punctuality (on time if clocked in ≤ 09:00)
+                    if (dayData.TimeIn && dayData.TimeIn <= LATE_THRESHOLD) {
+                        punctDays++;
+                    }
+
+                    // Lunch compliance
+                    if (dayData.LunchOut && dayData.LunchBack) {
+                        totalBreaks++;
+                        const breakMin = calculateDuration(dayData.LunchOut, dayData.LunchBack) * 60;
+                        if (breakMin <= 60 && breakMin > 0) okBreaks++;
+                    }
+
+                    // Collect valid clock-in times for average
+                    const minutes = timeToMinutes(dayData.TimeIn);
+                    if (!isNaN(minutes)) {
+                        clockInMinutes.push(minutes);
+                    }
+                } else {
+                    chartData.push(0);
+                }
             }
 
-            // Set up real-time listener on entire attendance path
-            statsListener = db.ref('attendance').on('value', snap => {
-                const allDays = snap.val() || {};
+            // Calculate average clock-in time
+            let avgClockInDisplay = "--:--";
+            if (clockInMinutes.length > 0) {
+                const sum = clockInMinutes.reduce((a, b) => a + b, 0);
+                const avgMinutes = sum / clockInMinutes.length;
+                avgClockInDisplay = formatTime(avgMinutes);
+            }
 
-                let totalHours = 0;
-                let daysWorked = 0;
-                let chartLabels = [];
-                let chartData = [];
-                let totalBreaks = 0;
-                let okBreaks = 0;
-                let punctDays = 0;
-                let clockInMinutes = [];
+            // Update UI with real values
+            document.getElementById('statTotalHours').innerText   = totalHours.toFixed(1);
+            document.getElementById('statAvgClockIn').innerText   = avgClockInDisplay;
+            document.getElementById('statPunctuality').innerText  = daysWorked ? Math.round((punctDays / daysWorked) * 100) + '%' : '0%';
+            document.getElementById('statBreakComp').innerText    = totalBreaks ? Math.round((okBreaks / totalBreaks) * 100) + '%' : '0%';
 
-                for (let i = 6; i >= 0; i--) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - i);
-                    const dStr = d.toISOString().split('T')[0];
-                    chartLabels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
+            toggleModal('statsModal');
+            renderPersonalChart(chartLabels, chartData);
+        }
 
-                    const dayData = allDays[dStr]?.[id];
-                    if (dayData) {
-                        daysWorked++;
+        function calculateDuration(inT, outT) {
+            const inMin  = timeToMinutes(inT);
+            const outMin = timeToMinutes(outT);
+            if (isNaN(inMin) || isNaN(outMin) || outMin <= inMin) return 0;
+            return (outMin - inMin) / 60; // hours
+        }
 
-                        const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut);
-                        totalHours += duration;
-                        chartData.push(duration);
-
-                        if (dayData.TimeIn && dayData.TimeIn <= LATE_THRESHOLD) punctDays++;
-
-                        if (dayData.LunchOut && dayData.LunchBack) {
-                            totalBreaks++;
-                            const breakMin = calculateDuration(dayData.LunchOut, dayData.LunchBack) * 60;
-                            if (breakMin <= 60 && breakMin > 0) okBreaks++;
-                        }
-
-                        const minutes = timeToMinutes(dayData.TimeIn);
-                        if (!isNaN(minutes)) clockInMinutes.push(minutes);
-                    } else {
-                        chartData.push(0);
-                    }
-                }
-
-                let avgClockInDisplay = "--:--";
-                if (clockInMinutes.length > 0) {
-                    const sum = clockInMinutes.reduce((a, b) => a + b, 0);
-                    const avgMinutes = sum / clockInMinutes.length;
-                    avgClockInDisplay = formatTime(avgMinutes);
-                }
-
-                document.getElementById('statTotalHours').innerText   = totalHours.toFixed(1);
-                document.getElementById('statAvgClockIn').innerText   = avgClockInDisplay;
-                document.getElementById('statPunctuality').innerText  = daysWorked ? Math.round((punctDays / daysWorked) * 100) + '%' : '0%';
-                document.getElementById('statBreakComp').innerText    = totalBreaks ? Math.round((okBreaks / totalBreaks) * 100) + '%' : '0%';
-
-                if (personalChart) personalChart.destroy();
-                personalChart = new Chart(document.getElementById('personalTrendChart').getContext('2d'), {
-                    type: 'bar',
-                    data: { labels: chartLabels, datasets: [{ label: 'Hours', data: chartData, backgroundColor: '#2563eb', borderRadius: 8 }] },
-                    options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
+        function renderPersonalChart(labels, data) {
+            if (personalChart) personalChart.destroy();
+            personalChart = new Chart(document.getElementById('personalTrendChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: 'Hours', data: data, backgroundColor: '#2563eb', borderRadius: 8 }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
-        function fetchEmployeeHistory(id, name, role) {
-            selectedEmpId = id;
-            updateEmployeeStats(id, name, role);
-            toggleModal('statsModal');
+        async function downloadPersonalPDF() {
+            const canvas = await html2canvas(document.getElementById('statsContent'), { scale: 2 });
+            const doc = new jspdf.jsPDF('p', 'mm', 'a4');
+            doc.text(`Performance Report: ${document.getElementById('statName').innerText}`, 15, 15);
+            doc.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 25, 190, 110);
+            doc.save(`Report_${selectedEmpId}.pdf`);
         }
 
-        function closeStatsModal() {
-            if (statsListener) {
-                statsListener.off();
-                statsListener = null;
-            }
-            toggleModal('statsModal');
+        async function generateGlobalReport() {
+            const doc = new jspdf.jsPDF();
+            doc.setFontSize(22);
+            doc.text("Global Operations Report", 20, 25);
+            doc.text(`Active Employees: ${document.getElementById('totalEmployees').innerText}`, 20, 45);
+            doc.save("Global_Report.pdf");
         }
 
-        // ... rest of your existing functions remain unchanged ...
+        document.getElementById('addEmployeeForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = `EMP-${Math.random().toString(16).slice(2, 6).toUpperCase()}`;
+            const name = document.getElementById('newEmpName').value.trim();
+            const role = document.getElementById('newEmpRole').value.trim();
+
+            db.ref('employees/' + id).set({
+                id, name, role,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                toggleModal('addEmployeeModal');
+                document.getElementById('addEmployeeForm').reset();
+                showEmployeeQR(id, name);
+            });
+        });
+
+        function showEmployeeQR(id, name) {
+            const qrContainer = document.getElementById('qrCodeContainer');
+            qrContainer.innerHTML = '';
+
+            new QRCode(qrContainer, {
+                text: id,
+                width: 220,
+                height: 220,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            setTimeout(() => {
+                const qrCanvas = qrContainer.querySelector('canvas');
+                if (qrCanvas) {
+                    const pdf = new jspdf.jsPDF({
+                        orientation: 'portrait',
+                        unit: 'px',
+                        format: [280, 280]
+                    });
+
+                    pdf.setFillColor(255, 255, 255);
+                    pdf.rect(0, 0, 280, 280, 'F');
+
+                    pdf.addImage(qrCanvas.toDataURL('image/png'), 'PNG', 30, 30, 220, 220);
+
+                    const pdfBlob = pdf.output('blob');
+                    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                    const dlBtn = document.getElementById('downloadQrBtn');
+                    dlBtn.href = pdfUrl;
+                    dlBtn.download = `QR_${name.replace(' ', '_')}.pdf`;
+                }
+
+                document.getElementById('successTitle').textContent = "QR Code Ready";
+                document.getElementById('successMessage').innerHTML =
+                    `Permanent QR for <strong>${name}</strong><br>` +
+                    `<strong>Use this same QR code every day</strong> to clock in/out and lunch.`;
+
+                toggleModal('successModal');
+            }, 300);
+        }
 
         function toggleModal(id) {
             const m = document.getElementById(id);
@@ -530,9 +714,6 @@
             m.classList.toggle('pointer-events-none');
             document.body.classList.toggle('modal-active');
         }
-
-        // Your other functions (startScanner, processScanLogic, showEmployeeQR, etc.) remain the same
-        // Just make sure closeStatsModal is called when closing the modal
     </script>
 </body>
 </html>
