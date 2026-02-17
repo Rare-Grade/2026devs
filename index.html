@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -57,6 +59,9 @@
             </div>
             
             <div class="flex gap-3">
+                <button onclick="startScanner()" class="pill-btn bg-purple-600 text-white px-5 py-2 text-[11px] font-black flex items-center gap-2 shadow-lg shadow-purple-500/20">
+                    <i class="fa-solid fa-qrcode"></i> SCAN QR
+                </button>
                 <button onclick="generateGlobalReport()" class="pill-btn bg-white/5 text-white border border-white/10 hover:bg-white/20 px-5 py-2 text-[11px] font-black flex items-center gap-2">
                     <i class="fa-solid fa-file-export"></i> EXPORT
                 </button>
@@ -137,6 +142,23 @@
             </div>
         </section>
     </main>
+
+    <div id="scannerModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[80]">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900/90 backdrop-blur-md"></div>
+        <div class="modal-container bg-white w-full max-w-lg mx-auto rounded-[2rem] shadow-2xl z-50 overflow-hidden relative">
+            <div class="p-6 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="font-black text-gray-800 text-lg">Scan Attendance QR</h3>
+                <button onclick="stopScanner()" class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 bg-black">
+                <div id="reader" class="w-full h-64 bg-black"></div>
+            </div>
+            <div class="p-6 text-center">
+                <p class="text-sm text-gray-500 font-bold mb-2">Point scanner at employee QR code</p>
+                <div id="scanStatus" class="text-xs font-mono text-blue-500">Ready to scan...</div>
+            </div>
+        </div>
+    </div>
 
     <div id="statsModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
@@ -230,13 +252,23 @@
 
     <div id="successModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[60]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-sm"></div>
-        <div class="modal-container bg-white w-full max-w-xs mx-auto rounded-[2rem] shadow-2xl z-50 p-8 text-center">
+        <div class="modal-container bg-white w-full max-w-sm mx-auto rounded-[2rem] shadow-2xl z-50 p-8 text-center">
             <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
                 <i class="fa-solid fa-check"></i>
             </div>
             <h3 class="text-xl font-black text-gray-900">Success!</h3>
-            <p class="text-gray-500 text-sm mt-2 mb-6">New employee has been added to the system database.</p>
-            <button onclick="toggleModal('successModal')" class="w-full pill-btn bg-gray-900 text-white font-black py-3">AWESOME</button>
+            <p class="text-gray-500 text-sm mt-2 mb-4">Employee added. Save this QR code.</p>
+            
+            <div class="flex justify-center mb-6">
+                <div id="qrCodeContainer" class="p-3 bg-white border border-gray-100 rounded-xl shadow-lg"></div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <a id="downloadQrBtn" href="#" class="w-full pill-btn bg-blue-600 text-white font-black py-3 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> DOWNLOAD QR
+                </a>
+                <button onclick="toggleModal('successModal')" class="w-full pill-btn bg-gray-900 text-white font-black py-3">DONE</button>
+            </div>
         </div>
     </div>
 
@@ -270,6 +302,7 @@
         let selectedEmpId = null;
         let pendingDeleteId = null;
         let activeAdminId = null;
+        let html5QrCode = null; // Scanner instance
 
         const gCtx = document.getElementById('attendanceChart').getContext('2d');
         const globalChart = new Chart(gCtx, {
@@ -363,6 +396,92 @@
             globalChart.data.datasets[0].data = [stats.working, stats.lunch, stats.out];
             globalChart.update();
         });
+
+        // --- SCANNER LOGIC START ---
+
+        function startScanner() {
+            toggleModal('scannerModal');
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+            .catch(err => {
+                document.getElementById('scanStatus').innerText = "Camera access denied or error.";
+                console.error(err);
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    toggleModal('scannerModal');
+                }).catch(err => console.log(err));
+            } else {
+                toggleModal('scannerModal');
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Stop scanning temporarily to process
+            html5QrCode.pause(); 
+            document.getElementById('scanStatus').innerText = `Processing: ${decodedText}...`;
+
+            // Validate ID exists in DB
+            db.ref('employees/' + decodedText).once('value').then(snap => {
+                if(snap.exists()) {
+                    const empData = snap.val();
+                    processScanLogic(decodedText, empData.name);
+                } else {
+                    alert("Invalid QR Code: Employee not found.");
+                    html5QrCode.resume();
+                }
+            });
+        }
+
+        function processScanLogic(id, name) {
+            const path = `attendance/${todayStr}/${id}`;
+            const now = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            
+            db.ref(path).once('value').then(snap => {
+                const data = snap.val() || {};
+                let update = { id: id, name: name };
+                let actionTaken = "";
+
+                // Logic Flow: 1st Scan (In) -> 2nd (Lunch Out) -> 3rd (Lunch Back) -> 4th (Out)
+                if (!data.TimeIn) {
+                    update.TimeIn = now;
+                    update.lastAction = "Clock In";
+                    actionTaken = "CLOCKED IN";
+                } else if (data.TimeIn && !data.LunchOut) {
+                    update.LunchOut = now;
+                    update.lastAction = "Lunch Out";
+                    actionTaken = "LUNCH OUT";
+                } else if (data.LunchOut && !data.LunchBack) {
+                    update.LunchBack = now;
+                    update.lastAction = "Lunch Back";
+                    actionTaken = "LUNCH BACK";
+                } else if (data.LunchBack && !data.TimeOut) {
+                    update.TimeOut = now;
+                    update.lastAction = "Clock Out";
+                    actionTaken = "CLOCKED OUT";
+                } else {
+                    alert(`${name} has already completed all actions for today.`);
+                    html5QrCode.resume();
+                    document.getElementById('scanStatus').innerText = "Ready to scan...";
+                    return;
+                }
+
+                db.ref(path).update(update).then(() => {
+                    alert(`${actionTaken}: ${name}`);
+                    // Resume scanning for next person
+                    html5QrCode.resume();
+                    document.getElementById('scanStatus').innerText = "Ready to scan...";
+                });
+            });
+        }
+
+        // --- SCANNER LOGIC END ---
 
         function showAdminActions(e, id) {
             e.stopPropagation();
@@ -462,14 +581,35 @@
         document.getElementById('addEmployeeForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const id = `EMP-${Math.random().toString(16).slice(2, 6).toUpperCase()}`;
+            const name = document.getElementById('newEmpName').value.trim();
+            const role = document.getElementById('newEmpRole').value.trim();
+
             db.ref('employees/' + id).set({
-                id, name: document.getElementById('newEmpName').value.trim(),
-                role: document.getElementById('newEmpRole').value.trim(),
+                id, name, role,
                 createdAt: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
                 toggleModal('addEmployeeModal');
                 document.getElementById('addEmployeeForm').reset();
-                setTimeout(() => toggleModal('successModal'), 300);
+                
+                // GENERATE QR
+                const qrContainer = document.getElementById('qrCodeContainer');
+                qrContainer.innerHTML = ''; // Clear previous
+                new QRCode(qrContainer, {
+                    text: id,
+                    width: 150,
+                    height: 150
+                });
+
+                // Set download link with slight delay to allow canvas render
+                setTimeout(() => {
+                    const qrCanvas = qrContainer.querySelector('canvas');
+                    if(qrCanvas) {
+                        const dlBtn = document.getElementById('downloadQrBtn');
+                        dlBtn.href = qrCanvas.toDataURL("image/png");
+                        dlBtn.download = `QR_${name.replace(' ', '_')}.png`;
+                    }
+                    toggleModal('successModal');
+                }, 300);
             });
         });
 
