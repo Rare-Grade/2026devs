@@ -37,7 +37,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-black text-gray-900 tracking-tight">Admin Portal</h1>
-                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Analytics Engine v3.0</p>
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Analytics Engine v3.5</p>
             </div>
         </div>
         
@@ -65,8 +65,8 @@
             </div>
 
             <div class="glass-card p-6">
-                <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Live Distribution</h3>
-                <canvas id="attendanceChart" height="220"></canvas>
+                <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Live Distribution</h3>
+                <canvas id="attendanceChart" height="240"></canvas>
             </div>
 
             <div class="glass-card flex-1 flex flex-col min-h-[400px]">
@@ -89,8 +89,8 @@
                         <p id="dateDisplay" class="text-sm font-bold text-gray-400 mt-1"></p>
                     </div>
                     <div class="flex gap-2 bg-white p-2 rounded-2xl shadow-inner border border-gray-100">
-                        <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-50 text-green-600 text-[10px] font-black">
-                            <div class="w-2 h-2 rounded-full bg-green-500 animate-ping"></div> WORKING
+                        <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 text-[10px] font-black">
+                            <div class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></div> WORKING
                         </div>
                         <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-yellow-50 text-yellow-600 text-[10px] font-black">
                             <div class="w-2 h-2 rounded-full bg-yellow-400"></div> LUNCH
@@ -199,6 +199,18 @@
         </div>
     </div>
 
+    <div id="successModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[60]">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-sm"></div>
+        <div class="modal-container bg-white w-full max-w-xs mx-auto rounded-[2rem] shadow-2xl z-50 p-8 text-center">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 class="text-xl font-black text-gray-900">Success!</h3>
+            <p class="text-gray-500 text-sm mt-2 mb-6">New employee has been added to the system database.</p>
+            <button onclick="toggleModal('successModal')" class="w-full pill-btn bg-gray-900 text-white font-black py-3">AWESOME</button>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -221,24 +233,33 @@
         let personalChart = null;
         let selectedEmpId = null;
 
-        // Global Chart
+        // Global Chart with Legend
         const gCtx = document.getElementById('attendanceChart').getContext('2d');
         const globalChart = new Chart(gCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Working', 'Lunch', 'Out'],
+                labels: ['Working', 'Lunch', 'Clocked Out'],
                 datasets: [{
                     data: [0, 0, 0],
                     backgroundColor: ['#2563eb', '#fbbf24', '#ef4444'],
-                    hoverOffset: 20,
+                    hoverOffset: 15,
                     borderWidth: 0,
-                    borderRadius: 10
+                    borderRadius: 8
                 }]
             },
-            options: { cutout: '85%', plugins: { legend: { display: false } } }
+            options: { 
+                cutout: '80%', 
+                plugins: { 
+                    legend: { 
+                        display: true, 
+                        position: 'bottom',
+                        labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } }
+                    } 
+                } 
+            }
         });
 
-        // Registry Listener
+        // Registry & Removal
         db.ref('employees').on('value', snap => {
             const list = document.getElementById('employeeList');
             const data = snap.val();
@@ -250,22 +271,23 @@
             Object.values(data).forEach(emp => {
                 const row = document.createElement('div');
                 row.className = "flex items-center gap-4 p-4 hover:bg-white hover:shadow-xl hover:shadow-gray-200/50 rounded-2xl cursor-pointer transition-all group mb-1";
-                row.onclick = () => fetchEmployeeHistory(emp.id, emp.name, emp.role);
                 row.innerHTML = `
-                    <div class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center font-black text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">
+                    <div onclick="fetchEmployeeHistory('${emp.id}', '${emp.name}', '${emp.role}')" class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center font-black text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">
                         ${emp.name.charAt(0)}
                     </div>
-                    <div class="flex-1">
+                    <div onclick="fetchEmployeeHistory('${emp.id}', '${emp.name}', '${emp.role}')" class="flex-1">
                         <p class="text-sm font-black text-gray-800">${emp.name}</p>
                         <p class="text-[9px] font-black text-gray-400 uppercase tracking-tighter">${emp.role}</p>
                     </div>
-                    <i class="fa-solid fa-chevron-right text-gray-200 group-hover:text-blue-500 transition-colors"></i>
+                    <button onclick="removeEmployee('${emp.id}')" class="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-all">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
                 `;
                 list.appendChild(row);
             });
         });
 
-        // Live Feed Listener
+        // Attendance Stream
         db.ref('attendance/' + todayStr).on('value', snap => {
             const data = snap.val();
             const tbody = document.getElementById('attendanceTable');
@@ -278,18 +300,14 @@
                     let statusLabel = 'OFFLINE', statusCol = 'bg-gray-50 text-gray-400', pulse = '';
                     let complianceHtml = '<span class="text-gray-200">-</span>';
                     
-                    // Late Check
                     let clockInHtml = log.TimeIn || '--:--';
-                    if(log.TimeIn && isLate(log.TimeIn)) {
+                    if(log.TimeIn && log.TimeIn > LATE_THRESHOLD) {
                         clockInHtml = `<span class="text-red-600 font-black">${log.TimeIn}</span> <span class="bg-red-50 text-red-500 text-[8px] px-1 rounded">LATE</span>`;
                     }
 
-                    // Lunch Compliance
                     if(log.LunchOut && log.LunchBack) {
                         const dur = calculateDuration(log.LunchOut, log.LunchBack) * 60;
-                        complianceHtml = dur > 60 ? 
-                            `<span class="text-red-600 font-black">FAIL (${Math.round(dur)}m)</span>` : 
-                            `<span class="text-green-600 font-black">PASS</span>`;
+                        complianceHtml = dur > 60 ? `<span class="text-red-600 font-black">OVER (${Math.round(dur)}m)</span>` : `<span class="text-green-600 font-black">PASS</span>`;
                     }
 
                     if(log.lastAction?.includes('In') || log.lastAction === 'Lunch Back') {
@@ -325,7 +343,13 @@
             globalChart.update();
         });
 
-        // Historical Analytics Engine
+        // Operations
+        function removeEmployee(id) {
+            if(confirm(`Are you sure you want to remove ${id}? All historical logs will remain but the user will be de-registered.`)) {
+                db.ref('employees/' + id).remove();
+            }
+        }
+
         async function fetchEmployeeHistory(id, name, role) {
             selectedEmpId = id;
             document.getElementById('statName').innerText = name;
@@ -334,11 +358,9 @@
             
             const historySnap = await db.ref('attendance').once('value');
             const allDays = historySnap.val() || {};
-            
             let totalHours = 0, daysWorked = 0, chartLabels = [], chartData = [];
             let totalBreaks = 0, okBreaks = 0, punctDays = 0;
 
-            // Analyze past 7 days
             for(let i=6; i>=0; i--) {
                 const d = new Date(); d.setDate(d.getDate() - i);
                 const dStr = d.toISOString().split('T')[0];
@@ -347,10 +369,10 @@
                 if(allDays[dStr] && allDays[dStr][id]) {
                     const log = allDays[dStr][id];
                     daysWorked++;
-                    totalHours += calculateDuration(log.TimeIn, log.TimeOut);
-                    chartData.push(calculateDuration(log.TimeIn, log.TimeOut));
-                    
-                    if(log.TimeIn && !isLate(log.TimeIn)) punctDays++;
+                    const duration = calculateDuration(log.TimeIn, log.TimeOut);
+                    totalHours += duration;
+                    chartData.push(duration);
+                    if(log.TimeIn && log.TimeIn <= LATE_THRESHOLD) punctDays++;
                     if(log.LunchOut && log.LunchBack) {
                         totalBreaks++;
                         if(calculateDuration(log.LunchOut, log.LunchBack) * 60 <= 60) okBreaks++;
@@ -364,12 +386,6 @@
             
             toggleModal('statsModal');
             renderPersonalChart(chartLabels, chartData);
-        }
-
-        // Utils
-        function isLate(timeStr) {
-            if(!timeStr) return false;
-            return timeStr > LATE_THRESHOLD;
         }
 
         function calculateDuration(inT, outT) {
@@ -394,25 +410,20 @@
             });
         }
 
-        // Export & UI Functions
         async function downloadPersonalPDF() {
-            const { jsPDF } = window.jspdf;
             const canvas = await html2canvas(document.getElementById('statsContent'), { scale: 2 });
-            const doc = new jsPDF('p', 'mm', 'a4');
+            const doc = new jspdf.jsPDF('p', 'mm', 'a4');
             doc.text(`Performance Report: ${document.getElementById('statName').innerText}`, 15, 15);
             doc.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 25, 190, 110);
-            doc.save(`HR_Report_${selectedEmpId}.pdf`);
+            doc.save(`Report_${selectedEmpId}.pdf`);
         }
 
         async function generateGlobalReport() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const doc = new jspdf.jsPDF();
             doc.setFontSize(22);
             doc.text("Global Operations Report", 20, 25);
-            doc.setFontSize(10);
-            doc.text(`Exported: ${new Date().toLocaleString()}`, 20, 35);
             doc.text(`Active Employees: ${document.getElementById('totalEmployees').innerText}`, 20, 45);
-            doc.save("Company_Report.pdf");
+            doc.save("Global_Report.pdf");
         }
 
         document.getElementById('addEmployeeForm').addEventListener('submit', (e) => {
@@ -426,6 +437,7 @@
             }).then(() => {
                 toggleModal('addEmployeeModal');
                 document.getElementById('addEmployeeForm').reset();
+                setTimeout(() => toggleModal('successModal'), 300);
             });
         });
 
