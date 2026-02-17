@@ -164,28 +164,52 @@
             outline: none;
         }
 
-        /* Mobile Bottom Sheet */
+        /* Mobile Bottom Sheet - Modern Floating Style */
         @media (max-width: 767px) {
             .floating-sidebar {
-                position: absolute;
-                left: 0;
-                right: 0;
+                position: fixed;
+                left: 12px;
+                right: 12px;
                 top: auto;
-                bottom: 0;
-                width: 100%;
-                border-radius: 30px 30px 0 0;
-                max-height: 85vh;
+                bottom: 20px;
+                width: auto;
+                border-radius: 24px;
+                max-height: 75vh;
                 transform: translateY(0);
                 overflow: hidden;
+                box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.3),
+                            0 0 0 1px rgba(255, 255, 255, 0.3) inset;
             }
 
-            .sidebar-collapsed {
-                transform: translateY(calc(100% - 85px));
-                width: 100%;
+            .sheet-collapsed {
+                transform: translateY(calc(100% - 70px));
             }
 
             .sidebar-toggle {
                 display: none;
+            }
+
+            /* Mobile Handle - Modern Pill Style */
+            .mobile-handle {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                padding: 12px 0 8px;
+                cursor: pointer;
+                background: linear-gradient(to bottom, rgba(255,255,255,0.9), transparent);
+            }
+
+            .mobile-handle-bar {
+                width: 36px;
+                height: 4px;
+                background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+                border-radius: 2px;
+                transition: all 0.3s ease;
+            }
+
+            .mobile-handle:active .mobile-handle-bar {
+                width: 44px;
+                background: linear-gradient(135deg, #94a3b8, #64748b);
             }
 
             /* Ensure scrollable content on mobile */
@@ -321,8 +345,8 @@
         </div>
 
         <!-- Mobile Handle -->
-        <div class="w-full flex justify-center pt-3 pb-1 md:hidden" onclick="expandBottomSheet()">
-            <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+        <div class="mobile-handle md:hidden" onclick="expandBottomSheet()">
+            <div class="mobile-handle-bar"></div>
         </div>
 
         <div class="sidebar-content flex flex-col h-full overflow-hidden">
@@ -673,9 +697,24 @@
                 updateWeatherOverlay();
                 setInterval(updateWeatherOverlay, 600000);
             });
-            map.on('dragstart', collapseBottomSheet);
-            map.on('click', collapseBottomSheet);
-            map.on('touchstart', collapseBottomSheet);
+            
+            // Auto-collapse on map interaction for mobile
+            map.on('dragstart', () => {
+                if (window.innerWidth < 768) collapseBottomSheet();
+            });
+            map.on('click', () => {
+                if (window.innerWidth < 768) collapseBottomSheet();
+            });
+            map.on('touchstart', () => {
+                if (window.innerWidth < 768) collapseBottomSheet();
+            });
+            map.on('zoomstart', () => {
+                if (window.innerWidth < 768) collapseBottomSheet();
+            });
+            map.on('pitchstart', () => {
+                if (window.innerWidth < 768) collapseBottomSheet();
+            });
+            
             startLocationTracking();
         }
 
