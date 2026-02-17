@@ -37,7 +37,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-black text-gray-900 tracking-tight">Admin Portal</h1>
-                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Analytics Engine v3.5</p>
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Analytics Engine v3.6</p>
             </div>
         </div>
         
@@ -199,6 +199,23 @@
         </div>
     </div>
 
+    <div id="confirmDeleteModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[70]">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
+        <div class="modal-container bg-white w-full max-w-xs mx-auto rounded-[2.5rem] shadow-2xl z-50 overflow-hidden">
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900">Are you sure?</h3>
+                <p class="text-gray-500 text-xs mt-2 leading-relaxed">This will remove <span id="deleteTargetName" class="font-bold text-gray-800"></span> from the registry. This action is irreversible.</p>
+                <div class="flex flex-col gap-2 mt-8">
+                    <button id="finalDeleteBtn" class="pill-btn bg-red-600 text-white font-black py-3 text-sm">DELETE PERMANENTLY</button>
+                    <button onclick="toggleModal('confirmDeleteModal')" class="pill-btn bg-gray-100 text-gray-500 font-black py-3 text-sm">CANCEL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="successModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[60]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-sm"></div>
         <div class="modal-container bg-white w-full max-w-xs mx-auto rounded-[2rem] shadow-2xl z-50 p-8 text-center">
@@ -232,8 +249,9 @@
         const LATE_THRESHOLD = "09:00";
         let personalChart = null;
         let selectedEmpId = null;
+        let pendingDeleteId = null;
 
-        // Global Chart with Legend
+        // Distribution Chart
         const gCtx = document.getElementById('attendanceChart').getContext('2d');
         const globalChart = new Chart(gCtx, {
             type: 'doughnut',
@@ -247,19 +265,10 @@
                     borderRadius: 8
                 }]
             },
-            options: { 
-                cutout: '80%', 
-                plugins: { 
-                    legend: { 
-                        display: true, 
-                        position: 'bottom',
-                        labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } }
-                    } 
-                } 
-            }
+            options: { cutout: '80%', plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } } } }
         });
 
-        // Registry & Removal
+        // Registry
         db.ref('employees').on('value', snap => {
             const list = document.getElementById('employeeList');
             const data = snap.val();
@@ -279,7 +288,7 @@
                         <p class="text-sm font-black text-gray-800">${emp.name}</p>
                         <p class="text-[9px] font-black text-gray-400 uppercase tracking-tighter">${emp.role}</p>
                     </div>
-                    <button onclick="removeEmployee('${emp.id}')" class="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-all">
+                    <button onclick="promptDelete('${emp.id}', '${emp.name}')" class="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-all">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 `;
@@ -287,7 +296,7 @@
             });
         });
 
-        // Attendance Stream
+        // Live Feed
         db.ref('attendance/' + todayStr).on('value', snap => {
             const data = snap.val();
             const tbody = document.getElementById('attendanceTable');
@@ -299,43 +308,22 @@
                     stats.total++;
                     let statusLabel = 'OFFLINE', statusCol = 'bg-gray-50 text-gray-400', pulse = '';
                     let complianceHtml = '<span class="text-gray-200">-</span>';
-                    
                     let clockInHtml = log.TimeIn || '--:--';
                     if(log.TimeIn && log.TimeIn > LATE_THRESHOLD) {
                         clockInHtml = `<span class="text-red-600 font-black">${log.TimeIn}</span> <span class="bg-red-50 text-red-500 text-[8px] px-1 rounded">LATE</span>`;
                     }
-
                     if(log.LunchOut && log.LunchBack) {
                         const dur = calculateDuration(log.LunchOut, log.LunchBack) * 60;
                         complianceHtml = dur > 60 ? `<span class="text-red-600 font-black">OVER (${Math.round(dur)}m)</span>` : `<span class="text-green-600 font-black">PASS</span>`;
                     }
-
                     if(log.lastAction?.includes('In') || log.lastAction === 'Lunch Back') {
-                        stats.working++;
-                        statusLabel = 'WORKING'; statusCol = 'bg-blue-50 text-blue-600'; pulse = 'animate-pulse';
+                        stats.working++; statusLabel = 'WORKING'; statusCol = 'bg-blue-50 text-blue-600'; pulse = 'animate-pulse';
                     } else if (log.lastAction === 'Lunch Out') {
-                        stats.lunch++;
-                        statusLabel = 'LUNCH'; statusCol = 'bg-yellow-50 text-yellow-700';
+                        stats.lunch++; statusLabel = 'LUNCH'; statusCol = 'bg-yellow-50 text-yellow-700';
                     } else {
-                        stats.out++;
-                        statusLabel = 'FINISHED'; statusCol = 'bg-red-50 text-red-700';
+                        stats.out++; statusLabel = 'FINISHED'; statusCol = 'bg-red-50 text-red-700';
                     }
-
-                    tbody.innerHTML += `
-                        <tr class="group hover:bg-gray-50/50 transition-colors">
-                            <td class="p-4 font-black text-gray-800">${log.name || 'User'} <br><span class="text-[10px] text-gray-300 font-bold">${log.id}</span></td>
-                            <td class="p-4 font-mono font-bold text-gray-500">${clockInHtml}</td>
-                            <td class="p-4 text-[11px] font-bold">
-                                ${log.LunchOut ? `<span class="text-red-400">OUT: ${log.LunchOut}</span>` : ''}
-                                ${log.LunchBack ? `<br><span class="text-green-500">BACK: ${log.LunchBack}</span>` : ''}
-                            </td>
-                            <td class="p-4 text-center text-xs">${complianceHtml}</td>
-                            <td class="p-4 font-mono font-bold text-gray-500">${log.TimeOut || '--:--'}</td>
-                            <td class="p-4 text-center">
-                                <span class="${statusCol} ${pulse} px-4 py-2 rounded-xl text-[10px] font-black border border-current opacity-80">${statusLabel}</span>
-                            </td>
-                        </tr>
-                    `;
+                    tbody.innerHTML += `<tr class="group hover:bg-gray-50/50 transition-colors"><td class="p-4 font-black text-gray-800">${log.name || 'User'} <br><span class="text-[10px] text-gray-300 font-bold">${log.id}</span></td><td class="p-4 font-mono font-bold text-gray-500">${clockInHtml}</td><td class="p-4 text-[11px] font-bold">${log.LunchOut ? `<span class="text-red-400">OUT: ${log.LunchOut}</span>` : ''}${log.LunchBack ? `<br><span class="text-green-500">BACK: ${log.LunchBack}</span>` : ''}</td><td class="p-4 text-center text-xs">${complianceHtml}</td><td class="p-4 font-mono font-bold text-gray-500">${log.TimeOut || '--:--'}</td><td class="p-4 text-center"><span class="${statusCol} ${pulse} px-4 py-2 rounded-xl text-[10px] font-black border border-current opacity-80">${statusLabel}</span></td></tr>`;
                 });
             }
             document.getElementById('presentToday').innerText = stats.total;
@@ -343,69 +331,59 @@
             globalChart.update();
         });
 
-        // Operations
-        function removeEmployee(id) {
-            if(confirm(`Are you sure you want to remove ${id}? All historical logs will remain but the user will be de-registered.`)) {
-                db.ref('employees/' + id).remove();
-            }
+        // Deletion Logic
+        function promptDelete(id, name) {
+            pendingDeleteId = id;
+            document.getElementById('deleteTargetName').innerText = name;
+            toggleModal('confirmDeleteModal');
         }
 
+        document.getElementById('finalDeleteBtn').onclick = () => {
+            if(pendingDeleteId) {
+                db.ref('employees/' + pendingDeleteId).remove().then(() => {
+                    toggleModal('confirmDeleteModal');
+                    pendingDeleteId = null;
+                });
+            }
+        };
+
+        // Analytics
         async function fetchEmployeeHistory(id, name, role) {
             selectedEmpId = id;
             document.getElementById('statName').innerText = name;
             document.getElementById('statIdRole').innerText = `${id} • ${role}`;
             document.getElementById('statAvatar').innerText = name.charAt(0);
-            
             const historySnap = await db.ref('attendance').once('value');
             const allDays = historySnap.val() || {};
-            let totalHours = 0, daysWorked = 0, chartLabels = [], chartData = [];
-            let totalBreaks = 0, okBreaks = 0, punctDays = 0;
-
+            let totalHours = 0, daysWorked = 0, chartLabels = [], chartData = [], totalBreaks = 0, okBreaks = 0, punctDays = 0;
             for(let i=6; i>=0; i--) {
                 const d = new Date(); d.setDate(d.getDate() - i);
                 const dStr = d.toISOString().split('T')[0];
                 chartLabels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
-                
                 if(allDays[dStr] && allDays[dStr][id]) {
-                    const log = allDays[dStr][id];
-                    daysWorked++;
+                    const log = allDays[dStr][id]; daysWorked++;
                     const duration = calculateDuration(log.TimeIn, log.TimeOut);
-                    totalHours += duration;
-                    chartData.push(duration);
+                    totalHours += duration; chartData.push(duration);
                     if(log.TimeIn && log.TimeIn <= LATE_THRESHOLD) punctDays++;
-                    if(log.LunchOut && log.LunchBack) {
-                        totalBreaks++;
-                        if(calculateDuration(log.LunchOut, log.LunchBack) * 60 <= 60) okBreaks++;
-                    }
+                    if(log.LunchOut && log.LunchBack) { totalBreaks++; if(calculateDuration(log.LunchOut, log.LunchBack) * 60 <= 60) okBreaks++; }
                 } else { chartData.push(0); }
             }
-
             document.getElementById('statTotalHours').innerText = totalHours.toFixed(1);
             document.getElementById('statPunctuality').innerText = daysWorked ? Math.round((punctDays/daysWorked)*100) + '%' : '100%';
             document.getElementById('statBreakComp').innerText = totalBreaks ? Math.round((okBreaks/totalBreaks)*100) + '%' : '100%';
-            
-            toggleModal('statsModal');
-            renderPersonalChart(chartLabels, chartData);
+            toggleModal('statsModal'); renderPersonalChart(chartLabels, chartData);
         }
 
         function calculateDuration(inT, outT) {
             if(!inT || !outT || outT === '--:--') return 0;
-            const parse = (s) => {
-                const [h, m] = s.split(':').map(Number);
-                return h + (m/60);
-            };
+            const parse = (s) => { const [h, m] = s.split(':').map(Number); return h + (m/60); };
             return Math.abs(parse(outT) - parse(inT));
         }
 
         function renderPersonalChart(labels, data) {
             if(personalChart) personalChart.destroy();
-            const ctx = document.getElementById('personalTrendChart').getContext('2d');
-            personalChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{ label: 'Hours', data: data, backgroundColor: '#2563eb', borderRadius: 8 }]
-                },
+            personalChart = new Chart(document.getElementById('personalTrendChart').getContext('2d'), {
+                type: 'bar', data: { labels: labels, datasets: [{ label: 'Hours', data: data, backgroundColor: '#2563eb', borderRadius: 8 }] },
                 options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
@@ -420,8 +398,7 @@
 
         async function generateGlobalReport() {
             const doc = new jspdf.jsPDF();
-            doc.setFontSize(22);
-            doc.text("Global Operations Report", 20, 25);
+            doc.setFontSize(22); doc.text("Global Operations Report", 20, 25);
             doc.text(`Active Employees: ${document.getElementById('totalEmployees').innerText}`, 20, 45);
             doc.save("Global_Report.pdf");
         }
@@ -430,8 +407,7 @@
             e.preventDefault();
             const id = `EMP-${Math.random().toString(16).slice(2, 6).toUpperCase()}`;
             db.ref('employees/' + id).set({
-                id,
-                name: document.getElementById('newEmpName').value.trim(),
+                id, name: document.getElementById('newEmpName').value.trim(),
                 role: document.getElementById('newEmpRole').value.trim(),
                 createdAt: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
