@@ -262,12 +262,12 @@
             </div>
 
             <p class="text-xs text-gray-600 mb-6">
-                Tip: Open the saved QR on your phone → set screen brightness to maximum → hold steady when scanning.
+                Tip: Open the saved QR PDF on your phone → set screen brightness to maximum → hold steady when scanning.
             </p>
 
             <div class="flex flex-col gap-2">
                 <a id="downloadQrBtn" href="#" class="w-full pill-btn bg-blue-600 text-white font-black py-3 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-download"></i> DOWNLOAD QR
+                    <i class="fa-solid fa-download"></i> DOWNLOAD QR (PDF)
                 </a>
                 <button onclick="toggleModal('successModal')" class="w-full pill-btn bg-gray-900 text-white font-black py-3">DONE</button>
             </div>
@@ -629,9 +629,23 @@
             setTimeout(() => {
                 const qrCanvas = qrContainer.querySelector('canvas');
                 if (qrCanvas) {
+                    const pdf = new jspdf.jsPDF({
+                        orientation: 'portrait',
+                        unit: 'px',
+                        format: [280, 280]  // small square format suitable for QR
+                    });
+
+                    pdf.setFillColor(255, 255, 255);
+                    pdf.rect(0, 0, 280, 280, 'F');  // white background
+
+                    pdf.addImage(qrCanvas.toDataURL('image/png'), 'PNG', 30, 30, 220, 220);
+
+                    const pdfBlob = pdf.output('blob');
+                    const pdfUrl = URL.createObjectURL(pdfBlob);
+
                     const dlBtn = document.getElementById('downloadQrBtn');
-                    dlBtn.href = qrCanvas.toDataURL("image/png");
-                    dlBtn.download = `QR_${name.replace(' ', '_')}.png`;
+                    dlBtn.href = pdfUrl;
+                    dlBtn.download = `QR_${name.replace(' ', '_')}.pdf`;
                 }
 
                 document.getElementById('successTitle').textContent = "QR Code Ready";
