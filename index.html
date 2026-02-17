@@ -55,9 +55,6 @@
             </div>
            
             <div class="flex gap-3">
-                <button onclick="startScanner()" class="pill-btn bg-purple-600 text-white px-5 py-2 text-[11px] font-black flex items-center gap-2 shadow-lg shadow-purple-500/20">
-                    <i class="fa-solid fa-qrcode"></i> SCAN
-                </button>
                 <button onclick="generateGlobalReport()" class="pill-btn bg-white/5 text-white border border-white/10 hover:bg-white/20 px-5 py-2 text-[11px] font-black flex items-center gap-2">
                     <i class="fa-solid fa-file-export"></i> EXPORT
                 </button>
@@ -247,7 +244,7 @@
         </div>
     </div>
 
-    <!-- Success / QR Modal (now reused for both new employee and re-display) -->
+    <!-- Success / QR Modal -->
     <div id="successModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[60]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-sm"></div>
         <div class="modal-container bg-white w-full max-w-sm mx-auto rounded-[2rem] shadow-2xl z-50 p-8 text-center">
@@ -325,7 +322,6 @@
             options: { cutout: '80%', plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, font: { weight: 'bold', size: 10 } } } } }
         });
 
-        // Employees listener
         db.ref('employees').on('value', snap => {
             const list = document.getElementById('employeeList');
             const data = snap.val();
@@ -356,7 +352,6 @@
             });
         });
 
-        // Today's attendance listener
         db.ref('attendance/' + todayStr).on('value', snap => {
             const data = snap.val();
             const tbody = document.getElementById('attendanceTable');
@@ -413,7 +408,6 @@
             globalChart.update();
         });
 
-        // Scanner Functions
         function startScanner() {
             toggleModal('scannerModal');
             html5QrCode = new Html5Qrcode("reader");
@@ -491,7 +485,6 @@
             });
         }
 
-        // Admin action menu
         function showAdminActions(e, id) {
             e.stopPropagation();
             activeAdminId = id;
@@ -517,7 +510,6 @@
             db.ref(path).update(update);
         }
 
-        // Delete
         function promptDelete(id, name) {
             pendingDeleteId = id;
             document.getElementById('deleteTargetName').innerText = name;
@@ -533,7 +525,6 @@
             }
         };
 
-        // Employee stats
         async function fetchEmployeeHistory(id, name, role) {
             selectedEmpId = id;
             document.getElementById('statName').innerText = name;
@@ -605,7 +596,6 @@
             doc.save("Global_Report.pdf");
         }
 
-        // Add Employee + QR Generation
         document.getElementById('addEmployeeForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const id = `EMP-${Math.random().toString(16).slice(2, 6).toUpperCase()}`;
@@ -623,7 +613,6 @@
             });
         });
 
-        // Reusable QR display function (used for new employee & re-download)
         function showEmployeeQR(id, name) {
             const qrContainer = document.getElementById('qrCodeContainer');
             qrContainer.innerHTML = '';
@@ -634,7 +623,7 @@
                 height: 220,
                 colorDark: "#000000",
                 colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H   // High error correction - best for phone screens
+                correctLevel: QRCode.CorrectLevel.H
             });
 
             setTimeout(() => {
@@ -645,7 +634,6 @@
                     dlBtn.download = `QR_${name.replace(' ', '_')}.png`;
                 }
 
-                // Customize modal texts for new vs re-display
                 document.getElementById('successTitle').textContent = "QR Code Ready";
                 document.getElementById('successMessage').innerHTML =
                     `Permanent QR for <strong>${name}</strong><br>` +
