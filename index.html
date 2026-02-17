@@ -3,78 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Attendance Dashboard</title>
+    <title>HR Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* Custom Animations */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-card { animation: fadeIn 0.5s ease-out forwards; }
-        .glass-panel { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        body { background-color: #f3f4f6; }
+        .glass-card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .modal { transition: opacity 0.25s ease; }
+        body.modal-active { overflow-x: hidden; overflow-y: visible !important; }
     </style>
 </head>
-<body class="bg-slate-900 text-gray-100 font-sans antialiased min-h-screen p-6">
+<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
 
-    <header class="flex justify-between items-center mb-8 animate-card">
-        <div>
-            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-                Attendance Command Center
-            </h1>
-            <p class="text-gray-400 mt-1" id="currentDateDisplay">Live Monitoring System</p>
-        </div>
-        <div class="flex gap-4">
-            <div class="glass-panel px-6 py-2 rounded-lg text-center">
-                <span class="block text-2xl font-bold text-blue-400" id="totalCount">0</span>
-                <span class="text-xs text-gray-400 uppercase tracking-wide">Present</span>
+    <nav class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center shadow-sm z-10">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 text-white p-2 rounded-lg">
+                <i class="fa-solid fa-building-user text-xl"></i>
             </div>
-            <div class="glass-panel px-6 py-2 rounded-lg text-center">
-                <span class="block text-2xl font-bold text-green-400" id="activeCount">0</span>
-                <span class="text-xs text-gray-400 uppercase tracking-wide">Active</span>
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">Admin Portal</h1>
+                <p class="text-xs text-gray-500">Realtime Attendance Monitoring</p>
             </div>
         </div>
-    </header>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div class="lg:col-span-1 space-y-6">
-            <div class="glass-panel p-6 rounded-2xl animate-card" style="animation-delay: 0.1s;">
-                <h3 class="text-lg font-semibold mb-4 text-gray-300">Current Status</h3>
-                <div class="relative h-64">
-                    <canvas id="statusChart"></canvas>
+        <button onclick="toggleModal('addEmployeeModal')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition shadow-lg shadow-blue-500/30 flex items-center gap-2">
+            <i class="fa-solid fa-user-plus"></i> Add Employee
+        </button>
+    </nav>
+
+    <main class="flex-1 flex overflow-hidden">
+        
+        <aside class="w-1/3 bg-gray-50 p-6 overflow-y-auto border-r border-gray-200 flex flex-col gap-6">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="glass-card p-4 border-l-4 border-blue-500">
+                    <p class="text-gray-500 text-xs uppercase font-bold">Total Staff</p>
+                    <h2 class="text-2xl font-bold mt-1" id="totalEmployees">0</h2>
+                </div>
+                <div class="glass-card p-4 border-l-4 border-green-500">
+                    <p class="text-gray-500 text-xs uppercase font-bold">Present Today</p>
+                    <h2 class="text-2xl font-bold mt-1" id="presentToday">0</h2>
                 </div>
             </div>
 
-            <div class="glass-panel p-6 rounded-2xl animate-card" style="animation-delay: 0.2s;">
-                <h3 class="text-lg font-semibold mb-4 text-gray-300">Live Activity Feed</h3>
-                <div id="activityFeed" class="space-y-3 h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-700">
-                    <div class="text-center text-gray-500 text-sm italic mt-10">Waiting for scans...</div>
+            <div class="glass-card p-4">
+                <h3 class="text-sm font-bold text-gray-700 mb-4">Today's Activity</h3>
+                <canvas id="attendanceChart" height="200"></canvas>
+            </div>
+
+            <div class="glass-card flex-1 flex flex-col">
+                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-700">Registered Staff</h3>
+                    <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full" id="regCount">0</span>
+                </div>
+                <div class="overflow-y-auto p-2" id="employeeList">
+                    <div class="text-center text-gray-400 py-4 text-sm">Loading registry...</div>
                 </div>
             </div>
-        </div>
+        </aside>
 
-        <div class="lg:col-span-2">
-            <div class="glass-panel p-6 rounded-2xl h-full animate-card" style="animation-delay: 0.3s;">
-                <h3 class="text-lg font-semibold mb-6 text-gray-300 flex justify-between items-center">
-                    Employee Overview
-                    <span class="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">Live Sync</span>
-                </h3>
-                
+        <section class="flex-1 bg-gray-100 p-8 overflow-y-auto">
+            <div class="glass-card min-h-full p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold text-gray-800">Live Attendance Log <span id="dateDisplay" class="text-sm font-normal text-gray-500 ml-2"></span></h2>
+                    <div class="flex gap-2 text-sm">
+                        <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-green-500"></div> Present</span>
+                        <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-yellow-400"></div> Lunch</span>
+                        <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-red-500"></div> Out</span>
+                    </div>
+                </div>
+
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="text-gray-400 text-sm border-b border-gray-700">
-                                <th class="pb-3 pl-2">Employee ID</th>
-                                <th class="pb-3">Time In</th>
-                                <th class="pb-3">Lunch Status</th>
-                                <th class="pb-3">Time Out</th>
-                                <th class="pb-3">Current State</th>
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="p-4 rounded-tl-lg">Employee</th>
+                                <th class="p-4">Time In</th>
+                                <th class="p-4">Lunch Break</th>
+                                <th class="p-4">Time Out</th>
+                                <th class="p-4 rounded-tr-lg">Status</th>
                             </tr>
                         </thead>
-                        <tbody id="attendanceTableBody" class="text-sm">
-                            </tbody>
+                        <tbody id="attendanceTable" class="divide-y divide-gray-100 text-sm">
+                            <tr><td colspan="5" class="p-8 text-center text-gray-400">Waiting for live scans...</td></tr>
+                        </tbody>
                     </table>
                 </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="addEmployeeModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+        
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto animate-bounce-in">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3 border-b">
+                    <p class="text-2xl font-bold text-gray-700">Add New Employee</p>
+                    <div class="cursor-pointer z-50" onclick="toggleModal('addEmployeeModal')">
+                        <i class="fa-solid fa-times text-gray-500 hover:text-red-500"></i>
+                    </div>
+                </div>
+
+                <form id="addEmployeeForm" class="mt-4 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" id="newEmpName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 px-3 py-2 border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Employee ID (Unique)</label>
+                        <input type="text" id="newEmpId" required placeholder="e.g. EMP001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 px-3 py-2 border uppercase">
+                        <p class="text-xs text-red-500 mt-1 hidden" id="idError">ID already exists!</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Position</label>
+                        <input type="text" id="newEmpRole" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 px-3 py-2 border">
+                    </div>
+                    
+                    <div class="pt-4 flex justify-end gap-2">
+                        <button type="button" onclick="toggleModal('addEmployeeModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg">Save Employee</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -83,124 +135,154 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // --- PASTE THE SAME FIREBASE CONFIG HERE ---
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-            projectId: "YOUR_PROJECT",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef"
+            apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
+            authDomain: "pinotp-d7ef5.firebaseapp.com",
+            databaseURL: "https://pinotp-d7ef5-default-rtdb.firebaseio.com",
+            projectId: "pinotp-d7ef5",
+            storageBucket: "pinotp-d7ef5.firebasestorage.app",
+            messagingSenderId: "708458917827",
+            appId: "1:708458917827:web:375de278577df0adcf9776"
         };
-        // -------------------------------------------
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('currentDateDisplay').innerText = new Date().toDateString();
+
+        // --- 1. Manage Employees (Registry) ---
+        
+        // Listen for Employees
+        db.ref('employees').on('value', (snapshot) => {
+            const list = document.getElementById('employeeList');
+            const data = snapshot.val();
+            list.innerHTML = '';
+            
+            if(data) {
+                const count = Object.keys(data).length;
+                document.getElementById('totalEmployees').innerText = count;
+                document.getElementById('regCount').innerText = count;
+
+                Object.values(data).forEach(emp => {
+                    list.innerHTML += `
+                        <div class="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
+                                ${emp.name.charAt(0)}
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-700">${emp.name}</p>
+                                <p class="text-xs text-gray-500">${emp.id} • ${emp.role}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                list.innerHTML = '<p class="text-center text-sm text-gray-400 mt-4">No employees added yet.</p>';
+            }
+        });
+
+        // Add Employee Logic
+        document.getElementById('addEmployeeForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('newEmpId').value.trim().toUpperCase();
+            const name = document.getElementById('newEmpName').value.trim();
+            const role = document.getElementById('newEmpRole').value.trim();
+
+            // Check if ID exists
+            db.ref('employees/' + id).once('value', (snap) => {
+                if(snap.exists()){
+                    document.getElementById('idError').classList.remove('hidden');
+                } else {
+                    document.getElementById('idError').classList.add('hidden');
+                    // Save to DB
+                    db.ref('employees/' + id).set({
+                        id: id,
+                        name: name,
+                        role: role,
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                    }).then(() => {
+                        toggleModal('addEmployeeModal');
+                        document.getElementById('addEmployeeForm').reset();
+                        alert('Employee Captured Successfully');
+                    });
+                }
+            });
+        });
+
+        // --- 2. Live Attendance Monitoring ---
+        const todayDate = new Date().toISOString().split('T')[0];
+        document.getElementById('dateDisplay').innerText = todayDate;
 
         // Chart Setup
-        const ctx = document.getElementById('statusChart').getContext('2d');
-        const statusChart = new Chart(ctx, {
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+        const chart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Working', 'On Lunch', 'Clocked Out'],
+                labels: ['Working', 'Lunch', 'Clocked Out'],
                 datasets: [{
                     data: [0, 0, 0],
-                    backgroundColor: ['#3b82f6', '#eab308', '#ef4444'],
-                    borderWidth: 0,
-                    hoverOffset: 4
+                    backgroundColor: ['#10b981', '#facc15', '#ef4444'],
+                    borderWidth: 0
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } }
-            }
+            options: { cutout: '70%', plugins: { legend: { position: 'right', labels: { boxWidth: 10 } } } }
         });
 
-        // Realtime Listener
-        db.ref(`attendance/${today}`).on('value', (snapshot) => {
+        db.ref('attendance/' + todayDate).on('value', (snapshot) => {
             const data = snapshot.val();
-            updateDashboard(data);
-        });
+            const tbody = document.getElementById('attendanceTable');
+            tbody.innerHTML = '';
 
-        function updateDashboard(data) {
-            const tableBody = document.getElementById('attendanceTableBody');
-            const feed = document.getElementById('activityFeed');
-            
-            if (!data) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No records today</td></tr>';
-                return;
+            let working = 0, lunch = 0, out = 0, totalPresent = 0;
+
+            if(data) {
+                Object.values(data).forEach(log => {
+                    totalPresent++;
+                    
+                    // Determine Status
+                    let statusHtml = '';
+                    if(log.lastAction === 'Time In' || log.lastAction === 'Lunch Back') {
+                        working++;
+                        statusHtml = '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Working</span>';
+                    } else if (log.lastAction === 'Lunch Out') {
+                        lunch++;
+                        statusHtml = '<span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">On Lunch</span>';
+                    } else {
+                        out++;
+                        statusHtml = '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">Finished</span>';
+                    }
+
+                    // Render Row
+                    const row = `
+                        <tr class="hover:bg-gray-50 transition group">
+                            <td class="p-4">
+                                <div class="font-bold text-gray-700">${log.name || log.id}</div>
+                                <div class="text-xs text-gray-500">${log.id}</div>
+                            </td>
+                            <td class="p-4 text-gray-600 font-mono">${log.TimeIn || '--:--'}</td>
+                            <td class="p-4 text-gray-600 font-mono text-xs">
+                                ${log.LunchOut ? `<span class="text-red-400">OUT: ${log.LunchOut}</span>` : ''}
+                                ${log.LunchBack ? `<br><span class="text-green-500">IN: ${log.LunchBack}</span>` : ''}
+                            </td>
+                            <td class="p-4 text-gray-600 font-mono">${log.TimeOut || '--:--'}</td>
+                            <td class="p-4">${statusHtml}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400">No attendance records for today yet.</td></tr>';
             }
 
-            tableBody.innerHTML = ''; // Clear table
-            
-            let working = 0, onLunch = 0, finished = 0;
-            let total = 0;
-            
-            // Convert object to array and sort by last update (roughly)
-            const employees = Object.values(data);
-            
-            employees.forEach(emp => {
-                total++;
-                
-                // Determine Status Logic
-                let statusBadge = '';
-                if (emp.lastAction === 'Time Out') {
-                    finished++;
-                    statusBadge = '<span class="px-2 py-1 rounded bg-red-500/20 text-red-400 text-xs">Left</span>';
-                } else if (emp.lastAction === 'Lunch Out') {
-                    onLunch++;
-                    statusBadge = '<span class="px-2 py-1 rounded bg-yellow-500/20 text-yellow-400 text-xs">Lunch</span>';
-                } else {
-                    working++;
-                    statusBadge = '<span class="px-2 py-1 rounded bg-green-500/20 text-green-400 text-xs">Working</span>';
-                }
+            // Update Stats
+            document.getElementById('presentToday').innerText = totalPresent;
+            chart.data.datasets[0].data = [working, lunch, out];
+            chart.update();
+        });
 
-                // Populate Table
-                const row = `
-                    <tr class="border-b border-gray-800 hover:bg-white/5 transition">
-                        <td class="py-4 pl-2 font-mono text-blue-300">${emp.id}</td>
-                        <td class="py-4 text-gray-400">${emp.TimeIn || '--'}</td>
-                        <td class="py-4 text-gray-400">
-                            ${emp.LunchOut ? `<span class="text-yellow-500">${emp.LunchOut}</span>` : '--'} 
-                            ${emp.LunchBack ? `➜ <span class="text-green-500">${emp.LunchBack}</span>` : ''}
-                        </td>
-                        <td class="py-4 text-gray-400">${emp.TimeOut || '--'}</td>
-                        <td class="py-4">${statusBadge}</td>
-                    </tr>
-                `;
-                tableBody.innerHTML += row;
-            });
-
-            // Update Header Stats
-            document.getElementById('totalCount').innerText = total;
-            document.getElementById('activeCount').innerText = working;
-
-            // Update Chart
-            statusChart.data.datasets[0].data = [working, onLunch, finished];
-            statusChart.update();
-            
-            // Update Feed (Just showing the last few actions visually)
-            // In a real app, you'd sort by timestamp. Here we just grab the raw list.
-            feed.innerHTML = '';
-            employees.reverse().slice(0, 5).forEach(emp => {
-                let color = 'text-blue-400';
-                if(emp.lastAction.includes('Out')) color = 'text-red-400';
-                if(emp.lastAction.includes('Lunch')) color = 'text-yellow-400';
-                
-                feed.innerHTML += `
-                    <div class="flex justify-between items-center text-sm border-l-2 border-gray-700 pl-3 py-1">
-                        <div>
-                            <span class="font-bold text-gray-200">${emp.id}</span>
-                            <span class="text-gray-500 text-xs ml-2">${emp.lastUpdate}</span>
-                        </div>
-                        <span class="${color}">${emp.lastAction}</span>
-                    </div>
-                `;
-            });
+        // UI Utilities
+        function toggleModal(modalID){
+            const modal = document.getElementById(modalID);
+            modal.classList.toggle('opacity-0');
+            modal.classList.toggle('pointer-events-none');
+            document.body.classList.toggle('modal-active');
         }
     </script>
 </body>
