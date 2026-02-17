@@ -176,6 +176,7 @@
                 border-radius: 30px 30px 0 0;
                 max-height: 85vh;
                 transform: translateY(0);
+                overflow: hidden;
             }
 
             .sidebar-collapsed {
@@ -185,6 +186,15 @@
 
             .sidebar-toggle {
                 display: none;
+            }
+
+            /* Ensure scrollable content on mobile */
+            .mobile-scroll-container {
+                flex: 1;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior-y: contain;
+                touch-action: pan-y;
             }
         }
 
@@ -381,7 +391,8 @@
                     </div>
                 </div>
                
-                <div class="flex-1 overflow-y-auto touch-scroll no-scrollbar p-6 space-y-4 bg-slate-50/50">
+                <!-- Mobile scrollable container -->
+                <div class="mobile-scroll-container flex-1 overflow-y-auto touch-scroll no-scrollbar p-6 space-y-4 bg-slate-50/50">
                     <!-- Selected Facility Info -->
                     <div id="selected-facility-info" class="hidden bg-white p-5 rounded-3xl shadow-lg border border-slate-100">
                         <div class="flex items-start justify-between mb-3">
