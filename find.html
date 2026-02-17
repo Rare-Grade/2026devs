@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
- 
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
     <style>
@@ -16,17 +15,16 @@
         #map { position: absolute; inset: 0; z-index: 0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-       
+      
         /* Mobile Bottom Sheet Transitions */
         .sheet-transition { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-       
+      
         /* Collapsed state for mobile: pushes down leaving only top ~85px visible */
         .sheet-collapsed { transform: translateY(calc(100% - 85px)); }
-       
+      
         @media (min-width: 768px) {
             .sheet-collapsed { transform: none; }
         }
-
         /* Search Bar Animations */
         .search-container {
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -41,11 +39,11 @@
         .search-container:focus-within .search-input {
             background-color: #ffffff;
         }
-
         /* Autocomplete Dropdown */
         .autocomplete-dropdown {
             animation: slideDown 0.2s ease-out;
             transform-origin: top;
+            z-index: 50;
         }
         @keyframes slideDown {
             from {
@@ -57,7 +55,6 @@
                 transform: translateY(0) scaleY(1);
             }
         }
-
         /* Voice Pulse Animation */
         .voice-pulse {
             animation: voicePulse 1.5s ease-in-out infinite;
@@ -66,13 +63,11 @@
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.2); opacity: 0.7; }
         }
-
         /* Touch-friendly scroll area */
         .touch-scroll {
             -webkit-overflow-scrolling: touch;
             overscroll-behavior-y: contain;
         }
-
         /* Floating Sidebar Styles */
         .floating-sidebar {
             position: fixed;
@@ -84,29 +79,25 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             border-radius: 30px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15),
                         0 0 0 1px rgba(255, 255, 255, 0.5) inset;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             overflow: hidden;
             display: flex;
             flex-direction: column;
         }
-
         .sidebar-collapsed {
             width: 80px;
             border-radius: 40px;
         }
-
         .sidebar-collapsed .sidebar-content {
             opacity: 0;
             pointer-events: none;
         }
-
         .sidebar-collapsed .sidebar-logo {
             opacity: 1;
             pointer-events: auto;
         }
-
         .sidebar-toggle {
             position: absolute;
             right: -15px;
@@ -125,45 +116,38 @@
             z-index: 40;
             border: 1px solid rgba(0, 0, 0, 0.05);
         }
-
         .sidebar-toggle:hover {
             transform: translateY(-50%) scale(1.1);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
-
         .sidebar-toggle i {
             transition: transform 0.3s ease;
             color: #64748b;
         }
-
         .sidebar-collapsed .sidebar-toggle i {
             transform: rotate(180deg);
         }
-
         /* Pill-shaped Search Bar */
         .pill-search {
             background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
             border-radius: 50px;
             padding: 6px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05), 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05),
                         0 1px 3px rgba(0, 0, 0, 0.05),
                         0 0 0 1px rgba(255, 255, 255, 0.8) inset;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-
         .pill-search:focus-within {
             transform: translateY(-2px);
-            box-shadow: 0 12px 40px -10px rgba(16, 185, 129, 0.25), 
+            box-shadow: 0 12px 40px -10px rgba(16, 185, 129, 0.25),
                         0 4px 20px rgba(0, 0, 0, 0.08),
                         0 0 0 1px rgba(16, 185, 129, 0.1) inset;
         }
-
         .pill-search input {
             background: transparent;
             border: none;
             outline: none;
         }
-
         /* Mobile Bottom Sheet - Modern Floating Style */
         @media (max-width: 767px) {
             .floating-sidebar {
@@ -181,15 +165,12 @@
                 box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.3),
                             0 0 0 1px rgba(255, 255, 255, 0.3) inset;
             }
-
             .sheet-collapsed {
                 transform: translateY(calc(100% - 70px));
             }
-
             .sidebar-toggle {
                 display: none;
             }
-
             /* Mobile Handle - Modern Pill Style */
             .mobile-handle {
                 width: 100%;
@@ -200,7 +181,6 @@
                 background: linear-gradient(to bottom, rgba(255,255,255,0.9), transparent);
                 flex-shrink: 0;
             }
-
             .mobile-handle-bar {
                 width: 36px;
                 height: 4px;
@@ -208,12 +188,10 @@
                 border-radius: 2px;
                 transition: all 0.3s ease;
             }
-
             .mobile-handle:active .mobile-handle-bar {
                 width: 44px;
                 background: linear-gradient(135deg, #94a3b8, #64748b);
             }
-
             /* Mobile content structure */
             .mobile-content-wrapper {
                 display: flex;
@@ -222,7 +200,6 @@
                 max-height: calc(75vh - 70px);
                 overflow: hidden;
             }
-
             .mobile-scroll-area {
                 flex: 1;
                 overflow-y: auto;
@@ -232,20 +209,19 @@
                 padding: 0 24px 24px;
             }
         }
-
         /* Desktop styles */
         @media (min-width: 768px) {
             .mobile-handle {
                 display: none;
             }
-            
+           
             .mobile-content-wrapper {
                 display: flex;
                 flex-direction: column;
                 height: 100%;
                 overflow: hidden;
             }
-            
+           
             .mobile-scroll-area {
                 flex: 1;
                 overflow-y: auto;
@@ -253,7 +229,6 @@
                 padding: 24px;
             }
         }
-
         /* Smooth content transitions */
         .sidebar-content {
             transition: opacity 0.2s ease;
@@ -262,7 +237,6 @@
             flex-direction: column;
             overflow: hidden;
         }
-
         .sidebar-logo {
             position: absolute;
             top: 50%;
@@ -272,15 +246,13 @@
             pointer-events: none;
             transition: opacity 0.2s ease;
         }
-
         /* Hover expand for desktop */
         @media (min-width: 768px) {
             .floating-sidebar:hover {
-                box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.2), 
+                box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.2),
                             0 0 0 1px rgba(255, 255, 255, 0.5) inset;
             }
         }
-
         /* Get Directions Button */
         .directions-btn {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -296,24 +268,19 @@
             align-items: center;
             gap: 8px;
         }
-
         .directions-btn:hover {
             transform: translateY(-2px) scale(1.02);
             box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
         }
-
         .directions-btn:active {
             transform: translateY(0) scale(0.98);
         }
-
         .directions-btn i {
             transition: transform 0.3s ease;
         }
-
         .directions-btn:hover i {
             transform: translateX(4px);
         }
-
         /* Clear Selection Button */
         .clear-btn {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
@@ -330,12 +297,10 @@
             align-items: center;
             gap: 6px;
         }
-
         .clear-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
         }
-
         /* Route line blue */
         .mapboxgl-canvas {
             outline: none;
@@ -365,26 +330,24 @@
             </button>
         </div>
     </div>
-    
+   
     <!-- Floating Sidebar -->
     <div id="bottom-panel" class="floating-sidebar sheet-transition">
         <!-- Toggle Button (Desktop only) -->
         <div class="sidebar-toggle" onclick="toggleSidebar()">
             <i class="fa-solid fa-chevron-left text-sm"></i>
         </div>
-        
+       
         <!-- Collapsed Logo -->
         <div class="sidebar-logo">
             <div class="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600">
                 <i class="fa-solid fa-location-crosshairs text-xl"></i>
             </div>
         </div>
-
         <!-- Mobile Handle -->
         <div class="mobile-handle" onclick="expandBottomSheet()">
             <div class="mobile-handle-bar"></div>
         </div>
-
         <div class="sidebar-content">
             <div id="login-view" class="mobile-content-wrapper">
                 <div class="mobile-scroll-area no-scrollbar">
@@ -437,25 +400,25 @@
                                 oninput="handleSearchInput(this)"
                                 onfocus="expandBottomSheet(); showSuggestions()"
                                 onkeypress="if(event.key === 'Enter') searchAndRoute(this.value)">
-                            
+                           
                             <!-- Voice Search Button -->
                             <button id="voice-search-btn" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-white transition" onclick="toggleVoiceSearch()">
                                 <i class="fa-solid fa-microphone text-sm"></i>
                             </button>
-                            
+                           
                             <!-- Clear Button -->
                             <button id="clear-search-btn" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-white hidden transition" onclick="clearFacilitySearch()">
                                 <i class="fa-solid fa-xmark text-sm"></i>
                             </button>
                         </div>
                     </div>
-                    
+                   
                     <!-- Autocomplete Suggestions -->
                     <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden absolute left-6 right-6 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-30 max-h-64 overflow-y-auto">
                         <!-- Suggestions will be populated here -->
                     </div>
                 </div>
-               
+              
                 <!-- Scrollable Content Area -->
                 <div class="mobile-scroll-area no-scrollbar bg-slate-50/50">
                     <!-- Selected Facility Info -->
@@ -475,7 +438,6 @@
                             <span>Get Directions</span>
                         </button>
                     </div>
-
                     <div id="route-info" class="hidden bg-emerald-600 text-white p-5 rounded-3xl shadow-lg mb-4 mt-4">
                         <h4 class="text-xs font-bold uppercase opacity-80 mb-1">Active Destination</h4>
                         <p id="dest-name" class="font-bold text-lg leading-tight">Finding route...</p>
@@ -491,9 +453,9 @@
                             <button onclick="startVoiceNavigation()" class="p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-volume-high"></i></button>
                         </div>
                     </div>
-                    
+                   
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-4 mb-3">Recommended</h3>
-                    
+                   
                     <div class="space-y-3 pb-6">
                         <div onclick="searchAndRoute('Hospital')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
                             <div class="flex items-center gap-4">
@@ -565,7 +527,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script>
         mapboxgl.accessToken = 'pk.eyJ1Ijoia2F0bGVnb3BoYXNoYSIsImEiOiJjbTlpOTdzbmYwMGNsMmpzYWJtZzN4d3pqIn0.Zt-aSMEoahrV3zkiVVHbOw';
-     
+    
         const firebaseConfig = {
             apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
             authDomain: "pinotp-d7ef5.firebaseapp.com",
@@ -592,6 +554,17 @@
         let sidebarCollapsed = false;
         let selectedFacility = null;
 
+        // Updated medicalSuggestions array (expanded with more common ZA-specific terms for better recommendations)
+        const medicalSuggestions = [
+            'Hospital', 'Emergency Room', 'Pharmacy', 'Clinic', 'General Practitioner',
+            'Family Doctor', 'Dentist', 'Optometrist', 'Eye Doctor', 'Physiotherapy',
+            'Physical Therapy', 'Medical Laboratory', 'Blood Test', 'Psychologist',
+            'Mental Health', 'Pediatrician', 'Children Doctor', 'Cardiologist',
+            'Dermatologist', 'Orthopedic', 'Gynecologist', 'Urgent Care', 'Walk-in Clinic',
+            'Maternity Clinic', 'HIV Testing Centre', 'TB Clinic', 'Vaccination Centre',
+            'Radiology', 'Pathology Lab', 'Specialist Surgeon', 'Oncologist'
+        ];
+
         // Initialize speech recognition
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -599,48 +572,47 @@
             recognition.continuous = false;
             recognition.interimResults = true;
             recognition.lang = 'en-US';
-            
+           
             recognition.onstart = function() {
                 isListening = true;
                 document.getElementById('voice-search-btn').classList.add('voice-pulse', 'text-emerald-600');
                 document.getElementById('facility-search').placeholder = 'Listening...';
             };
-            
+           
             recognition.onend = function() {
                 isListening = false;
                 document.getElementById('voice-search-btn').classList.remove('voice-pulse', 'text-emerald-600');
                 document.getElementById('facility-search').placeholder = 'Search facilities...';
             };
-            
+           
             recognition.onresult = function(event) {
                 const transcript = Array.from(event.results)
                     .map(result => result[0])
                     .map(result => result.transcript)
                     .join('');
-                
+               
                 document.getElementById('facility-search').value = transcript;
                 toggleClearButton(document.getElementById('facility-search'));
-                
+               
                 if (event.results[0].isFinal) {
                     setTimeout(() => {
                         searchAndRoute(transcript);
                     }, 500);
                 }
             };
-            
+           
             recognition.onerror = function(event) {
                 console.error('Speech recognition error:', event.error);
                 isListening = false;
                 document.getElementById('voice-search-btn').classList.remove('voice-pulse', 'text-emerald-600');
             };
         }
-
         function toggleVoiceSearch() {
             if (!recognition) {
                 alert('Voice search is not supported in your browser');
                 return;
             }
-            
+           
             if (isListening) {
                 recognition.stop();
             } else {
@@ -648,55 +620,85 @@
             }
         }
 
-        // Autocomplete suggestions
-        const medicalSuggestions = [
-            'Hospital', 'Emergency Room', 'Pharmacy', 'Clinic', 'General Practitioner',
-            'Family Doctor', 'Dentist', 'Optometrist', 'Eye Doctor', 'Physiotherapy',
-            'Physical Therapy', 'Medical Laboratory', 'Blood Test', 'Psychologist',
-            'Mental Health', 'Pediatrician', 'Children Doctor', 'Cardiologist',
-            'Dermatologist', 'Orthopedic', 'Gynecologist', 'Urgent Care', 'Walk-in Clinic'
-        ];
-
+        // Updated handleSearchInput
         function handleSearchInput(input) {
             toggleClearButton(input);
             showSuggestions();
         }
 
+        // Updated showSuggestions with recommendations when empty
         function showSuggestions() {
             const input = document.getElementById('facility-search');
             const dropdown = document.getElementById('autocomplete-dropdown');
             const value = input.value.toLowerCase();
-            
-            if (value.length < 1) {
-                dropdown.classList.add('hidden');
-                return;
+
+            let filtered;
+            if (value.length === 0) {
+                // Show all as recommendations when empty
+                filtered = medicalSuggestions.slice(0, 10); // Limit to top 10 for performance
+            } else {
+                filtered = medicalSuggestions.filter(s =>
+                    s.toLowerCase().includes(value) && s.toLowerCase() !== value
+                ).slice(0, 5);
             }
-            
-            const filtered = medicalSuggestions.filter(s => 
-                s.toLowerCase().includes(value) && s.toLowerCase() !== value
-            ).slice(0, 5);
-            
+
             if (filtered.length === 0) {
                 dropdown.classList.add('hidden');
                 return;
             }
-            
-            dropdown.innerHTML = filtered.map(suggestion => `
-                <div onclick="selectSuggestion('${suggestion}')" 
-                     class="px-4 py-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0">
+
+            dropdown.innerHTML = filtered.map((suggestion, index) => `
+                <div data-index="${index}" onclick="selectSuggestion('${suggestion}')"
+                     class="suggestion-item px-4 py-3 hover:bg-slate-50 cursor-pointer flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0">
                     <i class="fa-solid fa-magnifying-glass text-slate-400 text-sm"></i>
                     <span class="text-slate-700 font-medium">${suggestion}</span>
                 </div>
             `).join('');
-            
+
             dropdown.classList.remove('hidden');
+            highlightSuggestion(0); // Highlight first by default
         }
 
+        // Add keyboard navigation for suggestions
+        document.getElementById('facility-search').addEventListener('keydown', function(e) {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            if (dropdown.classList.contains('hidden')) return;
+
+            const items = dropdown.querySelectorAll('.suggestion-item');
+            let activeIndex = Array.from(items).findIndex(item => item.classList.contains('bg-slate-100'));
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = (activeIndex + 1) % items.length;
+                highlightSuggestion(activeIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = (activeIndex - 1 + items.length) % items.length;
+                highlightSuggestion(activeIndex);
+            } else if (e.key === 'Enter' && activeIndex >= 0) {
+                e.preventDefault();
+                const selected = items[activeIndex].querySelector('span').textContent;
+                selectSuggestion(selected);
+            } else if (e.key === 'Escape') {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function highlightSuggestion(index) {
+            const items = document.querySelectorAll('.suggestion-item');
+            items.forEach((item, i) => {
+                item.classList.toggle('bg-slate-100', i === index);
+                item.classList.toggle('text-slate-900', i === index);
+            });
+        }
+
+        // Updated selectSuggestion with auto-fill
         function selectSuggestion(value) {
-            document.getElementById('facility-search').value = value;
+            const input = document.getElementById('facility-search');
+            input.value = value; // Auto-fill the input
             document.getElementById('autocomplete-dropdown').classList.add('hidden');
-            toggleClearButton(document.getElementById('facility-search'));
-            searchAndRoute(value);
+            toggleClearButton(input);
+            searchAndRoute(value); // Trigger search immediately
         }
 
         // Hide suggestions when clicking outside
@@ -707,7 +709,6 @@
                 dropdown.classList.add('hidden');
             }
         });
-
         function initMap() {
             map = new mapboxgl.Map({
                 container: 'map',
@@ -742,7 +743,7 @@
                 updateWeatherOverlay();
                 setInterval(updateWeatherOverlay, 600000);
             });
-            
+           
             // Auto-collapse on map interaction for mobile
             map.on('dragstart', () => {
                 if (window.innerWidth < 768) collapseBottomSheet();
@@ -759,21 +760,19 @@
             map.on('pitchstart', () => {
                 if (window.innerWidth < 768) collapseBottomSheet();
             });
-            
+           
             startLocationTracking();
         }
-
         function toggleSidebar() {
             const sidebar = document.getElementById('bottom-panel');
             sidebarCollapsed = !sidebarCollapsed;
-            
+           
             if (sidebarCollapsed) {
                 sidebar.classList.add('sidebar-collapsed');
             } else {
                 sidebar.classList.remove('sidebar-collapsed');
             }
         }
-
         function collapseBottomSheet() {
             if (window.innerWidth < 768) {
                 document.getElementById('bottom-panel').classList.add('sheet-collapsed');
@@ -786,7 +785,6 @@
             document.getElementById('location-modal').classList.add('hidden');
             startLocationTracking();
         }
-
         const updateWeatherOverlay = async () => {
             try {
                 const resp = await fetch('https://api.rainviewer.com/public/weather-maps.json');
@@ -816,7 +814,6 @@
                 console.error('Weather overlay update failed:', err);
             }
         };
-
         function createUserMarker(coords) {
             const markerEl = document.createElement('div');
             markerEl.innerHTML = `
@@ -833,7 +830,6 @@
                 anchor: 'center'
             }).setLngLat(coords).addTo(map);
         }
-
         function startLocationTracking() {
             if ('geolocation' in navigator) {
                 if (watchId !== null) {
@@ -863,7 +859,6 @@
                 document.getElementById('location-modal').classList.remove('hidden');
             }
         }
-
         function toggleClearButton(input) {
             const btn = document.getElementById('clear-search-btn');
             const voiceBtn = document.getElementById('voice-search-btn');
@@ -875,7 +870,6 @@
                 voiceBtn.classList.remove('hidden');
             }
         }
-
         function clearFacilitySearch() {
             const input = document.getElementById('facility-search');
             input.value = '';
@@ -883,54 +877,52 @@
             document.getElementById('autocomplete-dropdown').classList.add('hidden');
             input.focus();
         }
-
         function clearSelection() {
             // Clear selected facility
             selectedFacility = null;
             currentDestCoords = null;
             currentDestName = null;
             currentDestAddress = null;
-            
+           
             // Hide facility info
             document.getElementById('selected-facility-info').classList.add('hidden');
             document.getElementById('route-info').classList.add('hidden');
-            
+           
             // Clear search input
             clearFacilitySearch();
-            
+           
             // Remove markers
             if (destMarker) {
                 destMarker.remove();
                 destMarker = null;
             }
-            
+           
             // Remove route
             if (map.getLayer('route')) map.removeLayer('route');
             if (map.getSource('route')) map.removeSource('route');
-            
+           
             // Remove turn markers
             turnMarkers.forEach(m => m.remove());
             turnMarkers = [];
-            
+           
             // Reset map view to user location
             if (window.userMarker) {
                 map.setCenter(userCoords);
                 map.setZoom(14);
             }
-            
+           
             // Clear instructions
             currentInstructions = [];
         }
-
         function getDirections() {
             if (!selectedFacility) return;
-            
+           
             // Hide selected facility info and show route info
             document.getElementById('selected-facility-info').classList.add('hidden');
-            
+           
             // Calculate and display route
             calculateRoute(selectedFacility.coords, selectedFacility.name, selectedFacility.address);
-            
+           
             // Collapse sidebar on mobile to show full map
             if (window.innerWidth < 768) {
                 collapseBottomSheet();
@@ -941,31 +933,28 @@
                 }
             }
         }
-
         async function searchAndRoute(query) {
             expandBottomSheet();
             document.getElementById('autocomplete-dropdown').classList.add('hidden');
             const searchUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?proximity=${userCoords[0]},${userCoords[1]}&access_token=${mapboxgl.accessToken}`;
             const res = await fetch(searchUrl);
             const data = await res.json();
-         
+        
             if (data.features.length > 0) {
                 const target = data.features[0];
                 const destCoords = target.center;
-                
+               
                 // Store selected facility
                 selectedFacility = {
                     coords: destCoords,
                     name: target.text,
                     address: target.place_name || 'No address available'
                 };
-                
+               
                 currentDestCoords = destCoords;
                 currentDestName = target.text;
                 currentDestAddress = target.place_name;
-
                 if (destMarker) destMarker.remove();
-
                 const destEl = document.createElement('div');
                 destEl.innerHTML = `
                     <div class="relative">
@@ -980,7 +969,6 @@
                     element: destEl,
                     anchor: 'center'
                 }).setLngLat(destCoords).addTo(map);
-
                 destMarker.setPopup(new mapboxgl.Popup({
                     offset: 25,
                     closeButton: true,
@@ -991,72 +979,62 @@
                         <span class="text-sm text-slate-600">${target.place_name || 'No address available'}</span>
                     </div>
                 `));
-
                 destMarker.getElement().addEventListener('click', () => destMarker.togglePopup());
-
                 // Show selected facility info with Get Directions button
                 document.getElementById('selected-facility-name').innerText = target.text;
                 document.getElementById('selected-facility-address').innerText = target.place_name || 'No address available';
                 document.getElementById('selected-facility-info').classList.remove('hidden');
-                
+               
                 // Hide route info until Get Directions is clicked
                 document.getElementById('route-info').classList.add('hidden');
-                
+               
                 // Fit bounds to show both user and destination
                 map.fitBounds([userCoords, destCoords], { padding: 100 });
-               
+              
                 setTimeout(collapseBottomSheet, 1500);
             }
         }
-
         async function calculateRoute(end, name, fullName) {
             if (map.getLayer('route')) map.removeLayer('route');
             if (map.getSource('route')) map.removeSource('route');
             turnMarkers.forEach(m => m.remove());
             turnMarkers = [];
             currentInstructions = [];
-
             const profile = currentMode;
             const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/${profile}/${userCoords[0]},${userCoords[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`);
             const json = await query.json();
             if (!json.routes || json.routes.length === 0) return;
             const data = json.routes[0];
-         
+        
             document.getElementById('dest-name').innerText = name;
             document.getElementById('route-dist').innerText = (data.distance / 1000).toFixed(1) + ' km';
             document.getElementById('route-time').innerText = Math.floor(data.duration / 60) + ' min';
             document.getElementById('route-info').classList.remove('hidden');
             updateModeIcon();
-
             const geojson = { type: 'Feature', geometry: data.geometry };
             map.addSource('route', { type: 'geojson', data: geojson });
             map.addLayer({
                 id: 'route',
                 type: 'line',
                 source: 'route',
-                paint: { 
-                    'line-color': '#3b82f6', 
-                    'line-width': 8, 
+                paint: {
+                    'line-color': '#3b82f6',
+                    'line-width': 8,
                     'line-opacity': 0.9,
                     'line-blur': 2
                 }
             });
-
             currentInstructions = [`Starting navigation to ${name}. Distance ${(data.distance / 1000).toFixed(1)} km, estimated time ${Math.floor(data.duration / 60)} minutes.`];
-
             data.legs[0].steps.forEach((step, index) => {
                 if (step.maneuver && step.maneuver.location) {
                     const coords = step.maneuver.location.coordinates;
                     const instruction = step.maneuver.instruction || 'Continue straight';
                     const stepDist = step.distance ? (step.distance / 1000).toFixed(1) + ' km' : 'short distance';
                     const stepTime = step.duration ? '~' + Math.round(step.duration / 60) + ' min' : '';
-
                     currentInstructions.push(instruction);
-
                     const el = document.createElement('div');
                     el.className = 'bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-lg border-2 border-white cursor-pointer';
                     el.innerText = index + 1;
-
                     const popup = new mapboxgl.Popup({
                         offset: 30,
                         closeButton: true,
@@ -1068,22 +1046,17 @@
                             ${stepDist || stepTime ? `<p class="text-sm text-slate-500 mt-2">${stepDist} • ${stepTime}</p>` : ''}
                         </div>
                     `);
-
                     const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
                         .setLngLat(coords)
                         .setPopup(popup)
                         .addTo(map);
-
                     marker.getElement().addEventListener('click', () => marker.togglePopup());
                     turnMarkers.push(marker);
                 }
             });
-
             currentInstructions.push(`You have arrived at your destination: ${name}`);
-
             // Fit bounds with padding to show full route
             map.fitBounds([userCoords, end], { padding: 100 });
-
             if (auth.currentUser) {
                 database.ref('users/' + auth.currentUser.uid + '/active_route').set({
                     destination: name,
@@ -1092,7 +1065,6 @@
                 });
             }
         }
-
         function setMode(mode) {
             currentMode = mode;
             setActiveModeButtons();
@@ -1101,14 +1073,12 @@
                 calculateRoute(currentDestCoords, currentDestName, currentDestAddress);
             }
         }
-
         function setActiveModeButtons() {
             document.querySelectorAll('#route-info .mode-btn').forEach(btn => {
                 btn.classList.toggle('bg-white/40', btn.dataset.mode === currentMode);
                 btn.classList.toggle('bg-white/20', btn.dataset.mode !== currentMode);
             });
         }
-
         function updateModeIcon() {
             const iconMap = {
                 'driving': 'fa-car',
@@ -1119,7 +1089,6 @@
             const iconEl = document.getElementById('mode-icon');
             if (iconEl) iconEl.className = `fa-solid ${iconMap[currentMode]} mr-1`;
         }
-
         function startVoiceNavigation() {
             if ('speechSynthesis' in window && currentInstructions.length > 0) {
                 speechSynthesis.cancel();
@@ -1139,14 +1108,12 @@
                 speakNext();
             }
         }
-
         function handleSignIn(provider) {
             let prov;
             if (provider === 'google') prov = new firebase.auth.GoogleAuthProvider();
             else if (provider === 'github') prov = new firebase.auth.GithubAuthProvider();
             auth.signInWithPopup(prov);
         }
-
         function handleEmailSignIn() {
             const email = document.getElementById('email-input').value.trim();
             const password = document.getElementById('password-input').value;
@@ -1164,9 +1131,7 @@
                     }
                 });
         }
-
         function handleSignOut() { auth.signOut(); }
-
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('login-view').classList.add('hidden');
@@ -1179,7 +1144,6 @@
                 document.getElementById('app-view').classList.add('hidden');
             }
         });
-
         initMap();
     </script>
 </body>
