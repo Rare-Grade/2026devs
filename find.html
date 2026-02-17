@@ -72,6 +72,144 @@
             -webkit-overflow-scrolling: touch;
             overscroll-behavior-y: contain;
         }
+
+        /* Floating Sidebar Styles */
+        .floating-sidebar {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            bottom: 20px;
+            width: 420px;
+            z-index: 30;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 
+                        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-collapsed {
+            width: 80px;
+            border-radius: 40px;
+        }
+
+        .sidebar-collapsed .sidebar-content {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sidebar-collapsed .sidebar-logo {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 60px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 40;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-toggle:hover {
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .sidebar-toggle i {
+            transition: transform 0.3s ease;
+            color: #64748b;
+        }
+
+        .sidebar-collapsed .sidebar-toggle i {
+            transform: rotate(180deg);
+        }
+
+        /* Pill-shaped Search Bar */
+        .pill-search {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-radius: 50px;
+            padding: 6px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05), 
+                        0 1px 3px rgba(0, 0, 0, 0.05),
+                        0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .pill-search:focus-within {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px -10px rgba(16, 185, 129, 0.25), 
+                        0 4px 20px rgba(0, 0, 0, 0.08),
+                        0 0 0 1px rgba(16, 185, 129, 0.1) inset;
+        }
+
+        .pill-search input {
+            background: transparent;
+            border: none;
+            outline: none;
+        }
+
+        /* Mobile Bottom Sheet */
+        @media (max-width: 767px) {
+            .floating-sidebar {
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: auto;
+                bottom: 0;
+                width: 100%;
+                border-radius: 30px 30px 0 0;
+                max-height: 85vh;
+                transform: translateY(0);
+            }
+
+            .sidebar-collapsed {
+                transform: translateY(calc(100% - 85px));
+                width: 100%;
+            }
+
+            .sidebar-toggle {
+                display: none;
+            }
+        }
+
+        /* Smooth content transitions */
+        .sidebar-content {
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Hover expand for desktop */
+        @media (min-width: 768px) {
+            .floating-sidebar:hover {
+                box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.2), 
+                            0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            }
+        }
     </style>
 </head>
 <body class="h-screen w-screen relative">
@@ -97,146 +235,168 @@
             </button>
         </div>
     </div>
-    <div id="bottom-panel" class="absolute z-30 bg-white w-full bottom-0 rounded-t-[30px] shadow-2xl md:top-0 md:left-0 md:w-[420px] md:h-full md:rounded-none flex flex-col overflow-hidden max-h-[85vh] md:max-h-full sheet-transition">
-       
+    
+    <!-- Floating Sidebar -->
+    <div id="bottom-panel" class="floating-sidebar sheet-transition">
+        <!-- Toggle Button (Desktop only) -->
+        <div class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fa-solid fa-chevron-left text-sm"></i>
+        </div>
+        
+        <!-- Collapsed Logo -->
+        <div class="sidebar-logo">
+            <div class="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600">
+                <i class="fa-solid fa-location-crosshairs text-xl"></i>
+            </div>
+        </div>
+
+        <!-- Mobile Handle -->
         <div class="w-full flex justify-center pt-3 pb-1 md:hidden" onclick="expandBottomSheet()">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
         </div>
-        <div id="login-view" class="p-8 flex flex-col h-full justify-center overflow-y-auto touch-scroll">
-            <div class="mb-8 text-center md:text-left">
-                <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-4 mx-auto md:mx-0">
-                    <i class="fa-solid fa-location-crosshairs text-xl"></i>
+
+        <div class="sidebar-content flex flex-col h-full overflow-hidden">
+            <div id="login-view" class="p-8 flex flex-col h-full justify-center overflow-y-auto touch-scroll">
+                <div class="mb-8 text-center md:text-left">
+                    <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-4 mx-auto md:mx-0">
+                        <i class="fa-solid fa-location-crosshairs text-xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-2">Bophelo Bot</h2>
+                    <p class="text-slate-500 text-sm">Real-time facility routing and medical assistance.</p>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-900 mb-2">Bophelo Bot</h2>
-                <p class="text-slate-500 text-sm">Real-time facility routing and medical assistance.</p>
-            </div>
-            <div class="space-y-3">
-                <button onclick="handleSignIn('google')" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-semibold hover:bg-slate-50 transition">
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5"> Sign in with Google
-                </button>
-                <button onclick="handleSignIn('github')" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-semibold hover:bg-slate-50 transition">
-                    <i class="fa-brands fa-github text-xl"></i> Sign in with GitHub
-                </button>
-            </div>
-            <div class="relative my-6">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-slate-200"></div>
-                </div>
-                <div class="relative flex justify-center text-sm">
-                    <span class="bg-white px-4 text-slate-400">or</span>
-                </div>
-            </div>
-            <div class="space-y-4">
-                <input id="email-input" type="email" placeholder="Enter your email" required class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all" onclick="expandBottomSheet()">
-                <input id="password-input" type="password" placeholder="Enter your password" required class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all" onclick="expandBottomSheet()">
-                <button onclick="handleEmailSignIn()" class="w-full bg-emerald-600 text-white p-4 rounded-2xl font-semibold hover:bg-emerald-700 transition">
-                    Continue with Email
-                </button>
-            </div>
-            <p class="text-xs text-slate-500 text-center mt-4">New here? We'll create an account for you.</p>
-        </div>
-        <div id="app-view" class="flex flex-col h-full hidden">
-            <div class="px-6 pt-2 pb-4 border-b border-slate-100 bg-white z-20 sticky top-0" onclick="expandBottomSheet()">
-                <div class="relative search-container rounded-2xl">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 peer-focus:text-emerald-600 transition-colors z-10"></i>
-                    <input id="facility-search" type="text" placeholder="Search (e.g. Pharmacy, ER)"
-                        class="search-input w-full bg-slate-50 p-4 pl-12 pr-24 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all peer"
-                        oninput="handleSearchInput(this)"
-                        onfocus="expandBottomSheet(); showSuggestions()"
-                        onkeypress="if(event.key === 'Enter') searchAndRoute(this.value)">
-                    
-                    <!-- Voice Search Button -->
-                    <button id="voice-search-btn" class="absolute right-10 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 transition z-10 p-2" onclick="toggleVoiceSearch()">
-                        <i class="fa-solid fa-microphone text-lg"></i>
+                <div class="space-y-3">
+                    <button onclick="handleSignIn('google')" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-semibold hover:bg-slate-50 transition">
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5"> Sign in with Google
                     </button>
-                    
-                    <!-- Clear Button -->
-                    <button id="clear-search-btn" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 hidden z-10" onclick="clearFacilitySearch()">
-                        <i class="fa-solid fa-xmark text-lg"></i>
+                    <button onclick="handleSignIn('github')" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-semibold hover:bg-slate-50 transition">
+                        <i class="fa-brands fa-github text-xl"></i> Sign in with GitHub
                     </button>
                 </div>
-                
-                <!-- Autocomplete Suggestions -->
-                <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden absolute left-6 right-6 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-30 max-h-64 overflow-y-auto">
-                    <!-- Suggestions will be populated here -->
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-slate-200"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="bg-white px-4 text-slate-400">or</span>
+                    </div>
                 </div>
+                <div class="space-y-4">
+                    <input id="email-input" type="email" placeholder="Enter your email" required class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all" onclick="expandBottomSheet()">
+                    <input id="password-input" type="password" placeholder="Enter your password" required class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium transition-all" onclick="expandBottomSheet()">
+                    <button onclick="handleEmailSignIn()" class="w-full bg-emerald-600 text-white p-4 rounded-2xl font-semibold hover:bg-emerald-700 transition">
+                        Continue with Email
+                    </button>
+                </div>
+                <p class="text-xs text-slate-500 text-center mt-4">New here? We'll create an account for you.</p>
             </div>
-           
-            <div class="flex-1 overflow-y-auto touch-scroll no-scrollbar p-6 space-y-4 bg-slate-50/50">
-                <div id="route-info" class="hidden bg-emerald-600 text-white p-5 rounded-3xl shadow-lg mb-4">
-                    <h4 class="text-xs font-bold uppercase opacity-80 mb-1">Active Destination</h4>
-                    <p id="dest-name" class="font-bold text-lg leading-tight">Finding route...</p>
-                    <div class="flex gap-4 mt-3 text-sm font-medium">
-                        <span><i id="mode-icon" class="fa-solid fa-car mr-1"></i> <span id="route-dist">0 km</span></span>
-                        <span><i class="fa-solid fa-clock mr-1"></i> <span id="route-time">0 min</span></span>
+            <div id="app-view" class="flex flex-col h-full hidden">
+                <div class="px-6 pt-2 pb-4 border-b border-slate-100 bg-white z-20 sticky top-0" onclick="expandBottomSheet()">
+                    <!-- Pill-shaped Search Bar -->
+                    <div class="pill-search relative">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-400 shadow-sm">
+                                <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                            </div>
+                            <input id="facility-search" type="text" placeholder="Search facilities..."
+                                class="search-input flex-1 px-3 py-2 text-sm font-medium text-slate-700 placeholder-slate-400"
+                                oninput="handleSearchInput(this)"
+                                onfocus="expandBottomSheet(); showSuggestions()"
+                                onkeypress="if(event.key === 'Enter') searchAndRoute(this.value)">
+                            
+                            <!-- Voice Search Button -->
+                            <button id="voice-search-btn" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-white transition" onclick="toggleVoiceSearch()">
+                                <i class="fa-solid fa-microphone text-sm"></i>
+                            </button>
+                            
+                            <!-- Clear Button -->
+                            <button id="clear-search-btn" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-white hidden transition" onclick="clearFacilitySearch()">
+                                <i class="fa-solid fa-xmark text-sm"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex justify-center gap-4 mt-5">
-                        <button data-mode="driving" onclick="setMode('driving')" class="mode-btn p-3 rounded-xl bg-white/40 hover:bg-white/50 transition text-2xl"><i class="fa-solid fa-car"></i></button>
-                        <button data-mode="driving-traffic" onclick="setMode('driving-traffic')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-bus"></i></button>
-                        <button data-mode="cycling" onclick="setMode('cycling')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-bicycle"></i></button>
-                        <button data-mode="walking" onclick="setMode('walking')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-person-walking"></i></button>
-                        <button onclick="startVoiceNavigation()" class="p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-volume-high"></i></button>
-                    </div>
-                </div>
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Recommended</h3>
-                <div onclick="searchAndRoute('Hospital')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-truck-medical"></i></div>
-                        <div><h4 class="font-bold">Nearest Emergency ER</h4><p class="text-xs text-slate-500">Auto-route to highest rated</p></div>
-                    </div>
-                </div>
-                <div onclick="searchAndRoute('Pharmacy')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-pills"></i></div>
-                        <div><h4 class="font-bold">24/7 Pharmacy</h4><p class="text-xs text-slate-500">Find medication nearby</p></div>
-                    </div>
-                </div>
-                <div onclick="searchAndRoute('Clinic')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-hospital"></i></div>
-                        <div><h4 class="font-bold">General Clinic</h4><p class="text-xs text-slate-500">Primary care facilities</p></div>
+                    
+                    <!-- Autocomplete Suggestions -->
+                    <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden absolute left-6 right-6 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-30 max-h-64 overflow-y-auto">
+                        <!-- Suggestions will be populated here -->
                     </div>
                 </div>
-                <div onclick="searchAndRoute('General Practitioner')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-stethoscope"></i></div>
-                        <div><h4 class="font-bold">Family Doctor / GP</h4><p class="text-xs text-slate-500">General practitioners</p></div>
+               
+                <div class="flex-1 overflow-y-auto touch-scroll no-scrollbar p-6 space-y-4 bg-slate-50/50">
+                    <div id="route-info" class="hidden bg-emerald-600 text-white p-5 rounded-3xl shadow-lg mb-4">
+                        <h4 class="text-xs font-bold uppercase opacity-80 mb-1">Active Destination</h4>
+                        <p id="dest-name" class="font-bold text-lg leading-tight">Finding route...</p>
+                        <div class="flex gap-4 mt-3 text-sm font-medium">
+                            <span><i id="mode-icon" class="fa-solid fa-car mr-1"></i> <span id="route-dist">0 km</span></span>
+                            <span><i class="fa-solid fa-clock mr-1"></i> <span id="route-time">0 min</span></span>
+                        </div>
+                        <div class="flex justify-center gap-4 mt-5">
+                            <button data-mode="driving" onclick="setMode('driving')" class="mode-btn p-3 rounded-xl bg-white/40 hover:bg-white/50 transition text-2xl"><i class="fa-solid fa-car"></i></button>
+                            <button data-mode="driving-traffic" onclick="setMode('driving-traffic')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-bus"></i></button>
+                            <button data-mode="cycling" onclick="setMode('cycling')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-bicycle"></i></button>
+                            <button data-mode="walking" onclick="setMode('walking')" class="mode-btn p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-person-walking"></i></button>
+                            <button onclick="startVoiceNavigation()" class="p-3 rounded-xl bg-white/20 hover:bg-white/30 transition text-2xl"><i class="fa-solid fa-volume-high"></i></button>
+                        </div>
                     </div>
-                </div>
-                <div onclick="searchAndRoute('Dentist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-tooth"></i></div>
-                        <div><h4 class="font-bold">Dentist</h4><p class="text-xs text-slate-500">Dental care services</p></div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Recommended</h3>
+                    <div onclick="searchAndRoute('Hospital')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-truck-medical"></i></div>
+                            <div><h4 class="font-bold">Nearest Emergency ER</h4><p class="text-xs text-slate-500">Auto-route to highest rated</p></div>
+                        </div>
                     </div>
-                </div>
-                <div onclick="searchAndRoute('Optometrist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-eye"></i></div>
-                        <div><h4 class="font-bold">Optometrist</h4><p class="text-xs text-slate-500">Eye care & vision testing</p></div>
+                    <div onclick="searchAndRoute('Pharmacy')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-pills"></i></div>
+                            <div><h4 class="font-bold">24/7 Pharmacy</h4><p class="text-xs text-slate-500">Find medication nearby</p></div>
+                        </div>
                     </div>
-                </div>
-                <div onclick="searchAndRoute('Physiotherapy')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-teal-50 text-teal-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-person-walking-arrow-loop-left"></i></div>
-                        <div><h4 class="font-bold">Physiotherapy</h4><p class="text-xs text-slate-500">Rehabilitation services</p></div>
+                    <div onclick="searchAndRoute('Clinic')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-hospital"></i></div>
+                            <div><h4 class="font-bold">General Clinic</h4><p class="text-xs text-slate-500">Primary care facilities</p></div>
+                        </div>
                     </div>
-                </div>
-                <div onclick="searchAndRoute('Laboratory')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-vial"></i></div>
-                        <div><h4 class="font-bold">Medical Laboratory</h4><p class="text-xs text-slate-500">Testing & diagnostics</p></div>
+                    <div onclick="searchAndRoute('General Practitioner')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-stethoscope"></i></div>
+                            <div><h4 class="font-bold">Family Doctor / GP</h4><p class="text-xs text-slate-500">General practitioners</p></div>
+                        </div>
                     </div>
-                </div>
-                <div onclick="searchAndRoute('Psychologist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-gray-50 text-gray-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-brain"></i></div>
-                        <div><h4 class="font-bold">Psychologist</h4><p class="text-xs text-slate-500">Mental health support</p></div>
+                    <div onclick="searchAndRoute('Dentist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-tooth"></i></div>
+                            <div><h4 class="font-bold">Dentist</h4><p class="text-xs text-slate-500">Dental care services</p></div>
+                        </div>
                     </div>
-                </div>
-                <div onclick="searchAndRoute('Pediatrician')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-yellow-50 text-yellow-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-baby"></i></div>
-                        <div><h4 class="font-bold">Pediatrician</h4><p class="text-xs text-slate-500">Child health specialists</p></div>
+                    <div onclick="searchAndRoute('Optometrist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-eye"></i></div>
+                            <div><h4 class="font-bold">Optometrist</h4><p class="text-xs text-slate-500">Eye care & vision testing</p></div>
+                        </div>
+                    </div>
+                    <div onclick="searchAndRoute('Physiotherapy')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-teal-50 text-teal-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-person-walking-arrow-loop-left"></i></div>
+                            <div><h4 class="font-bold">Physiotherapy</h4><p class="text-xs text-slate-500">Rehabilitation services</p></div>
+                        </div>
+                    </div>
+                    <div onclick="searchAndRoute('Laboratory')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-vial"></i></div>
+                            <div><h4 class="font-bold">Medical Laboratory</h4><p class="text-xs text-slate-500">Testing & diagnostics</p></div>
+                        </div>
+                    </div>
+                    <div onclick="searchAndRoute('Psychologist')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-gray-50 text-gray-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-brain"></i></div>
+                            <div><h4 class="font-bold">Psychologist</h4><p class="text-xs text-slate-500">Mental health support</p></div>
+                        </div>
+                    </div>
+                    <div onclick="searchAndRoute('Pediatrician')" class="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer hover:border-emerald-500 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-yellow-50 text-yellow-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-baby"></i></div>
+                            <div><h4 class="font-bold">Pediatrician</h4><p class="text-xs text-slate-500">Child health specialists</p></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -270,6 +430,7 @@
         let watchId = null;
         let recognition = null;
         let isListening = false;
+        let sidebarCollapsed = false;
 
         // Initialize speech recognition
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -288,7 +449,7 @@
             recognition.onend = function() {
                 isListening = false;
                 document.getElementById('voice-search-btn').classList.remove('voice-pulse', 'text-emerald-600');
-                document.getElementById('facility-search').placeholder = 'Search (e.g. Pharmacy, ER)';
+                document.getElementById('facility-search').placeholder = 'Search facilities...';
             };
             
             recognition.onresult = function(event) {
@@ -380,7 +541,7 @@
 
         // Hide suggestions when clicking outside
         document.addEventListener('click', function(e) {
-            const searchContainer = document.querySelector('.search-container');
+            const searchContainer = document.querySelector('.pill-search');
             const dropdown = document.getElementById('autocomplete-dropdown');
             if (!searchContainer.contains(e.target)) {
                 dropdown.classList.add('hidden');
@@ -425,6 +586,17 @@
             map.on('click', collapseBottomSheet);
             map.on('touchstart', collapseBottomSheet);
             startLocationTracking();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('bottom-panel');
+            sidebarCollapsed = !sidebarCollapsed;
+            
+            if (sidebarCollapsed) {
+                sidebar.classList.add('sidebar-collapsed');
+            } else {
+                sidebar.classList.remove('sidebar-collapsed');
+            }
         }
 
         function collapseBottomSheet() {
