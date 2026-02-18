@@ -10,6 +10,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
     <style>
@@ -156,6 +159,23 @@
             </div>
         </section>
     </main>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[90]">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900/90 backdrop-blur-md"></div>
+        <div class="modal-container bg-white w-full max-w-sm mx-auto rounded-[2.5rem] shadow-2xl z-50 relative p-10 text-center">
+            <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-4xl">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h2 class="text-3xl font-black text-gray-900 mb-2">Admin Portal</h2>
+            <p class="text-gray-500 text-sm mb-8">Sign in with your Google account to access the HR Command Center</p>
+            <button onclick="signInWithGoogle()" class="w-full pill-btn bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-black py-4 flex items-center justify-center gap-3 text-base">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png" class="w-5 h-5" alt="Google">
+                Sign in with Google
+            </button>
+            <p class="text-xs text-gray-400 mt-8">Only employees registered as Admin can enter</p>
+        </div>
+    </div>
 
     <!-- Scanner Modal -->
     <div id="scannerModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[80]">
@@ -350,8 +370,6 @@
         <div onclick="adminSetAction('Clock Out')" class="action-item px-4 py-2 text-xs font-black cursor-pointer text-red-500">CLOCK OUT</div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
@@ -364,6 +382,10 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+
         const todayStr = new Date().toISOString().split('T')[0];
         document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         const LATE_THRESHOLD = "09:00";
@@ -472,6 +494,46 @@
             document.getElementById('presentToday').innerText = stats.total;
             globalChart.data.datasets[0].data = [stats.working, stats.lunch, stats.out];
             globalChart.update();
+        });
+
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider).then(async (result) => {
+                const user = result.user;
+                const snap = await db.ref('employees').orderByChild('email').equalTo(user.email.toLowerCase()).once('value');
+                let isAdminUser = false;
+                snap.forEach(child => {
+                    if (child.val().isAdmin === true) isAdminUser = true;
+                });
+                if (isAdminUser) {
+                    toggleModal('adminLoginModal');
+                    console.log('Admin access granted to', user.email);
+                } else {
+                    await auth.signOut();
+                    alert("Access denied: This Google account is not registered as an Admin.");
+                }
+            }).catch(err => {
+                console.error(err);
+                alert("Google sign-in failed: " + err.message);
+            });
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            const loginModal = document.getElementById('adminLoginModal');
+            if (user) {
+                const snap = await db.ref('employees').orderByChild('email').equalTo(user.email.toLowerCase()).once('value');
+                let isAdminUser = false;
+                snap.forEach(child => {
+                    if (child.val().isAdmin === true) isAdminUser = true;
+                });
+                if (!isAdminUser) {
+                    await auth.signOut();
+                    if (loginModal.classList.contains('opacity-0')) toggleModal('adminLoginModal');
+                } else {
+                    if (!loginModal.classList.contains('opacity-0')) toggleModal('adminLoginModal');
+                }
+            } else {
+                if (loginModal.classList.contains('opacity-0')) toggleModal('adminLoginModal');
+            }
         });
 
         function startScanner() {
@@ -822,6 +884,14 @@
                 toggleModal('locationModal');
             });
         }
+
+        // Show admin login modal on initial load if not authenticated
+        setTimeout(() => {
+            const loginModal = document.getElementById('adminLoginModal');
+            if (loginModal.classList.contains('opacity-0')) {
+                toggleModal('adminLoginModal');
+            }
+        }, 300);
     </script>
 </body>
 </html>
