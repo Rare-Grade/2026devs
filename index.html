@@ -90,6 +90,9 @@
                 <button onclick="toggleModal('addEmployeeModal')" class="pill-btn bg-blue-600 text-white px-5 py-2 text-[11px] font-black flex items-center gap-2 shadow-lg shadow-blue-500/20">
                     <i class="fa-solid fa-plus"></i> ADD STAFF
                 </button>
+                <button onclick="signOutAdmin()" class="pill-btn bg-red-600 text-white px-5 py-2 text-[11px] font-black flex items-center gap-2 shadow-lg shadow-red-500/20">
+                    <i class="fa-solid fa-right-from-bracket"></i> SIGN OUT
+                </button>
             </div>
         </nav>
     </header>
@@ -517,6 +520,15 @@
             });
         }
 
+        function signOutAdmin() {
+            auth.signOut().then(() => {
+                toggleModal('adminLoginModal');
+            }).catch(err => {
+                console.error(err);
+                alert("Sign out failed: " + err.message);
+            });
+        }
+
         auth.onAuthStateChanged(async (user) => {
             const loginModal = document.getElementById('adminLoginModal');
             if (user) {
@@ -885,7 +897,6 @@
             });
         }
 
-        // Show admin login modal on initial load if not authenticated
         setTimeout(() => {
             const loginModal = document.getElementById('adminLoginModal');
             if (loginModal.classList.contains('opacity-0')) {
