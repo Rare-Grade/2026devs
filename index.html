@@ -312,7 +312,7 @@
             </div>
         </div>
     </div>
-    <!-- Add Employee Modal - OPTIMIZED FOR ALL SCREENS -->
+    <!-- Add Employee Modal -->
     <div id="addEmployeeModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/40 backdrop-blur-sm"></div>
         <div class="modal-container bg-white w-full max-w-sm sm:max-w-md mx-4 sm:mx-auto rounded-[2.5rem] shadow-2xl z-50 relative max-h-[92vh] overflow-hidden">
@@ -353,6 +353,50 @@
             </div>
         </div>
     </div>
+
+    <!-- Edit Employee Modal (NEW) -->
+    <div id="editEmployeeModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900/40 backdrop-blur-sm"></div>
+        <div class="modal-container bg-white w-full max-w-sm sm:max-w-md mx-4 sm:mx-auto rounded-[2.5rem] shadow-2xl z-50 relative max-h-[92vh] overflow-hidden">
+            <button onclick="toggleModal('editEmployeeModal')" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            <div class="p-6 sm:p-10 overflow-y-auto max-h-[calc(92vh-3.5rem)]">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4">
+                        <i class="fa-solid fa-pen"></i>
+                    </div>
+                    <h2 class="text-2xl font-black text-gray-900">Edit Staff</h2>
+                    <p class="text-gray-400 text-sm font-bold">Update employee details</p>
+                </div>
+                <form id="editEmployeeForm" class="space-y-5">
+                    <input type="hidden" id="editEmpId">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase ml-2 mb-2">Full Legal Name</label>
+                        <input type="text" id="editEmpName" required class="w-full rounded-2xl border-gray-100 bg-gray-50 px-6 py-4 text-sm focus:ring-4 focus:ring-amber-500/10 outline-none border transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase ml-2 mb-2">Job Title / Department</label>
+                        <input type="text" id="editEmpRole" required class="w-full rounded-2xl border-gray-100 bg-gray-50 px-6 py-4 text-sm focus:ring-4 focus:ring-amber-500/10 outline-none border transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase ml-2 mb-2">User Type</label>
+                        <select id="editEmpType" class="w-full rounded-2xl border-gray-100 bg-gray-50 px-6 py-4 text-sm focus:ring-4 focus:ring-amber-500/10 outline-none border transition-all">
+                            <option value="employee">Employee</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase ml-2 mb-2">Work Email</label>
+                        <input type="email" id="editEmpEmail" required class="w-full rounded-2xl border-gray-100 bg-gray-50 px-6 py-4 text-sm focus:ring-4 focus:ring-amber-500/10 outline-none border transition-all">
+                    </div>
+                    <div class="pt-6 flex gap-3">
+                        <button type="button" onclick="toggleModal('editEmployeeModal')" class="flex-1 pill-btn bg-gray-100 text-gray-500 font-black py-4">CANCEL</button>
+                        <button type="submit" class="flex-1 pill-btn bg-amber-600 text-white font-black py-4 shadow-xl shadow-amber-500/20">UPDATE STAFF</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Confirm Delete Modal -->
     <div id="confirmDeleteModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[70]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
@@ -430,6 +474,7 @@
         let html5QrCode = null;
         let officeLocation = null;
         let attendanceListener = null;
+        let editingEmpId = null;
 
         db.ref('settings/officeLocation').on('value', snap => {
             officeLocation = snap.val() || null;
@@ -471,6 +516,9 @@
                     </div>
                     <button onclick="showEmployeeQR('${emp.id}', '${emp.name}')" class="opacity-0 group-hover:opacity-100 p-2 text-blue-400 hover:text-blue-600 transition-all">
                         <i class="fa-solid fa-qrcode"></i>
+                    </button>
+                    <button onclick="editEmployee('${emp.id}', '${emp.name.replace(/'/g, "\\'")}', '${emp.role.replace(/'/g, "\\'")}', '${emp.email}', ${emp.isAdmin})" class="opacity-0 group-hover:opacity-100 p-2 text-amber-400 hover:text-amber-600 transition-all">
+                        <i class="fa-solid fa-pen"></i>
                     </button>
                     <button onclick="promptDelete('${emp.id}', '${emp.name}')" class="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-all">
                         <i class="fa-solid fa-trash-can"></i>
@@ -657,7 +705,6 @@
             db.ref(path).once('value').then(snap => {
                 const data = snap.val() || {};
 
-                // 15-minute cooldown between scans
                 if (data.lastActionTime) {
                     const timeSinceLast = Date.now() - data.lastActionTime;
                     if (timeSinceLast < 15 * 60 * 1000) {
@@ -731,7 +778,13 @@
             toggleModal('confirmDeleteModal');
         }
         document.getElementById('finalDeleteBtn').onclick = () => {
-            if (pendingDeleteId) db.ref('employees/' + pendingDeleteId).remove().then(() => toggleModal('confirmDeleteModal'));
+            if (pendingDeleteId) {
+                db.ref('employees/' + pendingDeleteId).remove();
+                db.ref('attendance/' + todayStr + '/' + pendingDeleteId).remove().then(() => {
+                    toggleModal('confirmDeleteModal');
+                    pendingDeleteId = null;
+                });
+            }
         };
         function formatTime(minutes) {
             if (isNaN(minutes) || minutes < 0) return "--:--";
@@ -824,6 +877,36 @@
                 showEmployeeQR(id, name);
             });
         });
+
+        // === EDIT EMPLOYEE FUNCTIONALITY ===
+        function editEmployee(id, name, role, email, isAdmin) {
+            editingEmpId = id;
+            document.getElementById('editEmpId').value = id;
+            document.getElementById('editEmpName').value = name;
+            document.getElementById('editEmpRole').value = role;
+            document.getElementById('editEmpEmail').value = email;
+            document.getElementById('editEmpType').value = isAdmin ? 'admin' : 'employee';
+            toggleModal('editEmployeeModal');
+        }
+
+        document.getElementById('editEmployeeForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!editingEmpId) return;
+            const name = document.getElementById('editEmpName').value.trim();
+            const role = document.getElementById('editEmpRole').value.trim();
+            const email = document.getElementById('editEmpEmail').value.trim().toLowerCase();
+            const isAdmin = document.getElementById('editEmpType').value === 'admin';
+            db.ref('employees/' + editingEmpId).update({
+                name: name,
+                role: role,
+                email: email,
+                isAdmin: isAdmin
+            }).then(() => {
+                toggleModal('editEmployeeModal');
+                editingEmpId = null;
+            });
+        });
+
         function showEmployeeQR(id, name) {
             const qrContainer = document.getElementById('qrCodeContainer');
             qrContainer.innerHTML = '';
