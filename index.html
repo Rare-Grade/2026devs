@@ -183,8 +183,6 @@
         </section>
     </main>
 
-    <!-- All modals remain exactly the same (Admin Login, Sign Out, Scanner, Location, Stats, Add Employee, Confirm Delete, Success/QR, Action Menu) -->
-    <!-- [All previous modal HTML unchanged - omitted here for brevity but fully included in final file] -->
     <!-- Admin Login Modal -->
     <div id="adminLoginModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[90]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/90 backdrop-blur-md"></div>
@@ -314,12 +312,12 @@
             </div>
         </div>
     </div>
-    <!-- Add Employee Modal -->
+    <!-- Add Employee Modal - OPTIMIZED FOR ALL SCREENS -->
     <div id="addEmployeeModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/40 backdrop-blur-sm"></div>
-        <div class="modal-container bg-white w-full max-w-md mx-auto rounded-[2.5rem] shadow-2xl z-50 relative">
+        <div class="modal-container bg-white w-full max-w-sm sm:max-w-md mx-4 sm:mx-auto rounded-[2.5rem] shadow-2xl z-50 relative max-h-[92vh] overflow-hidden">
             <button onclick="toggleModal('addEmployeeModal')" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
-            <div class="p-10">
+            <div class="p-6 sm:p-10 overflow-y-auto max-h-[calc(92vh-3.5rem)]">
                 <div class="text-center mb-8">
                     <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4">
                         <i class="fa-solid fa-user-plus"></i>
@@ -545,13 +543,11 @@
                 attendanceListener = null;
             }
             if (fromDate === toDate && fromDate === todayStr) {
-                // Live mode for today
                 attendanceListener = db.ref('attendance/' + todayStr);
                 attendanceListener.on('value', snap => {
                     renderAttendanceTable(snap.val(), todayStr);
                 });
             } else {
-                // Historical range
                 db.ref('attendance').orderByKey().startAt(fromDate).endAt(toDate).once('value').then(snap => {
                     let combined = {};
                     snap.forEach(child => {
@@ -580,7 +576,6 @@
             loadAttendanceData(todayStr, todayStr);
         }
 
-        // Rest of the script (signInWithGoogle, scanner, processScanLogic, adminSetAction, fetchEmployeeHistory, etc.) remains 100% unchanged
         function signInWithGoogle() {
             auth.signInWithPopup(provider).then(async (result) => {
                 const user = result.user;
@@ -846,7 +841,6 @@
             });
         }
 
-        // Initialize with today live view
         window.onload = () => {
             document.getElementById('dateFrom').value = todayStr;
             document.getElementById('dateTo').value = todayStr;
