@@ -656,13 +656,48 @@
             const now = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
             db.ref(path).once('value').then(snap => {
                 const data = snap.val() || {};
-                let update = { id, name, date: saveTodayStr, day: new Date().toLocaleDateString('en-US', { weekday: 'long' }) };
+
+                // 15-minute cooldown between scans
+                if (data.lastActionTime) {
+                    const timeSinceLast = Date.now() - data.lastActionTime;
+                    if (timeSinceLast < 15 * 60 * 1000) {
+                        const minutesLeft = Math.ceil((15 * 60 * 1000 - timeSinceLast) / 60000);
+                        alert(`Please wait ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''} before your next scan.`);
+                        html5QrCode.resume();
+                        return;
+                    }
+                }
+
+                let update = { 
+                    id: id, 
+                    name: name,
+                    date: saveTodayStr,
+                    day: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
+                    lastActionTime: Date.now()
+                };
                 let actionTaken = "";
-                if (!data.TimeIn) { update.TimeIn = now; update.lastAction = "Clock In"; actionTaken = "CLOCKED IN"; }
-                else if (!data.LunchOut) { update.LunchOut = now; update.lastAction = "Lunch Out"; actionTaken = "LUNCH OUT"; }
-                else if (!data.LunchBack) { update.LunchBack = now; update.lastAction = "Lunch Back"; actionTaken = "LUNCH BACK"; }
-                else if (!data.TimeOut) { update.TimeOut = now; update.lastAction = "Clock Out"; actionTaken = "CLOCKED OUT"; }
-                else { alert(`${name} completed today.`); html5QrCode.resume(); return; }
+
+                if (!data.TimeIn) {
+                    update.TimeIn = now;
+                    update.lastAction = "Clock In";
+                    actionTaken = "CLOCKED IN";
+                } else if (!data.LunchOut) {
+                    update.LunchOut = now;
+                    update.lastAction = "Lunch Out";
+                    actionTaken = "LUNCH OUT";
+                } else if (!data.LunchBack) {
+                    update.LunchBack = now;
+                    update.lastAction = "Lunch Back";
+                    actionTaken = "LUNCH BACK";
+                } else if (!data.TimeOut) {
+                    update.TimeOut = now;
+                    update.lastAction = "Clock Out";
+                    actionTaken = "CLOCKED OUT";
+                } else {
+                    alert(`${name} has already completed all 4 scans for today.`);
+                    html5QrCode.resume();
+                    return;
+                }
                 db.ref(path).update(update).then(() => {
                     alert(`${actionTaken}: ${name}`);
                     html5QrCode.resume();
