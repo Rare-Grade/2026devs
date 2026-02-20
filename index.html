@@ -115,9 +115,9 @@
                     <h2 class="text-3xl font-black text-gray-800" id="presentToday">0</h2>
                 </div>
             </div>
-            <div class="glass-card p-6">
-                <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Daily Status Distribution</h3>
-                <canvas id="attendanceChart" height="240"></canvas>
+            <div class="glass-card p-4">
+                <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Daily Status Distribution</h3>
+                <canvas id="attendanceChart" height="180"></canvas>
             </div>
             <div class="glass-card flex-1 flex flex-col min-h-[400px]">
                 <div class="p-5 border-b border-gray-50 flex justify-between items-center">
@@ -634,7 +634,7 @@
                         <td class="p-3.5 text-center text-xs">${complianceHtml}</td>
                         <td class="p-3.5 font-mono font-bold text-gray-500">${log.TimeOut || '--:--'}</td>
                         <td class="p-3.5 text-center">
-                            <span class="${statusInfo.class} px-4 py-2 rounded-xl text-[10px] font-black opacity-90">${statusInfo.status}</span>
+                            <span class="${statusInfo.class} px-4 py-2 rounded-xl text-[10px] font-black opacity-90 whitespace-nowrap">${statusInfo.status}</span>
                         </td>
                     </tr>`;
             });
@@ -695,18 +695,18 @@
                     toggleModal('adminLoginModal');
                 } else {
                     await auth.signOut();
-                    alert("Access denied: This Google account is not registered as an Admin.");
+                    // Access denied popup removed
                 }
             }).catch(err => {
                 console.error(err);
-                alert("Google sign-in failed: " + err.message);
+                // Error alert removed for cleaner UX
             });
         }
         
         function showSignOutConfirm() { toggleModal('signOutConfirmModal'); }
         function confirmSignOut() { toggleModal('signOutConfirmModal'); signOutAdmin(); }
         function signOutAdmin() {
-            auth.signOut().then(() => toggleModal('adminLoginModal')).catch(err => alert("Sign out failed: " + err.message));
+            auth.signOut().then(() => toggleModal('adminLoginModal')).catch(err => console.log("Sign out error"));
         }
         
         auth.onAuthStateChanged(async (user) => {
@@ -717,7 +717,10 @@
                 snap.forEach(child => { if (child.val().isAdmin === true) isAdminUser = true; });
                 if (!isAdminUser) await auth.signOut();
             }
-            if (!user || document.getElementById('adminLoginModal').classList.contains('opacity-0')) toggleModal('adminLoginModal');
+            // Only show login modal if no user is logged in
+            if (!user && loginModal.classList.contains('opacity-0')) {
+                toggleModal('adminLoginModal');
+            }
         });
         
         function startScanner() {
