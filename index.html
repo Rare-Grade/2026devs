@@ -695,11 +695,10 @@
                     toggleModal('adminLoginModal');
                 } else {
                     await auth.signOut();
-                    // Access denied popup removed
+                    alert("Access denied: This Google account is not registered as an Admin.");
                 }
             }).catch(err => {
                 console.error(err);
-                // Error alert removed for cleaner UX
             });
         }
         
