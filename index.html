@@ -559,30 +559,28 @@
         });
 
         function determineStatus(log) {
+            // If no clock in, absent
             if (!log || !log.TimeIn) {
                 return { status: 'ABSENT', class: 'status-absent' };
             }
             
+            // If currently at lunch (Lunch Out but not back yet)
+            if (log.LunchOut && !log.LunchBack) {
+                return { status: 'LUNCH', class: 'status-lunch' };
+            }
+            
+            // Calculate if late (more than 1 hour after 9:00)
             const timeIn = log.TimeIn;
             const [hours, minutes] = timeIn.split(':').map(Number);
             const timeInMinutes = hours * 60 + minutes;
             const thresholdMinutes = 9 * 60; // 9:00 AM
             
-            if (log.lastAction === 'Lunch Out') {
-                return { status: 'LUNCH', class: 'status-lunch' };
-            }
-            
-            if (log.TimeOut) {
-                if (timeInMinutes > thresholdMinutes + 60) {
-                    return { status: 'HALF DAY', class: 'status-halfday' };
-                }
-                return { status: 'PRESENT', class: 'status-present' };
-            }
-            
+            // If clocked in more than 1 hour after 9:00, it's half day
             if (timeInMinutes > thresholdMinutes + 60) {
                 return { status: 'HALF DAY', class: 'status-halfday' };
             }
             
+            // Otherwise present
             return { status: 'PRESENT', class: 'status-present' };
         }
 
