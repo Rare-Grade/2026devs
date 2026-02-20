@@ -743,6 +743,10 @@
                 html5QrCode.stop().then(() => {
                     toggleModal('scannerModal');
                     html5QrCode = null;
+                }).catch(err => {
+                    console.error("Error stopping scanner:", err);
+                    toggleModal('scannerModal');
+                    html5QrCode = null;
                 });
             } else {
                 toggleModal('scannerModal');
