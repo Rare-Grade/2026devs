@@ -448,6 +448,9 @@
                 <a id="downloadQrBtn" href="#" class="w-full pill-btn bg-blue-600 text-white font-black py-3 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-download"></i> DOWNLOAD QR (PDF)
                 </a>
+                <button id="regenerateQrBtn" onclick="regenerateQR()" class="w-full pill-btn bg-gray-100 text-gray-700 font-black py-3 flex items-center justify-center gap-2 hover:bg-gray-200">
+                    <i class="fa-solid fa-rotate"></i> REGENERATE QR
+                </button>
             </div>
         </div>
     </div>
@@ -486,6 +489,8 @@
         let attendanceListener = null;
         let editingEmpId = null;
         let employeesData = {};
+        let currentQrEmpId = null;
+        let currentQrEmpName = null;
 
         db.ref('settings/officeLocation').on('value', snap => {
             officeLocation = snap.val() || null;
@@ -1113,6 +1118,15 @@
         });
 
         function showEmployeeQR(id, name) {
+            currentQrEmpId = id;
+            currentQrEmpName = name;
+            generateQRCode(id, name);
+            document.getElementById('successTitle').textContent = "QR Code Ready";
+            document.getElementById('successMessage').innerHTML = `Permanent QR for <strong>${name}</strong><br><strong>Use this same QR code every day</strong>`;
+            toggleModal('successModal');
+        }
+
+        function generateQRCode(id, name) {
             const qrContainer = document.getElementById('qrCodeContainer');
             qrContainer.innerHTML = '';
             new QRCode(qrContainer, { text: id, width: 220, height: 220, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
@@ -1129,10 +1143,41 @@
                     dlBtn.href = pdfUrl;
                     dlBtn.download = `QR_${name.replace(' ', '_')}.pdf`;
                 }
-                document.getElementById('successTitle').textContent = "QR Code Ready";
-                document.getElementById('successMessage').innerHTML = `Permanent QR for <strong>${name}</strong><br><strong>Use this same QR code every day</strong>`;
-                toggleModal('successModal');
             }, 300);
+        }
+
+        function regenerateQR() {
+            if (!currentQrEmpId || !currentQrEmpName) return;
+            
+            // Generate new ID
+            const newId = `EMP-${Math.random().toString(16).slice(2, 6).toUpperCase()}`;
+            
+            // Get current employee data
+            const empData = employeesData[currentQrEmpId];
+            if (!empData) return;
+            
+            // Create new employee entry with new ID
+            const updatedData = {
+                ...empData,
+                id: newId
+            };
+            
+            // Update Firebase: remove old, add new
+            db.ref('employees/' + currentQrEmpId).remove()
+                .then(() => {
+                    return db.ref('employees/' + newId).set(updatedData);
+                })
+                .then(() => {
+                    // Update current tracking variables
+                    currentQrEmpId = newId;
+                    
+                    // Regenerate QR with new ID
+                    generateQRCode(newId, currentQrEmpName);
+                    
+                    // Show confirmation
+                    document.getElementById('successTitle').textContent = "QR Regenerated!";
+                    document.getElementById('successMessage').innerHTML = `New QR Code for <strong>${currentQrEmpName}</strong><br><strong>New ID: ${newId}</strong>`;
+                });
         }
         
         function toggleModal(id) {
