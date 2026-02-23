@@ -559,19 +559,28 @@
             }
         });
         function determineStatus(log) {
+            // If no clock in, absent
             if (!log || !log.TimeIn) {
                 return { status: 'ABSENT', class: 'status-absent' };
             }
+           
+            // If currently at lunch (Lunch Out but not back yet)
             if (log.LunchOut && !log.LunchBack) {
                 return { status: 'LUNCH', class: 'status-lunch' };
             }
+           
+            // Calculate if late (more than 1 hour after 9:00)
             const timeIn = log.TimeIn;
             const [hours, minutes] = timeIn.split(':').map(Number);
             const timeInMinutes = hours * 60 + minutes;
-            const thresholdMinutes = 9 * 60;
+            const thresholdMinutes = 9 * 60; // 9:00 AM
+           
+            // If clocked in more than 1 hour after 9:00, it's half day
             if (timeInMinutes > thresholdMinutes + 60) {
                 return { status: 'HALF DAY', class: 'status-halfday' };
             }
+           
+            // Otherwise present
             return { status: 'PRESENT', class: 'status-present' };
         }
         function renderAttendanceTable(rawData, singleDate) {
@@ -579,6 +588,7 @@
             tbody.innerHTML = '';
             let stats = { present: 0, lunch: 0, halfday: 0, absent: 0 };
             if (singleDate) {
+                // For single date, show all employees, including absents
                 const employees = Object.values(employeesData);
                 if (employees.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-gray-300">No employees registered</td></tr>`;
@@ -587,7 +597,7 @@
                     globalChart.update();
                     return;
                 }
-                employees.sort((a, b) => a.name.localeCompare(b.name));
+                employees.sort((a, b) => a.name.localeCompare(b.name)); // Sort by name
                 employees.forEach(emp => {
                     let log = rawData[emp.id] || { id: emp.id, name: emp.name };
                     const displayDate = singleDate;
@@ -627,6 +637,7 @@
                         </tr>`;
                 });
             } else {
+                // For range, keep as before
                 const entries = Object.values(rawData || {});
                 if (entries.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-gray-300">No records found in selected range</td></tr>`;
@@ -752,6 +763,7 @@
             if (!user && loginModal.classList.contains('opacity-0')) {
                 toggleModal('adminLoginModal');
             } else if (user) {
+                // Check if user is admin, if not sign them out
                 const snap = await db.ref('employees').orderByChild('email').equalTo(user.email.toLowerCase()).once('value');
                 let isAdminUser = false;
                 snap.forEach(child => {
@@ -937,6 +949,7 @@
                 chartLabels = [],
                 chartData = [];
            
+            // Get last 30 days for chart
             for (let i = 29; i >= 0; i--) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
@@ -1030,8 +1043,6 @@
             const absentDaysCount = document.getElementById('statAbsentDays').innerText;
 
             const doc = new jspdf.jsPDF('p', 'mm', 'a4');
-
-            // Modern Professional Header
             doc.setFillColor(15, 23, 42);
             doc.rect(0, 0, 210, 45, 'F');
             doc.addImage('https://i.postimg.cc/05BVVkbb/LOGO-removebg-preview.png', 'PNG', 15, 8, 45, 25);
@@ -1039,20 +1050,17 @@
             doc.setFontSize(26);
             doc.text("ATTENDANCE HUB", 72, 22);
             doc.setFontSize(11);
-            doc.text("Enterprise HR Analytics", 72, 32);
+            doc.text("Employee Performance Report", 72, 32);
             doc.setTextColor(0);
 
-            doc.setFontSize(20);
-            doc.text("EMPLOYEE PERFORMANCE REPORT", 20, 65);
-
-            doc.setFontSize(16);
-            doc.text(empName, 20, 78);
-            doc.setFontSize(11);
-            doc.text(empIdRole, 20, 86);
-            doc.text(`Last 30 Days • Generated: ${new Date().toLocaleDateString('en-GB')}`, 20, 94);
+            doc.setFontSize(18);
+            doc.text(empName, 20, 65);
+            doc.setFontSize(12);
+            doc.text(empIdRole, 20, 75);
+            doc.text(`Last 30 Days • Generated: ${new Date().toLocaleDateString('en-GB')}`, 20, 85);
 
             // Summary Cards
-            let y = 110;
+            let y = 100;
             const cardW = 43;
             const gap = 8;
 
@@ -1183,8 +1191,12 @@
                         const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut, dayData.LunchOut, dayData.LunchBack);
                         totalHours += duration;
                         const timeInMinutes = timeToMinutes(dayData.TimeIn);
-                        if (timeInMinutes > 9*60 + 60) halfDays++;
-                        else fullDays++;
+                        const thresholdMinutes = 9 * 60;
+                        if (timeInMinutes > thresholdMinutes + 60) {
+                            halfDays++;
+                        } else {
+                            fullDays++;
+                        }
                     } else {
                         absentDays++;
                     }
@@ -1199,74 +1211,16 @@
 
             doc.text(`Overall Attendance Rate: ${overallRate}%`, 20, 85);
             doc.text(`Total Absent Days (All Employees): ${totalAbsent}`, 20, 95);
-
-            // Calendar
-            doc.setFontSize(15);
-            doc.text("Monthly Attendance Calendar", 20, 115);
-            let yPos = 125;
-            const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-            doc.setFontSize(10);
-            for (let i = 0; i < 7; i++) {
-                doc.text(days[i], 22 + i*25, yPos + 8);
-            }
-            yPos += 15;
-            const cellSize = 25;
-            const firstDay = new Date(year, month, 1).getDay();
-            let dayNum = 1;
-            for (let row = 0; row < 6; row++) {
-                for (let col = 0; col < 7; col++) {
-                    const x = 20 + col * cellSize;
-                    const y = yPos + row * cellSize;
-                    doc.setDrawColor(226,232,240);
-                    doc.rect(x, y, cellSize, cellSize);
-                    if ((row === 0 && col < firstDay) || dayNum > daysInMonth) {
-                        dayNum++;
-                        continue;
-                    }
-                    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
-                    const dayAtt = allAttendance[dateStr] || {};
-                    let absent = 0;
-                    Object.keys(employeesData).forEach(id => {
-                        if (!dayAtt[id] || !dayAtt[id].TimeIn) absent++;
-                    });
-                    const attended = totalEmps - absent;
-                    const rate = totalEmps ? (attended / totalEmps * 100) : 0;
-                    let r=220, g=38, b=38;
-                    if (rate >= 90) { r=34; g=197; b=94; }
-                    else if (rate >= 70) { r=234; g=179; b=8; }
-                    doc.setFillColor(r, g, b);
-                    doc.rect(x, y, cellSize, cellSize, 'F');
-                    doc.setTextColor(255);
-                    doc.setFontSize(9);
-                    doc.text(String(dayNum), x+3, y+9);
-                    doc.setFontSize(6);
-                    doc.text(`${attended}/${totalEmps}`, x+3, y+17);
-                    doc.text(`${rate.toFixed(0)}%`, x+3, y+23);
-                    dayNum++;
-                }
-            }
-            yPos += 160;
-
-            // Legend
-            doc.setFontSize(10);
-            doc.setFillColor(34,197,94);
-            doc.rect(20, yPos, 12, 12, 'F');
-            doc.text("≥ 90% Attendance", 38, yPos+9);
-            doc.setFillColor(234,179,8);
-            doc.rect(95, yPos, 12, 12, 'F');
-            doc.text("70–89% Attendance", 113, yPos+9);
-            doc.setFillColor(220,38,38);
-            doc.rect(170, yPos, 12, 12, 'F');
-            doc.text("< 70% Attendance", 188, yPos+9);
-            yPos += 25;
+            doc.text(`Total Working Hours (All Employees): ${totalWorkingHours.toFixed(1)}`, 20, 105);
 
             // Employee Table
+            let yPos = 120;
             doc.setFontSize(14);
             doc.text("Employee-wise Summary", 20, yPos);
             yPos += 12;
 
             // Table Header
-            doc.setFillColor(37,99,235);
+            doc.setFillColor(37, 99, 235);
             doc.rect(20, yPos, 170, 12, 'F');
             doc.setTextColor(255);
             doc.setFontSize(11);
@@ -1315,6 +1269,7 @@
                 showEmployeeQR(id, name);
             });
         });
+        // === EDIT EMPLOYEE FUNCTIONALITY ===
         function editEmployee(id, name, role, email, isAdmin) {
             editingEmpId = id;
             document.getElementById('editEmpId').value = id;
