@@ -448,6 +448,23 @@
             </div>
         </div>
     </div>
+    <!-- Email Exists Modal -->
+    <div id="emailExistsModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[75]">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
+        <div class="modal-container bg-white w-full max-w-xs mx-auto rounded-[2.5rem] shadow-2xl z-50 relative">
+            <button onclick="toggleModal('emailExistsModal')" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
+                    <i class="fa-solid fa-envelope-circle-check"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900">Email Already Exists</h3>
+                <p class="text-gray-500 text-xs mt-2 leading-relaxed">This email address is already registered in the system. Please use a different email address.</p>
+                <div class="flex flex-col gap-2 mt-8">
+                    <button onclick="toggleModal('emailExistsModal')" class="pill-btn bg-amber-600 text-white font-black py-3 text-sm">OK, GOT IT</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="adminActionMenu" class="action-menu py-2 overflow-hidden">
         <div onclick="adminSetAction('Clock In')" class="action-item px-4 py-2 text-xs font-black cursor-pointer border-b border-gray-50">CLOCK IN</div>
         <div onclick="adminSetAction('Lunch Out')" class="action-item px-4 py-2 text-xs font-black cursor-pointer">LUNCH OUT</div>
@@ -1059,10 +1076,10 @@
             doc.text(empIdRole, 20, 75);
             doc.text(`Last 30 Days • Generated: ${new Date().toLocaleDateString('en-GB')}`, 20, 85);
 
-            // Summary Cards
+            // Summary Cards - Equal width and fit
             let y = 100;
-            const cardW = 43;
-            const gap = 8;
+            const cardW = 40;
+            const gap = 6.67; // (210 - 40 - 40 - 40 - 40 - 20 - 20) / 3 = 6.67
 
             // Total Hours
             doc.setFillColor(241, 245, 255);
@@ -1226,12 +1243,20 @@
             doc.save(`Monthly_Report_${monthStr.replace(/ /g,'_')}.pdf`);
         }
        
-        document.getElementById('addEmployeeForm').addEventListener('submit', (e) => {
+        document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const email = document.getElementById('newEmpEmail').value.trim().toLowerCase();
+            
+            // Check if email already exists
+            const emailCheck = await db.ref('employees').orderByChild('email').equalTo(email).once('value');
+            if (emailCheck.exists()) {
+                toggleModal('emailExistsModal');
+                return;
+            }
+            
             const id = `EMP-${Math.random().toString(16).slice(2, 6).toUpperCase()}`;
             const name = document.getElementById('newEmpName').value.trim();
             const role = document.getElementById('newEmpRole').value.trim();
-            const email = document.getElementById('newEmpEmail').value.trim().toLowerCase();
             const isAdmin = document.getElementById('newEmpType').value === 'admin';
             db.ref('employees/' + id).set({ id, name, role, email, isAdmin, createdAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
                 toggleModal('addEmployeeModal');
@@ -1249,12 +1274,27 @@
             document.getElementById('editEmpType').value = isAdmin ? 'admin' : 'employee';
             toggleModal('editEmployeeModal');
         }
-        document.getElementById('editEmployeeForm').addEventListener('submit', (e) => {
+        document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!editingEmpId) return;
+            const email = document.getElementById('editEmpEmail').value.trim().toLowerCase();
+            
+            // Check if email already exists (excluding current employee)
+            const emailCheck = await db.ref('employees').orderByChild('email').equalTo(email).once('value');
+            let emailExists = false;
+            emailCheck.forEach(child => {
+                if (child.key !== editingEmpId) {
+                    emailExists = true;
+                }
+            });
+            
+            if (emailExists) {
+                toggleModal('emailExistsModal');
+                return;
+            }
+            
             const name = document.getElementById('editEmpName').value.trim();
             const role = document.getElementById('editEmpRole').value.trim();
-            const email = document.getElementById('editEmpEmail').value.trim().toLowerCase();
             const isAdmin = document.getElementById('editEmpType').value === 'admin';
             db.ref('employees/' + editingEmpId).update({
                 name: name,
