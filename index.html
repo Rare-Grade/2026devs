@@ -364,7 +364,7 @@
         <div class="modal-overlay absolute w-full h-full bg-gray-900/40 backdrop-blur-sm"></div>
         <div class="modal-container bg-white w-full max-w-sm sm:max-w-md mx-4 sm:mx-auto rounded-[2.5rem] shadow-2xl z-50 relative max-h-[92vh] overflow-hidden">
             <button onclick="toggleModal('editEmployeeModal')" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
-            <div class="p-6 sm:p-10 overflow-y-auto max-h=[calc(92vh-3.5rem)]">
+            <div class="p-6 sm:p-10 overflow-y-auto max-h-[calc(92vh-3.5rem)]">
                 <div class="text-center mb-8">
                     <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4">
                         <i class="fa-solid fa-pen"></i>
@@ -453,6 +453,23 @@
         <div onclick="adminSetAction('Lunch Out')" class="action-item px-4 py-2 text-xs font-black cursor-pointer">LUNCH OUT</div>
         <div onclick="adminSetAction('Lunch Back')" class="action-item px-4 py-2 text-xs font-black cursor-pointer border-b border-gray-50">LUNCH BACK</div>
         <div onclick="adminSetAction('Clock Out')" class="action-item px-4 py-2 text-xs font-black cursor-pointer text-red-500">CLOCK OUT</div>
+    </div>
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[70]">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
+        <div class="modal-container bg-white w-full max-w-xs mx-auto rounded-[2.5rem] shadow-2xl z-50 relative">
+            <button onclick="toggleModal('errorModal')" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900">Error</h3>
+                <p id="errorMessage" class="text-gray-500 text-xs mt-2 leading-relaxed"></p>
+                <div class="flex flex-col gap-2 mt-8">
+                    <button onclick="toggleModal('errorModal')" class="pill-btn bg-gray-100 text-gray-500 font-black py-3 text-sm">OK</button>
+                </div>
+            </div>
+        </div>
     </div>
     <script>
         const firebaseConfig = {
@@ -1061,53 +1078,57 @@
 
             // Summary Cards
             let y = 100;
-            const cardW = 43;
-            const gap = 8;
+            const cardW = 42;
+            const gap = 6;
 
             // Total Hours
             doc.setFillColor(241, 245, 255);
             doc.roundedRect(20, y, cardW, 42, 6, 6, 'F');
             doc.setDrawColor(148, 163, 184);
             doc.roundedRect(20, y, cardW, 42, 6, 6);
-            doc.setFontSize(9);
+            doc.setFontSize(8);
             doc.setTextColor(71, 85, 105);
-            doc.text("TOTAL HOURS", 25, y + 13);
-            doc.setFontSize(21);
+            doc.text("TOTAL", 25, y + 10);
+            doc.text("HOURS", 25, y + 16);
+            doc.setFontSize(20);
             doc.setTextColor(30, 64, 175);
-            doc.text(totalHours, 25, y + 30);
+            doc.text(totalHours, 25, y + 32);
 
             // Full Days
             doc.setFillColor(240, 253, 244);
             doc.roundedRect(20 + cardW + gap, y, cardW, 42, 6, 6, 'F');
             doc.roundedRect(20 + cardW + gap, y, cardW, 42, 6, 6);
-            doc.setFontSize(9);
+            doc.setFontSize(8);
             doc.setTextColor(71, 85, 105);
-            doc.text("FULL DAYS", 25 + cardW + gap, y + 13);
-            doc.setFontSize(21);
+            doc.text("FULL", 25 + cardW + gap, y + 10);
+            doc.text("DAYS", 25 + cardW + gap, y + 16);
+            doc.setFontSize(20);
             doc.setTextColor(22, 101, 52);
-            doc.text(fullDays, 25 + cardW + gap, y + 30);
+            doc.text(fullDays, 25 + cardW + gap, y + 32);
 
             // Half Days
             doc.setFillColor(254, 252, 232);
             doc.roundedRect(20 + 2*(cardW + gap), y, cardW, 42, 6, 6, 'F');
             doc.roundedRect(20 + 2*(cardW + gap), y, cardW, 42, 6, 6);
-            doc.setFontSize(9);
+            doc.setFontSize(8);
             doc.setTextColor(71, 85, 105);
-            doc.text("HALF DAYS", 25 + 2*(cardW + gap), y + 13);
-            doc.setFontSize(21);
+            doc.text("HALF", 25 + 2*(cardW + gap), y + 10);
+            doc.text("DAYS", 25 + 2*(cardW + gap), y + 16);
+            doc.setFontSize(20);
             doc.setTextColor(161, 98, 7);
-            doc.text(halfDays, 25 + 2*(cardW + gap), y + 30);
+            doc.text(halfDays, 25 + 2*(cardW + gap), y + 32);
 
             // Absent
             doc.setFillColor(254, 242, 242);
             doc.roundedRect(20 + 3*(cardW + gap), y, cardW, 42, 6, 6, 'F');
             doc.roundedRect(20 + 3*(cardW + gap), y, cardW, 42, 6, 6);
-            doc.setFontSize(9);
+            doc.setFontSize(8);
             doc.setTextColor(71, 85, 105);
-            doc.text("ABSENT DAYS", 25 + 3*(cardW + gap), y + 13);
-            doc.setFontSize(21);
+            doc.text("ABSENT", 25 + 3*(cardW + gap), y + 10);
+            doc.text("DAYS", 25 + 3*(cardW + gap), y + 16);
+            doc.setFontSize(20);
             doc.setTextColor(220, 38, 38);
-            doc.text(absentDaysCount, 25 + 3*(cardW + gap), y + 30);
+            doc.text(absentDaysCount, 25 + 3*(cardW + gap), y + 32);
 
             // Trend Chart
             y += 55;
@@ -1195,10 +1216,10 @@
             doc.setTextColor(255);
             doc.setFontSize(11);
             doc.text("Employee Name", 25, yPos+9);
-            doc.text("Full Days", 90, yPos+9);
+            doc.text("Full Days", 85, yPos+9);
             doc.text("Half Days", 115, yPos+9);
-            doc.text("Absent Days", 140, yPos+9);
-            doc.text("Hours", 170, yPos+9);
+            doc.text("Absent Days", 145, yPos+9);
+            doc.text("Working Hours", 165, yPos+9);
             yPos += 14;
             doc.setTextColor(0);
 
@@ -1215,15 +1236,20 @@
                 doc.setDrawColor(226,232,240);
                 doc.rect(20, yPos, 170, 10);
                 doc.text(emp.name.substring(0,28), 25, yPos+7.5);
-                doc.text(String(emp.fullDays), 95, yPos+7.5);
-                doc.text(String(emp.halfDays), 120, yPos+7.5);
-                doc.text(String(emp.absentDays), 148, yPos+7.5);
-                doc.text(emp.totalHours, 173, yPos+7.5);
+                doc.text(String(emp.fullDays), 88, yPos+7.5);
+                doc.text(String(emp.halfDays), 118, yPos+7.5);
+                doc.text(String(emp.absentDays), 150, yPos+7.5);
+                doc.text(emp.totalHours, 172, yPos+7.5);
                 yPos += 10;
                 alternate = !alternate;
             });
 
             doc.save(`Monthly_Report_${monthStr.replace(/ /g,'_')}.pdf`);
+        }
+       
+        function showError(msg) {
+            document.getElementById('errorMessage').innerText = msg;
+            toggleModal('errorModal');
         }
        
         document.getElementById('addEmployeeForm').addEventListener('submit', (e) => {
@@ -1233,10 +1259,16 @@
             const role = document.getElementById('newEmpRole').value.trim();
             const email = document.getElementById('newEmpEmail').value.trim().toLowerCase();
             const isAdmin = document.getElementById('newEmpType').value === 'admin';
-            db.ref('employees/' + id).set({ id, name, role, email, isAdmin, createdAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
-                toggleModal('addEmployeeModal');
-                document.getElementById('addEmployeeForm').reset();
-                showEmployeeQR(id, name);
+            db.ref('employees').orderByChild('email').equalTo(email).once('value').then(snap => {
+                if (snap.exists()) {
+                    showError('This email is already registered.');
+                } else {
+                    db.ref('employees/' + id).set({ id, name, role, email, isAdmin, createdAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
+                        toggleModal('addEmployeeModal');
+                        document.getElementById('addEmployeeForm').reset();
+                        showEmployeeQR(id, name);
+                    });
+                }
             });
         });
         // === EDIT EMPLOYEE FUNCTIONALITY ===
@@ -1254,90 +1286,26 @@
             if (!editingEmpId) return;
             const name = document.getElementById('editEmpName').value.trim();
             const role = document.getElementById('editEmpRole').value.trim();
-            const email = document.getElementById('editEmpEmail').value.trim().toLowerCase();
+            const newEmail = document.getElementById('editEmpEmail').value.trim().toLowerCase();
             const isAdmin = document.getElementById('editEmpType').value === 'admin';
-            db.ref('employees/' + editingEmpId).update({
-                name: name,
-                role: role,
-                email: email,
-                isAdmin: isAdmin
-            }).then(() => {
-                toggleModal('editEmployeeModal');
-                editingEmpId = null;
+            db.ref('employees').orderByChild('email').equalTo(newEmail).once('value').then(snap => {
+                let duplicate = false;
+                snap.forEach(child => {
+                    if (child.key !== editingEmpId) duplicate = true;
+                });
+                if (duplicate) {
+                    showError('This email is already registered.');
+                } else {
+                    db.ref('employees/' + editingEmpId).update({
+                        name: name,
+                        role: role,
+                        email: newEmail,
+                        isAdmin: isAdmin
+                    }).then(() => {
+                        toggleModal('editEmployeeModal');
+                        editingEmpId = null;
+                    });
+                }
             });
         });
-        function showEmployeeQR(id, name) {
-            currentQrEmpId = id;
-            currentQrEmpName = name;
-            generateQRCode(id, name);
-            document.getElementById('successTitle').textContent = "QR Code Ready";
-            document.getElementById('successMessage').innerHTML = `Permanent QR for <strong>${name}</strong><br><strong>Use this same QR code every day</strong>`;
-            toggleModal('successModal');
-        }
-        function generateQRCode(id, name) {
-            const qrContainer = document.getElementById('qrCodeContainer');
-            qrContainer.innerHTML = '';
-            new QRCode(qrContainer, { text: id, width: 220, height: 220, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
-            setTimeout(() => {
-                const qrCanvas = qrContainer.querySelector('canvas');
-                if (qrCanvas) {
-                    const pdf = new jspdf.jsPDF({ orientation: 'portrait', unit: 'px', format: [280, 280] });
-                    pdf.setFillColor(255, 255, 255);
-                    pdf.rect(0, 0, 280, 280, 'F');
-                    pdf.addImage(qrCanvas.toDataURL('image/png'), 'PNG', 30, 30, 220, 220);
-                    const pdfBlob = pdf.output('blob');
-                    const pdfUrl = URL.createObjectURL(pdfBlob);
-                    const dlBtn = document.getElementById('downloadQrBtn');
-                    dlBtn.href = pdfUrl;
-                    dlBtn.download = `QR_${name.replace(' ', '_')}.pdf`;
-                }
-            }, 300);
-        }
-        function regenerateQR() {
-            if (!currentQrEmpId || !currentQrEmpName) return;
-            generateQRCode(currentQrEmpId, currentQrEmpName);
-            document.getElementById('successTitle').textContent = "QR Regenerated!";
-            document.getElementById('successMessage').innerHTML = `Regenerated QR for <strong>${currentQrEmpName}</strong><br><strong>ID remains: ${currentQrEmpId}</strong>`;
-        }
-       
-        function toggleModal(id) {
-            const m = document.getElementById(id);
-            m.classList.toggle('opacity-0');
-            m.classList.toggle('pointer-events-none');
-            document.body.classList.toggle('modal-active');
-        }
-       
-        function toggleLocationModal() {
-            if (officeLocation) {
-                document.getElementById('officeLat').value = officeLocation.lat || '';
-                document.getElementById('officeLng').value = officeLocation.lng || '';
-                document.getElementById('officeRadius').value = officeLocation.radius || 150;
-            }
-            toggleModal('locationModal');
-        }
-       
-        function getCurrentLocationForOffice() {
-            navigator.geolocation.getCurrentPosition(pos => {
-                document.getElementById('officeLat').value = pos.coords.latitude.toFixed(6);
-                document.getElementById('officeLng').value = pos.coords.longitude.toFixed(6);
-            }, err => alert("Unable to retrieve location"));
-        }
-       
-        function saveOfficeLocation() {
-            const lat = parseFloat(document.getElementById('officeLat').value);
-            const lng = parseFloat(document.getElementById('officeLng').value);
-            const radius = parseFloat(document.getElementById('officeRadius').value) || 150;
-            if (isNaN(lat) || isNaN(lng)) return alert("Please enter valid coordinates");
-            db.ref('settings/officeLocation').set({ lat, lng, radius }).then(() => {
-                alert("Office location saved");
-                toggleModal('locationModal');
-            });
-        }
-        window.onload = () => {
-            document.getElementById('dateFrom').value = todayStr;
-            document.getElementById('dateTo').value = todayStr;
-            loadTodayLive();
-        };
-    </script>
-</body>
-</html>
+        function showEmployeeQR(id, name)
