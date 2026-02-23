@@ -958,7 +958,7 @@
                
                 const dayData = allDays[dStr]?.[id];
                 if (dayData) {
-                    const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut);
+                    const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut, dayData.LunchOut, dayData.LunchBack);
                     totalHours += duration;
                    
                     const timeInMinutes = timeToMinutes(dayData.TimeIn);
@@ -986,10 +986,17 @@
             renderPersonalChart(chartLabels, chartData);
         }
        
-        function calculateDuration(inT, outT) {
+        function calculateDuration(inT, outT, lunchOut = null, lunchBack = null) {
             const inMin = timeToMinutes(inT), outMin = timeToMinutes(outT);
             if (isNaN(inMin) || isNaN(outMin) || outMin <= inMin) return 0;
-            return (outMin - inMin) / 60;
+            let lunchMin = 0;
+            if (lunchOut && lunchBack) {
+                const lOut = timeToMinutes(lunchOut), lBack = timeToMinutes(lunchBack);
+                if (!isNaN(lOut) && !isNaN(lBack) && lBack > lOut) {
+                    lunchMin = lBack - lOut;
+                }
+            }
+            return (outMin - inMin - lunchMin) / 60;
         }
        
         function renderPersonalChart(labels, data) {
@@ -1050,12 +1057,115 @@
            
             doc.setFontSize(14);
             doc.text(`Period: ${monthStr}`, 20, 40);
-            doc.text(`Total Employees: ${Object.keys(employeesData).length}`, 20, 50);
+            const totalEmps = Object.keys(employeesData).length;
+            doc.text(`Total Employees: ${totalEmps}`, 20, 50);
            
-            let yPos = 70;
-            doc.setFontSize(12);
+            const attendanceSnap = await db.ref('attendance').once('value');
+            const allAttendance = attendanceSnap.val() || {};
+           
+            // Collect day stats for calendar
+            let dayStats = new Array(daysInMonth + 1).fill(null);
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayAttendance = allAttendance[dateStr] || {};
+                let absent = 0;
+                Object.keys(employeesData).forEach(empId => {
+                    const dayData = dayAttendance[empId];
+                    if (!dayData || !dayData.TimeIn) absent++;
+                });
+                dayStats[day] = { absent };
+            }
+           
+            // Collect employee data
+            const employeeData = [];
+            let totalAbsent = 0;
+            for (const [empId, emp] of Object.entries(employeesData)) {
+                let fullDays = 0, halfDays = 0, absentDays = 0, totalHours = 0;
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const dayData = allAttendance[dateStr]?.[empId];
+                    if (dayData && dayData.TimeIn) {
+                        const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut, dayData.LunchOut, dayData.LunchBack);
+                        totalHours += duration;
+                        const timeInMinutes = timeToMinutes(dayData.TimeIn);
+                        const thresholdMinutes = 9 * 60;
+                        if (timeInMinutes > thresholdMinutes + 60) {
+                            halfDays++;
+                        } else {
+                            fullDays++;
+                        }
+                    } else {
+                        absentDays++;
+                    }
+                }
+                employeeData.push({ name: emp.name, fullDays, halfDays, absentDays, totalHours });
+                totalAbsent += absentDays;
+            }
+           
+            doc.text(`Total Absent Days: ${totalAbsent}`, 20, 55);
+           
+            // Draw calendar
+            doc.setFontSize(14);
+            doc.text("Overall Attendance Calendar", 20, 65);
+            let yPos = 75;
+            doc.setFontSize(10);
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            for (let i = 0; i < 7; i++) {
+                doc.text(days[i], 20 + i * 25 + 5, yPos + 8);
+            }
+            yPos += 20;
+            const cellSize = 25;
+            const firstDay = new Date(year, month, 1).getDay();
+            let dayNum = 1;
+            for (let row = 0; row < 6; row++) {
+                for (let col = 0; col < 7; col++) {
+                    const x = 20 + col * cellSize;
+                    const y = yPos + row * cellSize;
+                    doc.setDrawColor(200);
+                    doc.rect(x, y, cellSize, cellSize);
+                    if ((row === 0 && col < firstDay) || dayNum > daysInMonth) continue;
+                    const absent = dayStats[dayNum].absent;
+                    const attended = totalEmps - absent;
+                    const rate = (attended / totalEmps) * 100;
+                    let r, g, b;
+                    if (rate >= 90) {
+                        r = 34; g = 197; b = 94;
+                    } else if (rate >= 70) {
+                        r = 234; g = 179; b = 8;
+                    } else {
+                        r = 220; g = 38; b = 38;
+                    }
+                    doc.setFillColor(r, g, b);
+                    doc.rect(x, y, cellSize, cellSize, 'F');
+                    doc.setDrawColor(200);
+                    doc.rect(x, y, cellSize, cellSize);
+                    doc.setTextColor(255);
+                    doc.setFontSize(8);
+                    doc.text(dayNum.toString(), x + 2, y + 8);
+                    doc.setFontSize(5);
+                    doc.text(`P:${attended}`, x + 2, y + 13);
+                    doc.text(`A:${absent}`, x + 2, y + 18);
+                    doc.text(`${rate.toFixed(0)}%`, x + 2, y + 23);
+                    dayNum++;
+                }
+            }
+            yPos += 6 * cellSize + 10;
+           
+            // Legend
+            doc.setFontSize(10);
+            doc.setFillColor(34, 197, 94);
+            doc.rect(20, yPos, 10, 10, 'F');
+            doc.text('>=90% Attendance', 35, yPos + 8);
+            doc.setFillColor(234, 179, 8);
+            doc.rect(80, yPos, 10, 10, 'F');
+            doc.text('70-90% Attendance', 95, yPos + 8);
+            doc.setFillColor(220, 38, 38);
+            doc.rect(140, yPos, 10, 10, 'F');
+            doc.text('<70% Attendance', 155, yPos + 8);
+            yPos += 20;
            
             // Table headers
+            doc.setFontSize(12);
             doc.setFillColor(37, 99, 235);
             doc.rect(20, yPos - 5, 170, 10, 'F');
             doc.setTextColor(255, 255, 255);
@@ -1068,46 +1178,18 @@
             doc.setTextColor(0, 0, 0);
             yPos += 15;
            
-            const attendanceSnap = await db.ref('attendance').once('value');
-            const allAttendance = attendanceSnap.val() || {};
-           
-            for (const [empId, emp] of Object.entries(employeesData)) {
-                let fullDays = 0, halfDays = 0, absentDays = 0, totalHours = 0;
-               
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    const dayData = allAttendance[dateStr]?.[empId];
-                   
-                    if (dayData && dayData.TimeIn) {
-                        const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut);
-                        totalHours += duration;
-                       
-                        const timeInMinutes = timeToMinutes(dayData.TimeIn);
-                        const thresholdMinutes = 9 * 60;
-                       
-                        if (timeInMinutes > thresholdMinutes + 60) {
-                            halfDays++;
-                        } else {
-                            fullDays++;
-                        }
-                    } else {
-                        absentDays++;
-                    }
-                }
-               
+            employeeData.forEach(data => {
                 if (yPos > 270) {
                     doc.addPage();
                     yPos = 30;
                 }
-               
-                doc.text(emp.name.substring(0, 25), 25, yPos);
-                doc.text(String(fullDays), 85, yPos);
-                doc.text(String(halfDays), 115, yPos);
-                doc.text(String(absentDays), 145, yPos);
-                doc.text(totalHours.toFixed(1), 170, yPos);
-               
+                doc.text(data.name.substring(0, 25), 25, yPos);
+                doc.text(String(data.fullDays), 85, yPos);
+                doc.text(String(data.halfDays), 115, yPos);
+                doc.text(String(data.absentDays), 145, yPos);
+                doc.text(data.totalHours.toFixed(1), 170, yPos);
                 yPos += 10;
-            }
+            });
            
             doc.save(`Monthly_Report_${monthStr.replace(' ', '_')}.pdf`);
         }
