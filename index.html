@@ -14,7 +14,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
         body { background-color: #f3f4f6; }
         .glass-header {
@@ -83,7 +82,7 @@
                     <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Enterprise Analytics</p>
                 </div>
             </div>
-         
+        
             <div class="flex gap-3">
                 <button onclick="startScanner()" class="pill-btn bg-violet-600 text-white px-5 py-2 text-[11px] font-black flex items-center gap-2 shadow-lg shadow-violet-500/20">
                     <i class="fa-solid fa-qrcode"></i> SCAN QR
@@ -154,7 +153,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Date Range Filter -->
                 <div class="flex items-center gap-4 mb-8 bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
                     <div class="flex items-center gap-3">
@@ -170,7 +168,6 @@
                     <button onclick="applyFilter()" class="pill-btn bg-violet-600 hover:bg-violet-700 text-white px-7 py-3 text-xs font-black shadow-lg shadow-violet-500/30">APPLY FILTER</button>
                     <button onclick="loadTodayLive()" class="pill-btn bg-emerald-600 hover:bg-emerald-700 text-white px-7 py-3 text-xs font-black shadow-lg shadow-emerald-500/30">TODAY LIVE</button>
                 </div>
-
                 <div class="overflow-x-auto relative">
                     <table class="w-full text-left">
                         <thead>
@@ -192,7 +189,6 @@
             </div>
         </section>
     </main>
-
     <!-- Admin Login Modal -->
     <div id="adminLoginModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[90]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/90 backdrop-blur-md"></div>
@@ -363,7 +359,6 @@
             </div>
         </div>
     </div>
-
     <!-- Edit Employee Modal (NEW) -->
     <div id="editEmployeeModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/40 backdrop-blur-sm"></div>
@@ -406,7 +401,6 @@
             </div>
         </div>
     </div>
-
     <!-- Confirm Delete Modal -->
     <div id="confirmDeleteModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[70]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
@@ -437,7 +431,7 @@
                 Employee added. Save this QR code.<br>
                 <strong>Use the same QR code every day</strong> to clock in, take lunch, and clock out.
             </p>
-         
+        
             <div class="flex justify-center mb-6">
                 <div id="qrCodeContainer" class="p-3 bg-white border border-gray-100 rounded-xl shadow-lg"></div>
             </div>
@@ -460,7 +454,6 @@
         <div onclick="adminSetAction('Lunch Back')" class="action-item px-4 py-2 text-xs font-black cursor-pointer border-b border-gray-50">LUNCH BACK</div>
         <div onclick="adminSetAction('Clock Out')" class="action-item px-4 py-2 text-xs font-black cursor-pointer text-red-500">CLOCK OUT</div>
     </div>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
@@ -491,11 +484,12 @@
         let employeesData = {};
         let currentQrEmpId = null;
         let currentQrEmpName = null;
-
+        let currentRawData = {};
+        let currentFrom = todayStr;
+        let currentTo = todayStr;
         db.ref('settings/officeLocation').on('value', snap => {
             officeLocation = snap.val() || null;
         });
-
         const gCtx = document.getElementById('attendanceChart').getContext('2d');
         const globalChart = new Chart(gCtx, {
             type: 'pie',
@@ -509,18 +503,18 @@
                     borderColor: '#ffffff'
                 }]
             },
-            options: { 
-                plugins: { 
-                    legend: { 
-                        display: true, 
-                        position: 'right', 
-                        labels: { 
-                            usePointStyle: true, 
+            options: {
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'right',
+                        labels: {
+                            usePointStyle: true,
                             font: { weight: 'bold', size: 9 },
                             padding: 8,
                             boxWidth: 8
-                        } 
-                    } 
+                        }
+                    }
                 },
                 layout: {
                     padding: 0
@@ -529,7 +523,6 @@
                 maintainAspectRatio: false
             }
         });
-
         db.ref('employees').on('value', snap => {
             const list = document.getElementById('employeeList');
             const data = snap.val();
@@ -561,108 +554,159 @@
                 `;
                 list.appendChild(row);
             });
+            if (currentFrom === todayStr && currentFrom === currentTo) {
+                renderAttendanceTable(currentRawData, todayStr);
+            }
         });
-
         function determineStatus(log) {
             // If no clock in, absent
             if (!log || !log.TimeIn) {
                 return { status: 'ABSENT', class: 'status-absent' };
             }
-            
+           
             // If currently at lunch (Lunch Out but not back yet)
             if (log.LunchOut && !log.LunchBack) {
                 return { status: 'LUNCH', class: 'status-lunch' };
             }
-            
+           
             // Calculate if late (more than 1 hour after 9:00)
             const timeIn = log.TimeIn;
             const [hours, minutes] = timeIn.split(':').map(Number);
             const timeInMinutes = hours * 60 + minutes;
             const thresholdMinutes = 9 * 60; // 9:00 AM
-            
+           
             // If clocked in more than 1 hour after 9:00, it's half day
             if (timeInMinutes > thresholdMinutes + 60) {
                 return { status: 'HALF DAY', class: 'status-halfday' };
             }
-            
+           
             // Otherwise present
             return { status: 'PRESENT', class: 'status-present' };
         }
-
         function renderAttendanceTable(rawData, singleDate) {
             const tbody = document.getElementById('attendanceTable');
             tbody.innerHTML = '';
-            let stats = { present: 0, lunch: 0, halfday: 0, absent: 0, total: 0 };
-            const entries = Object.values(rawData || {});
-            
-            if (entries.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-gray-300">No records found in selected range</td></tr>`;
-                document.getElementById('presentToday').innerText = 0;
-                globalChart.data.datasets[0].data = [0, 0, 0, 0];
-                globalChart.update();
-                return;
+            let stats = { present: 0, lunch: 0, halfday: 0, absent: 0 };
+            if (singleDate) {
+                // For single date, show all employees, including absents
+                const employees = Object.values(employeesData);
+                if (employees.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-gray-300">No employees registered</td></tr>`;
+                    document.getElementById('presentToday').innerText = 0;
+                    globalChart.data.datasets[0].data = [0, 0, 0, 0];
+                    globalChart.update();
+                    return;
+                }
+                employees.sort((a, b) => a.name.localeCompare(b.name)); // Sort by name
+                employees.forEach(emp => {
+                    let log = rawData[emp.id] || { id: emp.id, name: emp.name };
+                    const displayDate = singleDate;
+                    const statusInfo = determineStatus(log);
+                    if (statusInfo.status === 'PRESENT') stats.present++;
+                    else if (statusInfo.status === 'LUNCH') stats.lunch++;
+                    else if (statusInfo.status === 'HALF DAY') stats.halfday++;
+                    else if (statusInfo.status === 'ABSENT') stats.absent++;
+                    let complianceHtml = '<span class="text-gray-200">-</span>';
+                    let clockInHtml = log.TimeIn || '--:--';
+                    if (log.TimeIn && log.TimeIn > LATE_THRESHOLD) {
+                        clockInHtml = `<span class="text-red-600 font-black">${log.TimeIn}</span> <span class="bg-red-50 text-red-500 text-[8px] px-1 rounded">LATE</span>`;
+                    }
+                    if (log.LunchOut && log.LunchBack) {
+                        const dur = calculateDuration(log.LunchOut, log.LunchBack) * 60;
+                        complianceHtml = dur > 60 ? `<span class="text-red-600 font-black">OVER (${Math.round(dur)}m)</span>` : `<span class="text-green-600 font-black">PASS</span>`;
+                    }
+                    tbody.innerHTML += `
+                        <tr class="group hover:bg-gray-50/70 transition-colors">
+                            <td class="p-3.5 font-mono text-xs text-gray-500">${displayDate}</td>
+                            <td class="p-3.5 font-black text-gray-800 flex items-center gap-3">
+                                <div>${log.name || 'User'} <br><span class="text-[10px] text-gray-300 font-bold">${log.id}</span></div>
+                                <button onclick="showAdminActions(event, '${log.id}')" class="p-1.5 bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-500 hover:text-white transition-all">
+                                    <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
+                                </button>
+                            </td>
+                            <td class="p-3.5 font-mono font-bold text-gray-500">${clockInHtml}</td>
+                            <td class="p-3.5 text-[11px] font-bold">
+                                ${log.LunchOut ? `<span class="text-red-400">OUT: ${log.LunchOut}</span>` : ''}
+                                ${log.LunchBack ? `<br><span class="text-green-500">BACK: ${log.LunchBack}</span>` : ''}
+                            </td>
+                            <td class="p-3.5 text-center text-xs">${complianceHtml}</td>
+                            <td class="p-3.5 font-mono font-bold text-gray-500">${log.TimeOut || '--:--'}</td>
+                            <td class="p-3.5 text-center">
+                                <span class="${statusInfo.class} px-4 py-2 rounded-xl text-[10px] font-black opacity-90 whitespace-nowrap">${statusInfo.status}</span>
+                            </td>
+                        </tr>`;
+                });
+            } else {
+                // For range, keep as before
+                const entries = Object.values(rawData || {});
+                if (entries.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-gray-300">No records found in selected range</td></tr>`;
+                    document.getElementById('presentToday').innerText = 0;
+                    globalChart.data.datasets[0].data = [0, 0, 0, 0];
+                    globalChart.update();
+                    return;
+                }
+                entries.forEach(log => {
+                    const displayDate = log._date;
+                    const statusInfo = determineStatus(log);
+                    if (statusInfo.status === 'PRESENT') stats.present++;
+                    else if (statusInfo.status === 'LUNCH') stats.lunch++;
+                    else if (statusInfo.status === 'HALF DAY') stats.halfday++;
+                    else if (statusInfo.status === 'ABSENT') stats.absent++;
+                    let complianceHtml = '<span class="text-gray-200">-</span>';
+                    let clockInHtml = log.TimeIn || '--:--';
+                    if (log.TimeIn && log.TimeIn > LATE_THRESHOLD) {
+                        clockInHtml = `<span class="text-red-600 font-black">${log.TimeIn}</span> <span class="bg-red-50 text-red-500 text-[8px] px-1 rounded">LATE</span>`;
+                    }
+                    if (log.LunchOut && log.LunchBack) {
+                        const dur = calculateDuration(log.LunchOut, log.LunchBack) * 60;
+                        complianceHtml = dur > 60 ? `<span class="text-red-600 font-black">OVER (${Math.round(dur)}m)</span>` : `<span class="text-green-600 font-black">PASS</span>`;
+                    }
+                    tbody.innerHTML += `
+                        <tr class="group hover:bg-gray-50/70 transition-colors">
+                            <td class="p-3.5 font-mono text-xs text-gray-500">${displayDate}</td>
+                            <td class="p-3.5 font-black text-gray-800 flex items-center gap-3">
+                                <div>${log.name || 'User'} <br><span class="text-[10px] text-gray-300 font-bold">${log.id}</span></div>
+                                <button onclick="showAdminActions(event, '${log.id}')" class="p-1.5 bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-500 hover:text-white transition-all">
+                                    <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
+                                </button>
+                            </td>
+                            <td class="p-3.5 font-mono font-bold text-gray-500">${clockInHtml}</td>
+                            <td class="p-3.5 text-[11px] font-bold">
+                                ${log.LunchOut ? `<span class="text-red-400">OUT: ${log.LunchOut}</span>` : ''}
+                                ${log.LunchBack ? `<br><span class="text-green-500">BACK: ${log.LunchBack}</span>` : ''}
+                            </td>
+                            <td class="p-3.5 text-center text-xs">${complianceHtml}</td>
+                            <td class="p-3.5 font-mono font-bold text-gray-500">${log.TimeOut || '--:--'}</td>
+                            <td class="p-3.5 text-center">
+                                <span class="${statusInfo.class} px-4 py-2 rounded-xl text-[10px] font-black opacity-90 whitespace-nowrap">${statusInfo.status}</span>
+                            </td>
+                        </tr>`;
+                });
             }
-            
-            entries.forEach(log => {
-                const displayDate = log._date || singleDate || todayStr;
-                stats.total++;
-                
-                const statusInfo = determineStatus(log);
-                
-                if (statusInfo.status === 'PRESENT') stats.present++;
-                else if (statusInfo.status === 'LUNCH') stats.lunch++;
-                else if (statusInfo.status === 'HALF DAY') stats.halfday++;
-                else if (statusInfo.status === 'ABSENT') stats.absent++;
-                
-                let complianceHtml = '<span class="text-gray-200">-</span>';
-                let clockInHtml = log.TimeIn || '--:--';
-                
-                if (log.TimeIn && log.TimeIn > LATE_THRESHOLD) {
-                    clockInHtml = `<span class="text-red-600 font-black">${log.TimeIn}</span> <span class="bg-red-50 text-red-500 text-[8px] px-1 rounded">LATE</span>`;
-                }
-                
-                if (log.LunchOut && log.LunchBack) {
-                    const dur = calculateDuration(log.LunchOut, log.LunchBack) * 60;
-                    complianceHtml = dur > 60 ? `<span class="text-red-600 font-black">OVER (${Math.round(dur)}m)</span>` : `<span class="text-green-600 font-black">PASS</span>`;
-                }
-                
-                tbody.innerHTML += `
-                    <tr class="group hover:bg-gray-50/70 transition-colors">
-                        <td class="p-3.5 font-mono text-xs text-gray-500">${displayDate}</td>
-                        <td class="p-3.5 font-black text-gray-800 flex items-center gap-3">
-                            <div>${log.name || 'User'} <br><span class="text-[10px] text-gray-300 font-bold">${log.id}</span></div>
-                            <button onclick="showAdminActions(event, '${log.id}')" class="p-1.5 bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-500 hover:text-white transition-all">
-                                <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
-                            </button>
-                        </td>
-                        <td class="p-3.5 font-mono font-bold text-gray-500">${clockInHtml}</td>
-                        <td class="p-3.5 text-[11px] font-bold">
-                            ${log.LunchOut ? `<span class="text-red-400">OUT: ${log.LunchOut}</span>` : ''}
-                            ${log.LunchBack ? `<br><span class="text-green-500">BACK: ${log.LunchBack}</span>` : ''}
-                        </td>
-                        <td class="p-3.5 text-center text-xs">${complianceHtml}</td>
-                        <td class="p-3.5 font-mono font-bold text-gray-500">${log.TimeOut || '--:--'}</td>
-                        <td class="p-3.5 text-center">
-                            <span class="${statusInfo.class} px-4 py-2 rounded-xl text-[10px] font-black opacity-90 whitespace-nowrap">${statusInfo.status}</span>
-                        </td>
-                    </tr>`;
-            });
-            
             document.getElementById('presentToday').innerText = stats.present;
             globalChart.data.datasets[0].data = [stats.present, stats.lunch, stats.halfday, stats.absent];
             globalChart.update();
         }
-
         function loadAttendanceData(fromDate, toDate) {
+            currentFrom = fromDate;
+            currentTo = toDate;
             if (attendanceListener) {
                 attendanceListener.off();
                 attendanceListener = null;
             }
-            if (fromDate === toDate && fromDate === todayStr) {
-                attendanceListener = db.ref('attendance/' + todayStr);
-                attendanceListener.on('value', snap => {
-                    renderAttendanceTable(snap.val(), todayStr);
-                });
+            if (fromDate === toDate) {
+                if (fromDate === todayStr) {
+                    attendanceListener = db.ref('attendance/' + todayStr);
+                    attendanceListener.on('value', snap => {
+                        currentRawData = snap.val() || {};
+                        renderAttendanceTable(currentRawData, todayStr);
+                    });
+                } else {
+                    db.ref('attendance/' + fromDate).once('value').then(snap => {
+                        renderAttendanceTable(snap.val() || {}, fromDate);
+                    });
+                }
             } else {
                 db.ref('attendance').orderByKey().startAt(fromDate).endAt(toDate).once('value').then(snap => {
                     let combined = {};
@@ -677,7 +721,6 @@
                 });
             }
         }
-
         function applyFilter() {
             let from = document.getElementById('dateFrom').value;
             let to = document.getElementById('dateTo').value;
@@ -685,13 +728,11 @@
             if (!to || to < from) to = from;
             loadAttendanceData(from, to);
         }
-
         function loadTodayLive() {
             document.getElementById('dateFrom').value = todayStr;
             document.getElementById('dateTo').value = todayStr;
             loadAttendanceData(todayStr, todayStr);
         }
-
         function signInWithGoogle() {
             auth.signInWithPopup(provider).then(async (result) => {
                 const user = result.user;
@@ -710,13 +751,13 @@
                 console.error(err);
             });
         }
-        
+       
         function showSignOutConfirm() { toggleModal('signOutConfirmModal'); }
         function confirmSignOut() { toggleModal('signOutConfirmModal'); signOutAdmin(); }
         function signOutAdmin() {
             auth.signOut().then(() => toggleModal('adminLoginModal')).catch(err => console.log("Sign out error"));
         }
-        
+       
         auth.onAuthStateChanged(async (user) => {
             const loginModal = document.getElementById('adminLoginModal');
             if (!user && loginModal.classList.contains('opacity-0')) {
@@ -733,14 +774,14 @@
                 }
             }
         });
-        
+       
         function startScanner() {
             toggleModal('scannerModal');
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess).catch(err => console.error(err));
         }
-        
+       
         function stopScanner() {
             if (html5QrCode) {
                 html5QrCode.stop().then(() => {
@@ -755,7 +796,7 @@
                 toggleModal('scannerModal');
             }
         }
-        
+       
         function onScanSuccess(decodedText) {
             html5QrCode.pause();
             document.getElementById('scanStatus').innerText = `Processing: ${decodedText}...`;
@@ -767,7 +808,7 @@
                 }
             });
         }
-        
+       
         function haversineDistance(lat1, lon1, lat2, lon2) {
             const R = 6371000;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -776,7 +817,7 @@
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return R * c;
         }
-        
+       
         async function isWithinOfficeLocation() {
             return new Promise((resolve, reject) => {
                 if (!officeLocation) return reject(new Error("Office location not set"));
@@ -786,7 +827,7 @@
                 }, reject, { enableHighAccuracy: true });
             });
         }
-        
+       
         async function processScanLogic(id, name) {
             try { await isWithinOfficeLocation(); } catch (e) { alert(e.message); html5QrCode.resume(); return; }
             const saveTodayStr = new Date().toISOString().split('T')[0];
@@ -794,7 +835,6 @@
             const now = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
             db.ref(path).once('value').then(snap => {
                 const data = snap.val() || {};
-
                 if (data.lastActionTime) {
                     const timeSinceLast = Date.now() - data.lastActionTime;
                     if (timeSinceLast < 15 * 60 * 1000) {
@@ -804,16 +844,14 @@
                         return;
                     }
                 }
-
-                let update = { 
-                    id: id, 
+                let update = {
+                    id: id,
                     name: name,
                     date: saveTodayStr,
                     day: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
                     lastActionTime: Date.now()
                 };
                 let actionTaken = "";
-
                 if (!data.TimeIn) {
                     update.TimeIn = now;
                     update.lastAction = "Clock In";
@@ -841,7 +879,7 @@
                 });
             });
         }
-        
+       
         function showAdminActions(e, id) {
             e.stopPropagation();
             activeAdminId = id;
@@ -850,9 +888,9 @@
             menu.style.left = (e.pageX - 10) + 'px';
             menu.style.top = (e.pageY + 10) + 'px';
         }
-        
+       
         window.onclick = () => document.getElementById('adminActionMenu').style.display = 'none';
-        
+       
         function adminSetAction(action) {
             if (!activeAdminId) return;
             const saveTodayStr = new Date().toISOString().split('T')[0];
@@ -865,13 +903,13 @@
             else if (action === 'Clock Out') update.TimeOut = now;
             db.ref(path).update(update);
         }
-        
+       
         function promptDelete(id, name) {
             pendingDeleteId = id;
             document.getElementById('deleteTargetName').innerText = name;
             toggleModal('confirmDeleteModal');
         }
-        
+       
         document.getElementById('finalDeleteBtn').onclick = () => {
             if (pendingDeleteId) {
                 db.ref('employees/' + pendingDeleteId).remove();
@@ -881,51 +919,51 @@
                 });
             }
         };
-        
+       
         function formatTime(minutes) {
             if (isNaN(minutes) || minutes < 0) return "--:--";
             const h = Math.floor(minutes / 60).toString().padStart(2, '0');
             const m = Math.floor(minutes % 60).toString().padStart(2, '0');
             return `${h}:${m}`;
         }
-        
+       
         function timeToMinutes(timeStr) {
             if (!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) return NaN;
             const [h, m] = timeStr.split(':').map(Number);
             return h * 60 + m;
         }
-        
+       
         async function fetchEmployeeHistory(id, name, role) {
             selectedEmpId = id;
             document.getElementById('statName').innerText = name;
             document.getElementById('statIdRole').innerText = `${id} • ${role}`;
             document.getElementById('statAvatar').innerText = name.charAt(0);
-            
+           
             const historySnap = await db.ref('attendance').once('value');
             const allDays = historySnap.val() || {};
-            
-            let totalHours = 0, 
-                fullDays = 0, 
-                halfDays = 0, 
+           
+            let totalHours = 0,
+                fullDays = 0,
+                halfDays = 0,
                 absentDays = 0,
-                chartLabels = [], 
+                chartLabels = [],
                 chartData = [];
-            
+           
             // Get last 30 days for chart
             for (let i = 29; i >= 0; i--) {
-                const d = new Date(); 
+                const d = new Date();
                 d.setDate(d.getDate() - i);
                 const dStr = d.toISOString().split('T')[0];
                 chartLabels.push(d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
-                
+               
                 const dayData = allDays[dStr]?.[id];
                 if (dayData) {
                     const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut);
                     totalHours += duration;
-                    
+                   
                     const timeInMinutes = timeToMinutes(dayData.TimeIn);
                     const thresholdMinutes = 9 * 60;
-                    
+                   
                     if (timeInMinutes > thresholdMinutes + 60) {
                         halfDays++;
                         chartData.push(0.5);
@@ -938,37 +976,37 @@
                     chartData.push(0);
                 }
             }
-            
+           
             document.getElementById('statTotalHours').innerText = totalHours.toFixed(1);
             document.getElementById('statFullDays').innerText = fullDays;
             document.getElementById('statHalfDays').innerText = halfDays;
             document.getElementById('statAbsentDays').innerText = absentDays;
-            
+           
             toggleModal('statsModal');
             renderPersonalChart(chartLabels, chartData);
         }
-        
+       
         function calculateDuration(inT, outT) {
             const inMin = timeToMinutes(inT), outMin = timeToMinutes(outT);
             if (isNaN(inMin) || isNaN(outMin) || outMin <= inMin) return 0;
             return (outMin - inMin) / 60;
         }
-        
+       
         function renderPersonalChart(labels, data) {
             if (personalChart) personalChart.destroy();
             personalChart = new Chart(document.getElementById('personalTrendChart').getContext('2d'), {
                 type: 'bar',
-                data: { 
-                    labels, 
-                    datasets: [{ 
-                        label: 'Attendance (1=Full Day, 0.5=Half Day, 0=Absent)', 
-                        data, 
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Attendance (1=Full Day, 0.5=Half Day, 0=Absent)',
+                        data,
                         backgroundColor: data.map(v => v === 1 ? '#22c55e' : v === 0.5 ? '#eab308' : '#dc2626'),
-                        borderRadius: 4 
-                    }] 
+                        borderRadius: 4
+                    }]
                 },
-                options: { 
-                    maintainAspectRatio: false, 
+                options: {
+                    maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
                         y: {
@@ -988,7 +1026,7 @@
                 }
             });
         }
-        
+       
         async function downloadPersonalPDF() {
             const canvas = await html2canvas(document.getElementById('statsContent'), { scale: 2 });
             const doc = new jspdf.jsPDF('p', 'mm', 'a4');
@@ -997,26 +1035,26 @@
             doc.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 35, 190, 100);
             doc.save(`Report_${selectedEmpId}.pdf`);
         }
-        
+       
         async function generateGlobalReport() {
             const doc = new jspdf.jsPDF();
             doc.setFontSize(22);
             doc.text("Monthly Operations Report", 20, 25);
-            
+           
             // Get current month data
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const monthStr = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            
+           
             doc.setFontSize(14);
             doc.text(`Period: ${monthStr}`, 20, 40);
             doc.text(`Total Employees: ${Object.keys(employeesData).length}`, 20, 50);
-            
+           
             let yPos = 70;
             doc.setFontSize(12);
-            
+           
             // Table headers
             doc.setFillColor(37, 99, 235);
             doc.rect(20, yPos - 5, 170, 10, 'F');
@@ -1026,27 +1064,27 @@
             doc.text("Half Days", 110, yPos);
             doc.text("Absent", 140, yPos);
             doc.text("Total Hours", 165, yPos);
-            
+           
             doc.setTextColor(0, 0, 0);
             yPos += 15;
-            
+           
             const attendanceSnap = await db.ref('attendance').once('value');
             const allAttendance = attendanceSnap.val() || {};
-            
+           
             for (const [empId, emp] of Object.entries(employeesData)) {
                 let fullDays = 0, halfDays = 0, absentDays = 0, totalHours = 0;
-                
+               
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const dayData = allAttendance[dateStr]?.[empId];
-                    
+                   
                     if (dayData && dayData.TimeIn) {
                         const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut);
                         totalHours += duration;
-                        
+                       
                         const timeInMinutes = timeToMinutes(dayData.TimeIn);
                         const thresholdMinutes = 9 * 60;
-                        
+                       
                         if (timeInMinutes > thresholdMinutes + 60) {
                             halfDays++;
                         } else {
@@ -1056,24 +1094,24 @@
                         absentDays++;
                     }
                 }
-                
+               
                 if (yPos > 270) {
                     doc.addPage();
                     yPos = 30;
                 }
-                
+               
                 doc.text(emp.name.substring(0, 25), 25, yPos);
                 doc.text(String(fullDays), 85, yPos);
                 doc.text(String(halfDays), 115, yPos);
                 doc.text(String(absentDays), 145, yPos);
                 doc.text(totalHours.toFixed(1), 170, yPos);
-                
+               
                 yPos += 10;
             }
-            
+           
             doc.save(`Monthly_Report_${monthStr.replace(' ', '_')}.pdf`);
         }
-        
+       
         document.getElementById('addEmployeeForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const id = `EMP-${Math.random().toString(16).slice(2, 6).toUpperCase()}`;
@@ -1087,7 +1125,6 @@
                 showEmployeeQR(id, name);
             });
         });
-
         // === EDIT EMPLOYEE FUNCTIONALITY ===
         function editEmployee(id, name, role, email, isAdmin) {
             editingEmpId = id;
@@ -1098,7 +1135,6 @@
             document.getElementById('editEmpType').value = isAdmin ? 'admin' : 'employee';
             toggleModal('editEmployeeModal');
         }
-
         document.getElementById('editEmployeeForm').addEventListener('submit', (e) => {
             e.preventDefault();
             if (!editingEmpId) return;
@@ -1116,7 +1152,6 @@
                 editingEmpId = null;
             });
         });
-
         function showEmployeeQR(id, name) {
             currentQrEmpId = id;
             currentQrEmpName = name;
@@ -1125,7 +1160,6 @@
             document.getElementById('successMessage').innerHTML = `Permanent QR for <strong>${name}</strong><br><strong>Use this same QR code every day</strong>`;
             toggleModal('successModal');
         }
-
         function generateQRCode(id, name) {
             const qrContainer = document.getElementById('qrCodeContainer');
             qrContainer.innerHTML = '';
@@ -1145,48 +1179,20 @@
                 }
             }, 300);
         }
-
         function regenerateQR() {
             if (!currentQrEmpId || !currentQrEmpName) return;
-            
-            // Generate new ID
-            const newId = `EMP-${Math.random().toString(16).slice(2, 6).toUpperCase()}`;
-            
-            // Get current employee data
-            const empData = employeesData[currentQrEmpId];
-            if (!empData) return;
-            
-            // Create new employee entry with new ID
-            const updatedData = {
-                ...empData,
-                id: newId
-            };
-            
-            // Update Firebase: remove old, add new
-            db.ref('employees/' + currentQrEmpId).remove()
-                .then(() => {
-                    return db.ref('employees/' + newId).set(updatedData);
-                })
-                .then(() => {
-                    // Update current tracking variables
-                    currentQrEmpId = newId;
-                    
-                    // Regenerate QR with new ID
-                    generateQRCode(newId, currentQrEmpName);
-                    
-                    // Show confirmation
-                    document.getElementById('successTitle').textContent = "QR Regenerated!";
-                    document.getElementById('successMessage').innerHTML = `New QR Code for <strong>${currentQrEmpName}</strong><br><strong>New ID: ${newId}</strong>`;
-                });
+            generateQRCode(currentQrEmpId, currentQrEmpName);
+            document.getElementById('successTitle').textContent = "QR Regenerated!";
+            document.getElementById('successMessage').innerHTML = `Regenerated QR for <strong>${currentQrEmpName}</strong><br><strong>ID remains: ${currentQrEmpId}</strong>`;
         }
-        
+       
         function toggleModal(id) {
             const m = document.getElementById(id);
             m.classList.toggle('opacity-0');
             m.classList.toggle('pointer-events-none');
             document.body.classList.toggle('modal-active');
         }
-        
+       
         function toggleLocationModal() {
             if (officeLocation) {
                 document.getElementById('officeLat').value = officeLocation.lat || '';
@@ -1195,14 +1201,14 @@
             }
             toggleModal('locationModal');
         }
-        
+       
         function getCurrentLocationForOffice() {
             navigator.geolocation.getCurrentPosition(pos => {
                 document.getElementById('officeLat').value = pos.coords.latitude.toFixed(6);
                 document.getElementById('officeLng').value = pos.coords.longitude.toFixed(6);
             }, err => alert("Unable to retrieve location"));
         }
-        
+       
         function saveOfficeLocation() {
             const lat = parseFloat(document.getElementById('officeLat').value);
             const lng = parseFloat(document.getElementById('officeLng').value);
@@ -1213,7 +1219,6 @@
                 toggleModal('locationModal');
             });
         }
-
         window.onload = () => {
             document.getElementById('dateFrom').value = todayStr;
             document.getElementById('dateTo').value = todayStr;
