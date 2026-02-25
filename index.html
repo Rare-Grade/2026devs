@@ -71,6 +71,10 @@
     </style>
 </head>
 <body class="text-gray-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- ──────────────────────────────────────────────── -->
+    <!--                   HEADER                        -->
+    <!-- ──────────────────────────────────────────────── -->
     <header class="z-20">
         <nav class="glass-header px-8 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
@@ -82,7 +86,7 @@
                     <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Enterprise Analytics</p>
                 </div>
             </div>
-        
+       
             <div class="flex gap-3">
                 <button onclick="startScanner()" class="pill-btn bg-violet-600 text-white px-5 py-2 text-[11px] font-black flex items-center gap-2 shadow-lg shadow-violet-500/20">
                     <i class="fa-solid fa-qrcode"></i> SCAN QR
@@ -102,6 +106,10 @@
             </div>
         </nav>
     </header>
+
+    <!-- ──────────────────────────────────────────────── -->
+    <!--                   MAIN CONTENT                  -->
+    <!-- ──────────────────────────────────────────────── -->
     <main class="flex-1 flex overflow-hidden">
         <aside class="w-1/3 bg-gray-50/50 p-6 pt-2 overflow-y-auto border-r border-gray-200 flex flex-col gap-6 custom-scroll">
             <div class="grid grid-cols-2 gap-4">
@@ -130,6 +138,7 @@
                 </div>
             </div>
         </aside>
+
         <section class="flex-1 bg-gray-100/50 p-8 pt-2 overflow-y-auto custom-scroll">
             <div class="glass-card min-h-full p-8">
                 <div class="flex justify-between items-end mb-6">
@@ -153,6 +162,7 @@
                         </div>
                     </div>
                 </div>
+
                 <!-- Date Range Filter -->
                 <div class="flex items-center gap-4 mb-8 bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
                     <div class="flex items-center gap-3">
@@ -168,6 +178,7 @@
                     <button onclick="applyFilter()" class="pill-btn bg-violet-600 hover:bg-violet-700 text-white px-7 py-3 text-xs font-black shadow-lg shadow-violet-500/30">APPLY FILTER</button>
                     <button onclick="loadTodayLive()" class="pill-btn bg-emerald-600 hover:bg-emerald-700 text-white px-7 py-3 text-xs font-black shadow-lg shadow-emerald-500/30">TODAY LIVE</button>
                 </div>
+
                 <div class="overflow-x-auto relative">
                     <table class="w-full text-left">
                         <thead>
@@ -189,6 +200,11 @@
             </div>
         </section>
     </main>
+
+    <!-- ──────────────────────────────────────────────── -->
+    <!--                   MODALS                        -->
+    <!-- ──────────────────────────────────────────────── -->
+
     <!-- Admin Login Modal -->
     <div id="adminLoginModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[90]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/90 backdrop-blur-md"></div>
@@ -205,7 +221,8 @@
             <p class="text-xs text-gray-400 mt-8">Only employees registered as Admin can enter</p>
         </div>
     </div>
-    <!-- Sign Out Confirmation Modal -->
+
+    <!-- Sign Out Confirmation -->
     <div id="signOutConfirmModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[85]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
         <div class="modal-container bg-white w-full max-w-xs mx-auto rounded-[2.5rem] shadow-2xl z-50 relative overflow-hidden">
@@ -215,7 +232,7 @@
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </div>
                 <h3 class="text-2xl font-black text-gray-900">Sign Out?</h3>
-                <p class="text-gray-500 text-sm mt-3 leading-relaxed">You will be logged out of the Admin Portal and returned to the login screen.</p>
+                <p class="text-gray-500 text-sm mt-3 leading-relaxed">You will be logged out of the Admin Portal.</p>
                 <div class="flex flex-col gap-2 mt-8">
                     <button onclick="confirmSignOut()" class="pill-btn bg-red-600 text-white font-black py-3.5 text-sm">YES, SIGN OUT</button>
                     <button onclick="toggleModal('signOutConfirmModal')" class="pill-btn bg-gray-100 text-gray-500 font-black py-3.5 text-sm">CANCEL</button>
@@ -223,10 +240,11 @@
             </div>
         </div>
     </div>
+
     <!-- Scanner Modal -->
     <div id="scannerModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[80]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/90 backdrop-blur-md"></div>
-        <div class="modal-container bg-white w-full max-lg mx-auto rounded-[2rem] shadow-2xl z-50 overflow-hidden relative" style="max-width: 600px;">
+        <div class="modal-container bg-white w-full max-w-[600px] mx-auto rounded-[2rem] shadow-2xl z-50 overflow-hidden relative">
             <div class="p-6 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
                 <h3 class="font-black text-gray-800 text-lg">Scan Attendance QR</h3>
                 <button onclick="stopScanner()" class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600"><i class="fa-solid fa-xmark"></i></button>
@@ -240,6 +258,7 @@
             </div>
         </div>
     </div>
+
     <!-- Office Location Modal -->
     <div id="locationModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/40 backdrop-blur-sm"></div>
@@ -274,6 +293,7 @@
             </div>
         </div>
     </div>
+
     <!-- Stats Modal -->
     <div id="statsModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
@@ -318,6 +338,7 @@
             </div>
         </div>
     </div>
+
     <!-- Add Employee Modal -->
     <div id="addEmployeeModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/40 backdrop-blur-sm"></div>
@@ -359,12 +380,13 @@
             </div>
         </div>
     </div>
-    <!-- Edit Employee Modal (NEW) -->
+
+    <!-- Edit Employee Modal -->
     <div id="editEmployeeModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/40 backdrop-blur-sm"></div>
         <div class="modal-container bg-white w-full max-w-sm sm:max-w-md mx-4 sm:mx-auto rounded-[2.5rem] shadow-2xl z-50 relative max-h-[92vh] overflow-hidden">
             <button onclick="toggleModal('editEmployeeModal')" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
-            <div class="p-6 sm:p-10 overflow-y-auto max-h=[calc(92vh-3.5rem)]">
+            <div class="p-6 sm:p-10 overflow-y-auto max-h-[calc(92vh-3.5rem)]">
                 <div class="text-center mb-8">
                     <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4">
                         <i class="fa-solid fa-pen"></i>
@@ -401,6 +423,7 @@
             </div>
         </div>
     </div>
+
     <!-- Confirm Delete Modal -->
     <div id="confirmDeleteModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[70]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
@@ -418,6 +441,7 @@
             </div>
         </div>
     </div>
+
     <!-- Success / QR Modal -->
     <div id="successModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[60]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-sm"></div>
@@ -431,7 +455,7 @@
                 Employee added. Save this QR code.<br>
                 <strong>Use the same QR code every day</strong> to clock in, take lunch, and clock out.
             </p>
-        
+       
             <div class="flex justify-center mb-6">
                 <div id="qrCodeContainer" class="p-3 bg-white border border-gray-100 rounded-xl shadow-lg"></div>
             </div>
@@ -448,6 +472,7 @@
             </div>
         </div>
     </div>
+
     <!-- Email Exists Modal -->
     <div id="emailExistsModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[75]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
@@ -465,12 +490,58 @@
             </div>
         </div>
     </div>
-    <div id="adminActionMenu" class="action-menu py-2 overflow-hidden">
-        <div onclick="adminSetAction('Clock In')" class="action-item px-4 py-2 text-xs font-black cursor-pointer border-b border-gray-50">CLOCK IN</div>
-        <div onclick="adminSetAction('Lunch Out')" class="action-item px-4 py-2 text-xs font-black cursor-pointer">LUNCH OUT</div>
-        <div onclick="adminSetAction('Lunch Back')" class="action-item px-4 py-2 text-xs font-black cursor-pointer border-b border-gray-50">LUNCH BACK</div>
-        <div onclick="adminSetAction('Clock Out')" class="action-item px-4 py-2 text-xs font-black cursor-pointer text-red-500">CLOCK OUT</div>
+
+    <!-- ─── NEW: Manual Entry Modal ─────────────────────────────────────── -->
+    <div id="manualEntryModal" class="modal opacity-0 pointer-events-none fixed inset-0 flex items-center justify-center z-[65]">
+        <div class="modal-overlay absolute inset-0 bg-gray-900/60 backdrop-blur-sm"></div>
+        <div class="modal-container bg-white w-full max-w-lg mx-4 rounded-3xl shadow-2xl relative overflow-hidden">
+            <button onclick="toggleModal('manualEntryModal')" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="p-8">
+                <h3 class="text-2xl font-black text-gray-900 mb-6">Manual Attendance Entry</h3>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Date</label>
+                        <input type="date" id="manualDate" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Time (HH:MM)</label>
+                        <input type="time" id="manualTime" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Action</label>
+                        <select id="manualAction" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="Clock In">Clock In</option>
+                            <option value="Lunch Out">Lunch Out</option>
+                            <option value="Lunch Back">Lunch Back</option>
+                            <option value="Clock Out">Clock Out</option>
+                        </select>
+                    </div>
+
+                    <div class="flex gap-3 pt-4">
+                        <button onclick="toggleModal('manualEntryModal')" class="flex-1 py-3.5 bg-gray-200 text-gray-700 font-black rounded-xl">CANCEL</button>
+                        <button onclick="saveManualEntry()" class="flex-1 py-3.5 bg-blue-600 text-white font-black rounded-xl shadow-lg shadow-blue-500/30">SAVE ENTRY</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Admin Action Menu (updated with Manual Entry) -->
+    <div id="adminActionMenu" class="action-menu py-2 overflow-hidden">
+        <div onclick="adminSetAction('Clock In')" class="action-item px-4 py-2 text-xs font-black cursor-pointer border-b border-gray-50">CLOCK IN (now)</div>
+        <div onclick="adminSetAction('Lunch Out')" class="action-item px-4 py-2 text-xs font-black cursor-pointer border-b border-gray-50">LUNCH OUT (now)</div>
+        <div onclick="adminSetAction('Lunch Back')" class="action-item px-4 py-2 text-xs font-black cursor-pointer border-b border-gray-50">LUNCH BACK (now)</div>
+        <div onclick="adminSetAction('Clock Out')" class="action-item px-4 py-2 text-xs font-black cursor-pointer border-b border-gray-50 text-red-600">CLOCK OUT (now)</div>
+        <div onclick="openManualEntry()" class="action-item px-4 py-2 text-xs font-black cursor-pointer text-indigo-600 font-bold">MANUAL ENTRY...</div>
+    </div>
+
+    <!-- ──────────────────────────────────────────────── -->
+    <!--                   JAVASCRIPT                    -->
+    <!-- ──────────────────────────────────────────────── -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
@@ -481,15 +552,20 @@
             messagingSenderId: "708458917827",
             appId: "1:708458917827:web:375de278577df0adcf9776"
         };
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
+
         const todayStr = new Date().toISOString().split('T')[0];
         document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
         const LATE_THRESHOLD = "09:00";
+
         let personalChart = null;
         let selectedEmpId = null;
         let pendingDeleteId = null;
@@ -504,9 +580,13 @@
         let currentRawData = {};
         let currentFrom = todayStr;
         let currentTo = todayStr;
+
+        // ─── Office Location Listener ────────────────────────────────
         db.ref('settings/officeLocation').on('value', snap => {
             officeLocation = snap.val() || null;
         });
+
+        // ─── Global Pie Chart ────────────────────────────────────────
         const gCtx = document.getElementById('attendanceChart').getContext('2d');
         const globalChart = new Chart(gCtx, {
             type: 'pie',
@@ -533,21 +613,24 @@
                         }
                     }
                 },
-                layout: {
-                    padding: 0
-                },
+                layout: { padding: 0 },
                 responsive: true,
                 maintainAspectRatio: false
             }
         });
+
+        // ─── Employees Listener ──────────────────────────────────────
         db.ref('employees').on('value', snap => {
             const list = document.getElementById('employeeList');
             const data = snap.val();
             employeesData = data || {};
             list.innerHTML = '';
+
             if (!data) return;
+
             document.getElementById('totalEmployees').innerText = Object.keys(data).length;
             document.getElementById('regCount').innerText = Object.keys(data).length;
+
             Object.values(data).forEach(emp => {
                 const row = document.createElement('div');
                 row.className = "flex items-center gap-4 p-4 hover:bg-white hover:shadow-xl hover:shadow-gray-200/50 rounded-2xl cursor-pointer transition-all group mb-1";
@@ -562,7 +645,7 @@
                     <button onclick="showEmployeeQR('${emp.id}', '${emp.name}')" class="opacity-0 group-hover:opacity-100 p-2 text-blue-400 hover:text-blue-600 transition-all">
                         <i class="fa-solid fa-qrcode"></i>
                     </button>
-                    <button onclick="editEmployee('${emp.id}', '${emp.name.replace(/'/g, "\\'")}', '${emp.role.replace(/'/g, "\\'")}', '${emp.email}', ${emp.isAdmin})" class="opacity-0 group-hover:opacity-100 p-2 text-amber-400 hover:text-amber-600 transition-all">
+                    <button onclick="editEmployee('${emp.id}', '${emp.name.replace(/'/g, "\\'")}', '${emp.role.replace(/'/g, "\\'")}', '${emp.email}', ${emp.isAdmin||false})" class="opacity-0 group-hover:opacity-100 p-2 text-amber-400 hover:text-amber-600 transition-all">
                         <i class="fa-solid fa-pen"></i>
                     </button>
                     <button onclick="promptDelete('${emp.id}', '${emp.name}')" class="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-all">
@@ -571,58 +654,54 @@
                 `;
                 list.appendChild(row);
             });
+
             if (currentFrom === todayStr && currentFrom === currentTo) {
                 renderAttendanceTable(currentRawData, todayStr);
             }
         });
+
         function determineStatus(log) {
-            // If no clock in, absent
-            if (!log || !log.TimeIn) {
-                return { status: 'ABSENT', class: 'status-absent' };
-            }
-           
-            // If currently at lunch (Lunch Out but not back yet)
-            if (log.LunchOut && !log.LunchBack) {
-                return { status: 'LUNCH', class: 'status-lunch' };
-            }
-           
-            // Calculate if late (more than 1 hour after 9:00)
+            if (!log || !log.TimeIn) return { status: 'ABSENT', class: 'status-absent' };
+            if (log.LunchOut && !log.LunchBack) return { status: 'LUNCH', class: 'status-lunch' };
+
             const timeIn = log.TimeIn;
             const [hours, minutes] = timeIn.split(':').map(Number);
             const timeInMinutes = hours * 60 + minutes;
-            const thresholdMinutes = 9 * 60; // 9:00 AM
-           
-            // If clocked in more than 1 hour after 9:00, it's half day
+            const thresholdMinutes = 9 * 60;
+
             if (timeInMinutes > thresholdMinutes + 60) {
                 return { status: 'HALF DAY', class: 'status-halfday' };
             }
-           
-            // Otherwise present
             return { status: 'PRESENT', class: 'status-present' };
         }
+
         function renderAttendanceTable(rawData, singleDate) {
             const tbody = document.getElementById('attendanceTable');
             tbody.innerHTML = '';
             let stats = { present: 0, lunch: 0, halfday: 0, absent: 0 };
+
             if (singleDate) {
-                // For single date, show all employees, including absents
                 const employees = Object.values(employeesData);
                 if (employees.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-gray-300">No employees registered</td></tr>`;
                     document.getElementById('presentToday').innerText = 0;
-                    globalChart.data.datasets[0].data = [0, 0, 0, 0];
+                    globalChart.data.datasets[0].data = [0,0,0,0];
                     globalChart.update();
                     return;
                 }
-                employees.sort((a, b) => a.name.localeCompare(b.name)); // Sort by name
+
+                employees.sort((a,b) => a.name.localeCompare(b.name));
+
                 employees.forEach(emp => {
                     let log = rawData[emp.id] || { id: emp.id, name: emp.name };
                     const displayDate = singleDate;
                     const statusInfo = determineStatus(log);
+
                     if (statusInfo.status === 'PRESENT') stats.present++;
                     else if (statusInfo.status === 'LUNCH') stats.lunch++;
                     else if (statusInfo.status === 'HALF DAY') stats.halfday++;
                     else if (statusInfo.status === 'ABSENT') stats.absent++;
+
                     let complianceHtml = '<span class="text-gray-200">-</span>';
                     let clockInHtml = log.TimeIn || '--:--';
                     if (log.TimeIn && log.TimeIn > LATE_THRESHOLD) {
@@ -630,8 +709,11 @@
                     }
                     if (log.LunchOut && log.LunchBack) {
                         const dur = calculateDuration(log.LunchOut, log.LunchBack) * 60;
-                        complianceHtml = dur > 60 ? `<span class="text-red-600 font-black">OVER (${Math.round(dur)}m)</span>` : `<span class="text-green-600 font-black">PASS</span>`;
+                        complianceHtml = dur > 60 
+                            ? `<span class="text-red-600 font-black">OVER (${Math.round(dur)}m)</span>`
+                            : `<span class="text-green-600 font-black">PASS</span>`;
                     }
+
                     tbody.innerHTML += `
                         <tr class="group hover:bg-gray-50/70 transition-colors">
                             <td class="p-3.5 font-mono text-xs text-gray-500">${displayDate}</td>
@@ -654,22 +736,24 @@
                         </tr>`;
                 });
             } else {
-                // For range, keep as before
+                // range mode ...
                 const entries = Object.values(rawData || {});
                 if (entries.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-gray-300">No records found in selected range</td></tr>`;
                     document.getElementById('presentToday').innerText = 0;
-                    globalChart.data.datasets[0].data = [0, 0, 0, 0];
+                    globalChart.data.datasets[0].data = [0,0,0,0];
                     globalChart.update();
                     return;
                 }
                 entries.forEach(log => {
                     const displayDate = log._date;
                     const statusInfo = determineStatus(log);
+
                     if (statusInfo.status === 'PRESENT') stats.present++;
                     else if (statusInfo.status === 'LUNCH') stats.lunch++;
                     else if (statusInfo.status === 'HALF DAY') stats.halfday++;
                     else if (statusInfo.status === 'ABSENT') stats.absent++;
+
                     let complianceHtml = '<span class="text-gray-200">-</span>';
                     let clockInHtml = log.TimeIn || '--:--';
                     if (log.TimeIn && log.TimeIn > LATE_THRESHOLD) {
@@ -677,8 +761,11 @@
                     }
                     if (log.LunchOut && log.LunchBack) {
                         const dur = calculateDuration(log.LunchOut, log.LunchBack) * 60;
-                        complianceHtml = dur > 60 ? `<span class="text-red-600 font-black">OVER (${Math.round(dur)}m)</span>` : `<span class="text-green-600 font-black">PASS</span>`;
+                        complianceHtml = dur > 60 
+                            ? `<span class="text-red-600 font-black">OVER (${Math.round(dur)}m)</span>`
+                            : `<span class="text-green-600 font-black">PASS</span>`;
                     }
+
                     tbody.innerHTML += `
                         <tr class="group hover:bg-gray-50/70 transition-colors">
                             <td class="p-3.5 font-mono text-xs text-gray-500">${displayDate}</td>
@@ -701,17 +788,21 @@
                         </tr>`;
                 });
             }
+
             document.getElementById('presentToday').innerText = stats.present;
             globalChart.data.datasets[0].data = [stats.present, stats.lunch, stats.halfday, stats.absent];
             globalChart.update();
         }
+
         function loadAttendanceData(fromDate, toDate) {
             currentFrom = fromDate;
             currentTo = toDate;
+
             if (attendanceListener) {
                 attendanceListener.off();
                 attendanceListener = null;
             }
+
             if (fromDate === toDate) {
                 if (fromDate === todayStr) {
                     attendanceListener = db.ref('attendance/' + todayStr);
@@ -738,6 +829,7 @@
                 });
             }
         }
+
         function applyFilter() {
             let from = document.getElementById('dateFrom').value;
             let to = document.getElementById('dateTo').value;
@@ -745,11 +837,45 @@
             if (!to || to < from) to = from;
             loadAttendanceData(from, to);
         }
+
         function loadTodayLive() {
             document.getElementById('dateFrom').value = todayStr;
             document.getElementById('dateTo').value = todayStr;
             loadAttendanceData(todayStr, todayStr);
         }
+
+        // ─── Admin Auth Flow ─────────────────────────────────────────
+        let authChecked = false;
+
+        auth.onAuthStateChanged(async (user) => {
+            const loginModal = document.getElementById('adminLoginModal');
+
+            if (!user) {
+                if (!loginModal.classList.contains('opacity-0')) return;
+                toggleModal('adminLoginModal');
+                return;
+            }
+
+            // We have a user → check if admin
+            const snap = await db.ref('employees').orderByChild('email').equalTo(user.email.toLowerCase()).once('value');
+            let isAdminUser = false;
+
+            snap.forEach(child => {
+                if (child.val().isAdmin === true) isAdminUser = true;
+            });
+
+            if (!isAdminUser) {
+                await auth.signOut();
+                alert("Access denied: This Google account is not registered as an Admin.");
+                toggleModal('adminLoginModal');
+            } else {
+                // Admin → hide login if visible
+                if (!loginModal.classList.contains('opacity-0')) {
+                    toggleModal('adminLoginModal');
+                }
+            }
+        });
+
         function signInWithGoogle() {
             auth.signInWithPopup(provider).then(async (result) => {
                 const user = result.user;
@@ -758,47 +884,35 @@
                 snap.forEach(child => {
                     if (child.val().isAdmin === true) isAdminUser = true;
                 });
-                if (isAdminUser) {
-                    toggleModal('adminLoginModal');
-                } else {
+
+                if (!isAdminUser) {
                     await auth.signOut();
                     alert("Access denied: This Google account is not registered as an Admin.");
                 }
+                // else → onAuthStateChanged will handle showing/hiding modal
             }).catch(err => {
                 console.error(err);
+                alert("Google sign-in failed: " + err.message);
             });
         }
-       
+
         function showSignOutConfirm() { toggleModal('signOutConfirmModal'); }
         function confirmSignOut() { toggleModal('signOutConfirmModal'); signOutAdmin(); }
+
         function signOutAdmin() {
-            auth.signOut().then(() => toggleModal('adminLoginModal')).catch(err => console.log("Sign out error"));
-        }
-       
-        auth.onAuthStateChanged(async (user) => {
-            const loginModal = document.getElementById('adminLoginModal');
-            if (!user && loginModal.classList.contains('opacity-0')) {
+            auth.signOut().then(() => {
                 toggleModal('adminLoginModal');
-            } else if (user) {
-                // Check if user is admin, if not sign them out
-                const snap = await db.ref('employees').orderByChild('email').equalTo(user.email.toLowerCase()).once('value');
-                let isAdminUser = false;
-                snap.forEach(child => {
-                    if (child.val().isAdmin === true) isAdminUser = true;
-                });
-                if (!isAdminUser) {
-                    await auth.signOut();
-                }
-            }
-        });
-       
+            }).catch(err => console.log("Sign out error:", err));
+        }
+
+        // ─── Scanner ─────────────────────────────────────────────────
         function startScanner() {
             toggleModal('scannerModal');
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess).catch(err => console.error(err));
         }
-       
+
         function stopScanner() {
             if (html5QrCode) {
                 html5QrCode.stop().then(() => {
@@ -813,19 +927,21 @@
                 toggleModal('scannerModal');
             }
         }
-       
+
         function onScanSuccess(decodedText) {
             html5QrCode.pause();
             document.getElementById('scanStatus').innerText = `Processing: ${decodedText}...`;
+
             db.ref('employees/' + decodedText).once('value').then(snap => {
-                if (snap.exists()) processScanLogic(decodedText, snap.val().name);
-                else {
+                if (snap.exists()) {
+                    processScanLogic(decodedText, snap.val().name);
+                } else {
                     alert("Invalid QR Code");
                     html5QrCode.resume();
                 }
             });
         }
-       
+
         function haversineDistance(lat1, lon1, lat2, lon2) {
             const R = 6371000;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -834,24 +950,36 @@
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return R * c;
         }
-       
+
         async function isWithinOfficeLocation() {
             return new Promise((resolve, reject) => {
                 if (!officeLocation) return reject(new Error("Office location not set"));
                 navigator.geolocation.getCurrentPosition(pos => {
-                    const dist = haversineDistance(pos.coords.latitude, pos.coords.longitude, officeLocation.lat, officeLocation.lng);
+                    const dist = haversineDistance(
+                        pos.coords.latitude, pos.coords.longitude,
+                        officeLocation.lat, officeLocation.lng
+                    );
                     resolve(dist <= officeLocation.radius);
-                }, reject, { enableHighAccuracy: true });
+                }, reject, { enableHighAccuracy: true, timeout: 10000 });
             });
         }
-       
+
         async function processScanLogic(id, name) {
-            try { await isWithinOfficeLocation(); } catch (e) { alert(e.message); html5QrCode.resume(); return; }
+            try {
+                await isWithinOfficeLocation();
+            } catch (e) {
+                alert(e.message);
+                html5QrCode.resume();
+                return;
+            }
+
             const saveTodayStr = new Date().toISOString().split('T')[0];
             const path = `attendance/${saveTodayStr}/${id}`;
             const now = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
             db.ref(path).once('value').then(snap => {
                 const data = snap.val() || {};
+
                 if (data.lastActionTime) {
                     const timeSinceLast = Date.now() - data.lastActionTime;
                     if (timeSinceLast < 15 * 60 * 1000) {
@@ -861,6 +989,7 @@
                         return;
                     }
                 }
+
                 let update = {
                     id: id,
                     name: name,
@@ -869,6 +998,7 @@
                     lastActionTime: Date.now()
                 };
                 let actionTaken = "";
+
                 if (!data.TimeIn) {
                     update.TimeIn = now;
                     update.lastAction = "Clock In";
@@ -890,13 +1020,15 @@
                     html5QrCode.resume();
                     return;
                 }
+
                 db.ref(path).update(update).then(() => {
                     alert(`${actionTaken}: ${name}`);
                     html5QrCode.resume();
                 });
             });
         }
-       
+
+        // ─── Admin Quick Actions (now) ───────────────────────────────
         function showAdminActions(e, id) {
             e.stopPropagation();
             activeAdminId = id;
@@ -905,82 +1037,127 @@
             menu.style.left = (e.pageX - 10) + 'px';
             menu.style.top = (e.pageY + 10) + 'px';
         }
-       
-        window.onclick = () => document.getElementById('adminActionMenu').style.display = 'none';
-       
+
+        window.onclick = () => {
+            document.getElementById('adminActionMenu').style.display = 'none';
+        };
+
         function adminSetAction(action) {
             if (!activeAdminId) return;
             const saveTodayStr = new Date().toISOString().split('T')[0];
             const now = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
             const path = `attendance/${saveTodayStr}/${activeAdminId}`;
+
             let update = { lastAction: action, date: saveTodayStr, day: new Date().toLocaleDateString('en-US', { weekday: 'long' }) };
-            if (action === 'Clock In') update.TimeIn = now;
-            else if (action === 'Lunch Out') update.LunchOut = now;
-            else if (action === 'Lunch Back') update.LunchBack = now;
-            else if (action === 'Clock Out') update.TimeOut = now;
+
+            if (action === 'Clock In')      update.TimeIn    = now;
+            else if (action === 'Lunch Out') update.LunchOut  = now;
+            else if (action === 'Lunch Back')update.LunchBack = now;
+            else if (action === 'Clock Out') update.TimeOut   = now;
+
             db.ref(path).update(update);
         }
-       
+
+        // ─── NEW: Manual Entry ───────────────────────────────────────
+        function openManualEntry() {
+            if (!activeAdminId) return alert("No employee selected");
+            document.getElementById('manualDate').value = todayStr;
+            document.getElementById('manualTime').value = "";
+            toggleModal('manualEntryModal');
+        }
+
+        function saveManualEntry() {
+            if (!activeAdminId) return;
+
+            const date = document.getElementById('manualDate').value;
+            const time = document.getElementById('manualTime').value;
+            const action = document.getElementById('manualAction').value;
+
+            if (!date || !time) {
+                alert("Please select both date and time.");
+                return;
+            }
+
+            const path = `attendance/${date}/${activeAdminId}`;
+            let update = {
+                id: activeAdminId,
+                name: employeesData[activeAdminId]?.name || "Unknown",
+                date: date,
+                day: new Date(date).toLocaleDateString('en-US', { weekday: 'long' }),
+                lastAction: action + " (manual)",
+                lastActionTime: Date.now()
+            };
+
+            if (action === 'Clock In')      update.TimeIn    = time;
+            else if (action === 'Lunch Out') update.LunchOut  = time;
+            else if (action === 'Lunch Back')update.LunchBack = time;
+            else if (action === 'Clock Out') update.TimeOut   = time;
+
+            db.ref(path).update(update).then(() => {
+                alert(`Manual ${action} saved for ${date} at ${time}`);
+                toggleModal('manualEntryModal');
+            }).catch(err => {
+                alert("Error saving manual entry: " + err.message);
+            });
+        }
+
+        // ─── Delete, Edit, QR, PDF, etc. (unchanged) ─────────────────
         function promptDelete(id, name) {
             pendingDeleteId = id;
             document.getElementById('deleteTargetName').innerText = name;
             toggleModal('confirmDeleteModal');
         }
-       
+
         document.getElementById('finalDeleteBtn').onclick = () => {
             if (pendingDeleteId) {
                 db.ref('employees/' + pendingDeleteId).remove();
+                // Optional: remove today's attendance too
                 db.ref('attendance/' + todayStr + '/' + pendingDeleteId).remove().then(() => {
                     toggleModal('confirmDeleteModal');
                     pendingDeleteId = null;
                 });
             }
         };
-       
+
         function formatTime(minutes) {
             if (isNaN(minutes) || minutes < 0) return "--:--";
             const h = Math.floor(minutes / 60).toString().padStart(2, '0');
             const m = Math.floor(minutes % 60).toString().padStart(2, '0');
             return `${h}:${m}`;
         }
-       
+
         function timeToMinutes(timeStr) {
             if (!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) return NaN;
             const [h, m] = timeStr.split(':').map(Number);
             return h * 60 + m;
         }
-       
+
         async function fetchEmployeeHistory(id, name, role) {
             selectedEmpId = id;
             document.getElementById('statName').innerText = name;
             document.getElementById('statIdRole').innerText = `${id} • ${role}`;
             document.getElementById('statAvatar').innerText = name.charAt(0);
-           
+
             const historySnap = await db.ref('attendance').once('value');
             const allDays = historySnap.val() || {};
-           
-            let totalHours = 0,
-                fullDays = 0,
-                halfDays = 0,
-                absentDays = 0,
-                chartLabels = [],
-                chartData = [];
-           
-            // Get last 30 days for chart
+
+            let totalHours = 0, fullDays = 0, halfDays = 0, absentDays = 0;
+            let chartLabels = [], chartData = [];
+
             for (let i = 29; i >= 0; i--) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const dStr = d.toISOString().split('T')[0];
                 chartLabels.push(d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
-               
+
                 const dayData = allDays[dStr]?.[id];
-                if (dayData) {
+                if (dayData && dayData.TimeIn) {
                     const duration = calculateDuration(dayData.TimeIn, dayData.TimeOut, dayData.LunchOut, dayData.LunchBack);
                     totalHours += duration;
-                   
+
                     const timeInMinutes = timeToMinutes(dayData.TimeIn);
                     const thresholdMinutes = 9 * 60;
-                   
+
                     if (timeInMinutes > thresholdMinutes + 60) {
                         halfDays++;
                         chartData.push(0.5);
@@ -993,19 +1170,20 @@
                     chartData.push(0);
                 }
             }
-           
+
             document.getElementById('statTotalHours').innerText = totalHours.toFixed(1);
             document.getElementById('statFullDays').innerText = fullDays;
             document.getElementById('statHalfDays').innerText = halfDays;
             document.getElementById('statAbsentDays').innerText = absentDays;
-           
+
             toggleModal('statsModal');
             renderPersonalChart(chartLabels, chartData);
         }
-       
+
         function calculateDuration(inT, outT, lunchOut = null, lunchBack = null) {
             const inMin = timeToMinutes(inT), outMin = timeToMinutes(outT);
             if (isNaN(inMin) || isNaN(outMin) || outMin <= inMin) return 0;
+
             let lunchMin = 0;
             if (lunchOut && lunchBack) {
                 const lOut = timeToMinutes(lunchOut), lBack = timeToMinutes(lunchBack);
@@ -1015,7 +1193,7 @@
             }
             return (outMin - inMin - lunchMin) / 60;
         }
-       
+
         function renderPersonalChart(labels, data) {
             if (personalChart) personalChart.destroy();
             personalChart = new Chart(document.getElementById('personalTrendChart').getContext('2d'), {
@@ -1023,7 +1201,7 @@
                 data: {
                     labels,
                     datasets: [{
-                        label: 'Attendance (1=Full Day, 0.5=Half Day, 0=Absent)',
+                        label: 'Attendance (1=Full, 0.5=Half, 0=Absent)',
                         data,
                         backgroundColor: data.map(v => v === 1 ? '#22c55e' : v === 0.5 ? '#eab308' : '#dc2626'),
                         borderRadius: 4
@@ -1039,8 +1217,8 @@
                             ticks: {
                                 stepSize: 0.5,
                                 callback: function(value) {
-                                    if (value === 1) return 'Full Day';
-                                    if (value === 0.5) return 'Half Day';
+                                    if (value === 1) return 'Full';
+                                    if (value === 0.5) return 'Half';
                                     if (value === 0) return 'Absent';
                                     return '';
                                 }
@@ -1050,7 +1228,7 @@
                 }
             });
         }
-       
+
         async function downloadPersonalPDF() {
             const empName = document.getElementById('statName').innerText;
             const empIdRole = document.getElementById('statIdRole').innerText;
@@ -1059,74 +1237,75 @@
             const halfDays = document.getElementById('statHalfDays').innerText;
             const absentDaysCount = document.getElementById('statAbsentDays').innerText;
 
-            const doc = new jspdf.jsPDF('p', 'mm', 'a4');
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+
             doc.setFillColor(15, 23, 42);
             doc.rect(0, 0, 210, 45, 'F');
             doc.addImage('https://i.postimg.cc/05BVVkbb/LOGO-removebg-preview.png', 'PNG', 15, 8, 45, 25);
+
             doc.setTextColor(255);
             doc.setFontSize(26);
             doc.text("ATTENDANCE HUB", 72, 22);
             doc.setFontSize(11);
             doc.text("Employee Performance Report", 72, 32);
-            doc.setTextColor(0);
 
+            doc.setTextColor(0);
             doc.setFontSize(18);
             doc.text(empName, 20, 65);
             doc.setFontSize(12);
             doc.text(empIdRole, 20, 75);
             doc.text(`Last 30 Days • Generated: ${new Date().toLocaleDateString('en-GB')}`, 20, 85);
 
-            // Summary Cards - Equal width and fit
             let y = 100;
             const cardW = 40;
-            const gap = 6.67; // (210 - 40 - 40 - 40 - 40 - 20 - 20) / 3 = 6.67
+            const gap = 6.67;
 
             // Total Hours
-            doc.setFillColor(241, 245, 255);
+            doc.setFillColor(241,245,255);
             doc.roundedRect(20, y, cardW, 42, 6, 6, 'F');
-            doc.setDrawColor(148, 163, 184);
+            doc.setDrawColor(148,163,184);
             doc.roundedRect(20, y, cardW, 42, 6, 6);
             doc.setFontSize(9);
-            doc.setTextColor(71, 85, 105);
-            doc.text("TOTAL HOURS", 25, y + 13);
+            doc.setTextColor(71,85,105);
+            doc.text("TOTAL HOURS", 25, y+13);
             doc.setFontSize(21);
-            doc.setTextColor(30, 64, 175);
-            doc.text(totalHours, 25, y + 30);
+            doc.setTextColor(30,64,175);
+            doc.text(totalHours, 25, y+30);
 
             // Full Days
-            doc.setFillColor(240, 253, 244);
+            doc.setFillColor(240,253,244);
             doc.roundedRect(20 + cardW + gap, y, cardW, 42, 6, 6, 'F');
             doc.roundedRect(20 + cardW + gap, y, cardW, 42, 6, 6);
             doc.setFontSize(9);
-            doc.setTextColor(71, 85, 105);
-            doc.text("FULL DAYS", 25 + cardW + gap, y + 13);
+            doc.setTextColor(71,85,105);
+            doc.text("FULL DAYS", 25 + cardW + gap, y+13);
             doc.setFontSize(21);
-            doc.setTextColor(22, 101, 52);
-            doc.text(fullDays, 25 + cardW + gap, y + 30);
+            doc.setTextColor(22,101,52);
+            doc.text(fullDays, 25 + cardW + gap, y+30);
 
             // Half Days
-            doc.setFillColor(254, 252, 232);
+            doc.setFillColor(254,252,232);
             doc.roundedRect(20 + 2*(cardW + gap), y, cardW, 42, 6, 6, 'F');
             doc.roundedRect(20 + 2*(cardW + gap), y, cardW, 42, 6, 6);
             doc.setFontSize(9);
-            doc.setTextColor(71, 85, 105);
-            doc.text("HALF DAYS", 25 + 2*(cardW + gap), y + 13);
+            doc.setTextColor(71,85,105);
+            doc.text("HALF DAYS", 25 + 2*(cardW + gap), y+13);
             doc.setFontSize(21);
-            doc.setTextColor(161, 98, 7);
-            doc.text(halfDays, 25 + 2*(cardW + gap), y + 30);
+            doc.setTextColor(161,98,7);
+            doc.text(halfDays, 25 + 2*(cardW + gap), y+30);
 
             // Absent
-            doc.setFillColor(254, 242, 242);
+            doc.setFillColor(254,242,242);
             doc.roundedRect(20 + 3*(cardW + gap), y, cardW, 42, 6, 6, 'F');
             doc.roundedRect(20 + 3*(cardW + gap), y, cardW, 42, 6, 6);
             doc.setFontSize(9);
-            doc.setTextColor(71, 85, 105);
-            doc.text("ABSENT DAYS", 25 + 3*(cardW + gap), y + 13);
+            doc.setTextColor(71,85,105);
+            doc.text("ABSENT DAYS", 25 + 3*(cardW + gap), y+13);
             doc.setFontSize(21);
-            doc.setTextColor(220, 38, 38);
-            doc.text(absentDaysCount, 25 + 3*(cardW + gap), y + 30);
+            doc.setTextColor(220,38,38);
+            doc.text(absentDaysCount, 25 + 3*(cardW + gap), y+30);
 
-            // Trend Chart
             y += 55;
             const chartCanvas = await html2canvas(document.getElementById('personalTrendChart'), { scale: 2 });
             doc.addImage(chartCanvas.toDataURL('image/png'), 'PNG', 20, y, 170, 82);
@@ -1135,26 +1314,27 @@
 
             doc.save(`Performance_${selectedEmpId}.pdf`);
         }
-       
+
         async function generateGlobalReport() {
-            const doc = new jspdf.jsPDF();
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const monthStr = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-            // Modern Header
             doc.setFillColor(15, 23, 42);
             doc.rect(0, 0, 210, 45, 'F');
             doc.addImage('https://i.postimg.cc/05BVVkbb/LOGO-removebg-preview.png', 'PNG', 15, 8, 45, 25);
+
             doc.setTextColor(255);
             doc.setFontSize(26);
             doc.text("ATTENDANCE HUB", 72, 22);
             doc.setFontSize(11);
             doc.text("Monthly Operations Report", 72, 32);
-            doc.setTextColor(0);
 
+            doc.setTextColor(0);
             doc.setFontSize(18);
             doc.text(monthStr, 20, 65);
 
@@ -1200,13 +1380,11 @@
             doc.text(`Total Absent Days (All Employees): ${totalAbsent}`, 20, 95);
             doc.text(`Total Working Hours (All Employees): ${totalWorkingHours.toFixed(1)}`, 20, 105);
 
-            // Employee Table
             let yPos = 120;
             doc.setFontSize(14);
             doc.text("Employee-wise Summary", 20, yPos);
             yPos += 12;
 
-            // Table Header
             doc.setFillColor(37, 99, 235);
             doc.rect(20, yPos, 170, 12, 'F');
             doc.setTextColor(255);
@@ -1216,16 +1394,14 @@
             doc.text("Half Days", 115, yPos+9);
             doc.text("Absent Days", 140, yPos+9);
             doc.text("Hours", 170, yPos+9);
+
             yPos += 14;
             doc.setTextColor(0);
 
             let alternate = false;
             employeeData.sort((a,b) => a.name.localeCompare(b.name));
             employeeData.forEach(emp => {
-                if (yPos > 270) {
-                    doc.addPage();
-                    yPos = 30;
-                }
+                if (yPos > 270) { doc.addPage(); yPos = 30; }
                 if (alternate) doc.setFillColor(248,250,252);
                 else doc.setFillColor(255);
                 doc.rect(20, yPos, 170, 10, 'F');
@@ -1242,29 +1418,32 @@
 
             doc.save(`Monthly_Report_${monthStr.replace(/ /g,'_')}.pdf`);
         }
-       
+
         document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('newEmpEmail').value.trim().toLowerCase();
-            
-            // Check if email already exists
+
             const emailCheck = await db.ref('employees').orderByChild('email').equalTo(email).once('value');
             if (emailCheck.exists()) {
                 toggleModal('emailExistsModal');
                 return;
             }
-            
+
             const id = `EMP-${Math.random().toString(16).slice(2, 6).toUpperCase()}`;
             const name = document.getElementById('newEmpName').value.trim();
             const role = document.getElementById('newEmpRole').value.trim();
             const isAdmin = document.getElementById('newEmpType').value === 'admin';
-            db.ref('employees/' + id).set({ id, name, role, email, isAdmin, createdAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
+
+            db.ref('employees/' + id).set({
+                id, name, role, email, isAdmin,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
                 toggleModal('addEmployeeModal');
                 document.getElementById('addEmployeeForm').reset();
                 showEmployeeQR(id, name);
             });
         });
-        // === EDIT EMPLOYEE FUNCTIONALITY ===
+
         function editEmployee(id, name, role, email, isAdmin) {
             editingEmpId = id;
             document.getElementById('editEmpId').value = id;
@@ -1274,38 +1453,35 @@
             document.getElementById('editEmpType').value = isAdmin ? 'admin' : 'employee';
             toggleModal('editEmployeeModal');
         }
+
         document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!editingEmpId) return;
+
             const email = document.getElementById('editEmpEmail').value.trim().toLowerCase();
-            
-            // Check if email already exists (excluding current employee)
             const emailCheck = await db.ref('employees').orderByChild('email').equalTo(email).once('value');
             let emailExists = false;
             emailCheck.forEach(child => {
-                if (child.key !== editingEmpId) {
-                    emailExists = true;
-                }
+                if (child.key !== editingEmpId) emailExists = true;
             });
-            
+
             if (emailExists) {
                 toggleModal('emailExistsModal');
                 return;
             }
-            
+
             const name = document.getElementById('editEmpName').value.trim();
             const role = document.getElementById('editEmpRole').value.trim();
             const isAdmin = document.getElementById('editEmpType').value === 'admin';
+
             db.ref('employees/' + editingEmpId).update({
-                name: name,
-                role: role,
-                email: email,
-                isAdmin: isAdmin
+                name, role, email, isAdmin
             }).then(() => {
                 toggleModal('editEmployeeModal');
                 editingEmpId = null;
             });
         });
+
         function showEmployeeQR(id, name) {
             currentQrEmpId = id;
             currentQrEmpName = name;
@@ -1314,17 +1490,28 @@
             document.getElementById('successMessage').innerHTML = `Permanent QR for <strong>${name}</strong><br><strong>Use this same QR code every day</strong>`;
             toggleModal('successModal');
         }
+
         function generateQRCode(id, name) {
             const qrContainer = document.getElementById('qrCodeContainer');
             qrContainer.innerHTML = '';
-            new QRCode(qrContainer, { text: id, width: 220, height: 220, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+            new QRCode(qrContainer, {
+                text: id,
+                width: 220,
+                height: 220,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
             setTimeout(() => {
                 const qrCanvas = qrContainer.querySelector('canvas');
                 if (qrCanvas) {
-                    const pdf = new jspdf.jsPDF({ orientation: 'portrait', unit: 'px', format: [280, 280] });
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [280, 280] });
                     pdf.setFillColor(255, 255, 255);
                     pdf.rect(0, 0, 280, 280, 'F');
                     pdf.addImage(qrCanvas.toDataURL('image/png'), 'PNG', 30, 30, 220, 220);
+
                     const pdfBlob = pdf.output('blob');
                     const pdfUrl = URL.createObjectURL(pdfBlob);
                     const dlBtn = document.getElementById('downloadQrBtn');
@@ -1333,46 +1520,50 @@
                 }
             }, 300);
         }
+
         function regenerateQR() {
             if (!currentQrEmpId || !currentQrEmpName) return;
             generateQRCode(currentQrEmpId, currentQrEmpName);
             document.getElementById('successTitle').textContent = "QR Regenerated!";
             document.getElementById('successMessage').innerHTML = `Regenerated QR for <strong>${currentQrEmpName}</strong><br><strong>ID remains: ${currentQrEmpId}</strong>`;
         }
-       
+
         function toggleModal(id) {
             const m = document.getElementById(id);
             m.classList.toggle('opacity-0');
             m.classList.toggle('pointer-events-none');
             document.body.classList.toggle('modal-active');
         }
-       
+
         function toggleLocationModal() {
             if (officeLocation) {
-                document.getElementById('officeLat').value = officeLocation.lat || '';
-                document.getElementById('officeLng').value = officeLocation.lng || '';
+                document.getElementById('officeLat').value   = officeLocation.lat || '';
+                document.getElementById('officeLng').value   = officeLocation.lng || '';
                 document.getElementById('officeRadius').value = officeLocation.radius || 150;
             }
             toggleModal('locationModal');
         }
-       
+
         function getCurrentLocationForOffice() {
             navigator.geolocation.getCurrentPosition(pos => {
                 document.getElementById('officeLat').value = pos.coords.latitude.toFixed(6);
                 document.getElementById('officeLng').value = pos.coords.longitude.toFixed(6);
             }, err => alert("Unable to retrieve location"));
         }
-       
+
         function saveOfficeLocation() {
             const lat = parseFloat(document.getElementById('officeLat').value);
             const lng = parseFloat(document.getElementById('officeLng').value);
             const radius = parseFloat(document.getElementById('officeRadius').value) || 150;
+
             if (isNaN(lat) || isNaN(lng)) return alert("Please enter valid coordinates");
+
             db.ref('settings/officeLocation').set({ lat, lng, radius }).then(() => {
                 alert("Office location saved");
                 toggleModal('locationModal');
             });
         }
+
         window.onload = () => {
             document.getElementById('dateFrom').value = todayStr;
             document.getElementById('dateTo').value = todayStr;
