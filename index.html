@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -32,47 +33,21 @@
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .glass-card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-        .modal { transition: opacity 0.25s ease; z-index: 100; }
-        body.modal-active { overflow-x: hidden; overflow-y: visible !important; }
-        .pill-btn { border-radius: 9999px; transition: all 0.3s ease; transform: scale(1); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(4px); }
+        .modal.active { display: flex; }
+        .pill-btn { border-radius: 9999px; transition: all 0.3s ease; transform: scale(1); cursor: pointer; }
         .pill-btn:hover { transform: translateY(-1px); filter: brightness(110%); }
         .pill-btn:active { transform: scale(0.96); }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
-        .action-menu { display: none; position: absolute; background: white; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid #f3f4f6; z-index: 50; width: 160px; }
-        .action-item:hover { background: #eff6ff; color: #2563eb; }
-        .modal-container { position: relative; }
-        .modal-close-btn {
-            position: absolute;
-            top: 1.25rem;
-            right: 1.25rem;
-            width: 2rem;
-            height: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f3f4f6;
-            color: #6b7280;
-            border-radius: 9999px;
-            transition: all 0.2s ease;
-            z-index: 10;
-        }
-        .modal-close-btn:hover {
-            background: #e5e7eb;
-            color: #374151;
-        }
-        table { border-collapse: collapse; }
-        th, td { transition: background 0.2s; }
         .status-present { background-color: #dcfce7; color: #166534; border: 1px solid #166534; }
         .status-lunch { background-color: #ffedd5; color: #c2410c; border: 1px solid #c2410c; }
         .status-absent { background-color: #fee2e2; color: #dc2626; border: 1px solid #dc2626; }
         .status-halfday { background-color: #fef9c3; color: #a16207; border: 1px solid #a16207; }
-        .status-offline { background-color: #f3f4f6; color: #6b7280; border: 1px solid #6b7280; }
     </style>
 </head>
 <body class="text-gray-800 h-screen flex flex-col overflow-hidden">
 
-    <!-- HEADER -->
     <header class="z-20">
         <nav class="glass-header px-8 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
@@ -86,26 +61,19 @@
             </div>
       
             <div class="flex gap-3">
-                <button onclick="startScanner()" class="pill-btn bg-violet-600 text-white px-5 py-2 text-[11px] font-black flex items-center gap-2 shadow-lg shadow-violet-500/20">
+                <button onclick="toggleModal('scanModal'); startScanner()" class="pill-btn bg-violet-600 text-white px-5 py-2 text-[11px] font-black flex items-center gap-2 shadow-lg shadow-violet-500/20">
                     <i class="fa-solid fa-qrcode"></i> SCAN QR
                 </button>
-                <button onclick="toggleLocationModal()" class="pill-btn bg-emerald-600 text-white px-5 py-2 text-[11px] font-black flex items-center gap-2 shadow-lg shadow-emerald-500/20">
-                    <i class="fa-solid fa-location-dot"></i> OFFICE
-                </button>
                 <button onclick="generateGlobalReport()" class="pill-btn bg-white/5 text-white border border-white/10 hover:bg-white/20 px-5 py-2 text-[11px] font-black flex items-center gap-2">
-                    <i class="fa-solid fa-file-export"></i> EXPORT
+                    <i class="fa-solid fa-file-export"></i> EXPORT PDF
                 </button>
-                <button onclick="toggleModal('addEmployeeModal')" class="pill-btn bg-blue-600 text-white px-5 py-2 text-[11px] font-black flex items-center gap-2 shadow-lg shadow-blue-500/20">
+                <button onclick="toggleModal('staffModal')" class="pill-btn bg-blue-600 text-white px-5 py-2 text-[11px] font-black flex items-center gap-2 shadow-lg shadow-blue-500/20">
                     <i class="fa-solid fa-plus"></i> ADD STAFF
-                </button>
-                <button onclick="showSignOutConfirm()" class="pill-btn bg-red-600 text-white px-5 py-2 text-[11px] font-black flex items-center gap-2 shadow-lg shadow-red-500/20">
-                    <i class="fa-solid fa-right-from-bracket"></i> SIGN OUT
                 </button>
             </div>
         </nav>
     </header>
 
-    <!-- MAIN CONTENT -->
     <main class="flex-1 flex overflow-hidden">
         <aside class="w-1/3 bg-gray-50/50 p-6 pt-2 overflow-y-auto border-r border-gray-200 flex flex-col gap-6 custom-scroll">
             <div class="grid grid-cols-2 gap-4">
@@ -136,22 +104,16 @@
         </aside>
 
         <section class="flex-1 bg-gray-100/50 p-8 pt-2 overflow-y-auto custom-scroll">
-            <div class="glass-card min-h-full p-8">
+            <div class="glass-card min-h-full p-8" id="reportView">
                 <div class="flex justify-between items-end mb-6">
                     <div>
-                        <span class="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-lg">LIVE LOG</span>
-                        <h2 class="text-3xl font-black text-gray-900 mt-2">Attendance Feed</h2>
+                        <span class="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-lg" id="viewLabel">LIVE LOG</span>
+                        <h2 class="text-3xl font-black text-gray-900 mt-2" id="mainTitle">Attendance Feed</h2>
                         <p id="dateDisplay" class="text-sm font-bold text-gray-400 mt-1"></p>
                     </div>
                     <div class="flex gap-2 bg-white p-2 rounded-2xl shadow-inner border border-gray-100">
                         <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-50 text-green-700 text-[10px] font-black">
                             <div class="w-2 h-2 rounded-full bg-green-500"></div> PRESENT
-                        </div>
-                        <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-50 text-orange-700 text-[10px] font-black">
-                            <div class="w-2 h-2 rounded-full bg-orange-500"></div> LUNCH
-                        </div>
-                        <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-yellow-50 text-yellow-700 text-[10px] font-black">
-                            <div class="w-2 h-2 rounded-full bg-yellow-500"></div> HALF DAY
                         </div>
                         <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-50 text-red-700 text-[10px] font-black">
                             <div class="w-2 h-2 rounded-full bg-red-500"></div> ABSENT
@@ -159,33 +121,26 @@
                     </div>
                 </div>
 
-                <!-- Date Range Filter -->
                 <div class="flex items-center gap-4 mb-8 bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
                     <div class="flex items-center gap-3">
-                        <div>
-                            <span class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">FROM</span>
-                            <input type="date" id="dateFrom" class="bg-white border border-gray-200 rounded-2xl px-5 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div>
-                            <span class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">TO</span>
-                            <input type="date" id="dateTo" class="bg-white border border-gray-200 rounded-2xl px-5 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
+                        <input type="date" id="dateFrom" class="bg-white border border-gray-200 rounded-2xl px-5 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none">
+                        <input type="date" id="dateTo" class="bg-white border border-gray-200 rounded-2xl px-5 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
-                    <button onclick="applyFilter()" class="pill-btn bg-violet-600 hover:bg-violet-700 text-white px-7 py-3 text-xs font-black shadow-lg shadow-violet-500/30">APPLY FILTER</button>
-                    <button onclick="loadTodayLive()" class="pill-btn bg-emerald-600 hover:bg-emerald-700 text-white px-7 py-3 text-xs font-black shadow-lg shadow-emerald-500/30">TODAY LIVE</button>
+                    <button onclick="applyFilter()" class="pill-btn bg-violet-600 text-white px-7 py-3 text-xs font-black shadow-lg shadow-violet-500/20">APPLY FILTER</button>
+                    <button onclick="loadTodayLive()" class="pill-btn bg-emerald-600 text-white px-7 py-3 text-xs font-black shadow-lg shadow-emerald-500/20">TODAY LIVE</button>
                 </div>
 
                 <div class="overflow-x-auto relative">
-                    <table class="w-full text-left">
+                    <table class="w-full text-left" id="mainTable">
                         <thead>
                             <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 bg-gray-50">
-                                <th class="pb-3 px-3 w-24">Date</th>
-                                <th class="pb-3 px-3">Staff Member</th>
-                                <th class="pb-3 px-3">Clock In</th>
-                                <th class="pb-3 px-3">Lunch Break</th>
-                                <th class="pb-3 px-3 text-center">Compliance</th>
-                                <th class="pb-3 px-3">Clock Out</th>
-                                <th class="pb-3 px-3 text-center">Status</th>
+                                <th class="p-3">Date</th>
+                                <th class="p-3">Staff Member</th>
+                                <th class="p-3">Clock In</th>
+                                <th class="p-3">Lunch Break</th>
+                                <th class="p-3">Clock Out</th>
+                                <th class="p-3 text-center">Status</th>
+                                <th class="p-3 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="attendanceTable" class="divide-y divide-gray-50 text-sm">
@@ -197,11 +152,56 @@
         </section>
     </main>
 
-    <!-- ─── MODALS (unchanged except minor class fixes) ─────────────────────────────── -->
-    <!-- ... (all modals remain the same - omitted for brevity) ... -->
+    <div id="staffModal" class="modal">
+        <div class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl relative">
+            <button onclick="toggleModal('staffModal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            <h2 class="text-2xl font-black mb-6">Staff Registration</h2>
+            <div class="space-y-4">
+                <input type="text" id="staffName" placeholder="Full Name" class="w-full p-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="staffRole" placeholder="Role (e.g. Designer)" class="w-full p-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-blue-500">
+                <button onclick="saveStaff()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg">REGISTER STAFF</button>
+            </div>
+        </div>
+    </div>
 
-    <!-- JAVASCRIPT -->
+    <div id="qrModal" class="modal">
+        <div class="bg-white p-10 rounded-3xl w-full max-w-sm text-center">
+            <h2 id="qrName" class="text-xl font-black mb-2"></h2>
+            <p class="text-gray-400 text-xs mb-6 font-bold uppercase tracking-widest">Employee Identity QR</p>
+            <div id="qrcode" class="flex justify-center mb-6"></div>
+            <button onclick="toggleModal('qrModal')" class="w-full bg-gray-100 text-gray-600 font-black py-3 rounded-2xl">CLOSE</button>
+        </div>
+    </div>
+
+    <div id="manualEntryModal" class="modal">
+        <div class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl relative">
+            <button onclick="toggleModal('manualEntryModal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            <h2 class="text-2xl font-black mb-2">Manual Override</h2>
+            <p id="manualEmpName" class="text-blue-600 font-bold mb-6"></p>
+            <div class="space-y-4">
+                <input type="date" id="manualDate" class="w-full p-4 bg-gray-50 rounded-2xl border-none">
+                <input type="time" id="manualTime" class="w-full p-4 bg-gray-50 rounded-2xl border-none">
+                <select id="manualAction" class="w-full p-4 bg-gray-50 rounded-2xl border-none">
+                    <option value="TimeIn">Clock In</option>
+                    <option value="LunchOut">Lunch Out</option>
+                    <option value="LunchBack">Lunch Back</option>
+                    <option value="TimeOut">Clock Out</option>
+                </select>
+                <button onclick="saveManualEntry()" class="w-full bg-violet-600 text-white font-black py-4 rounded-2xl shadow-lg">UPDATE RECORDS</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scanModal" class="modal">
+        <div class="bg-white p-6 rounded-3xl w-full max-w-md text-center">
+            <h2 class="text-xl font-black mb-4">Scanner Active</h2>
+            <div id="reader" style="width: 100%; border-radius: 20px; overflow: hidden;"></div>
+            <button onclick="stopScanner(); toggleModal('scanModal')" class="mt-6 w-full bg-red-50 text-red-600 font-black py-3 rounded-2xl">CANCEL SCAN</button>
+        </div>
+    </div>
+
     <script>
+        // --- FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyAxBT0oESoL62oz_x_Z8cMtdENWZPx4tMI",
             authDomain: "pinotp-d7ef5.firebaseapp.com",
@@ -213,366 +213,270 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const auth = firebase.auth();
-        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' });
 
+        // --- STATE ---
         const todayStr = new Date().toISOString().split('T')[0];
-        document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-        const LATE_THRESHOLD = "09:00";
-
-        let personalChart = null;
-        let selectedEmpId = null;
-        let pendingDeleteId = null;
-        let activeAdminId = null;
-        let html5QrCode = null;
-        let officeLocation = null;
-        let attendanceListener = null;
-        let editingEmpId = null;
         let employeesData = {};
-        let currentQrEmpId = null;
-        let currentQrEmpName = null;
-        let currentRawData = {};
-        let currentFrom = todayStr;
-        let currentTo = todayStr;
+        let activeManualId = null;
+        let selectedEmpId = null; // Used for personal export view
+        let html5QrCode = null;
 
-        // ─── Office Location Listener ────────────────────────────────
-        db.ref('settings/officeLocation').on('value', snap => {
-            officeLocation = snap.val() || null;
-        });
+        // --- INITIALIZATION ---
+        document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('dateFrom').value = todayStr;
+        document.getElementById('dateTo').value = todayStr;
 
-        // ─── Global Pie Chart ────────────────────────────────────────
         const gCtx = document.getElementById('attendanceChart').getContext('2d');
         const globalChart = new Chart(gCtx, {
             type: 'pie',
             data: {
-                labels: ['Present', 'Lunch', 'Half Day', 'Absent'],
+                labels: ['Present', 'Lunch', 'Absent'],
                 datasets: [{
-                    data: [0, 0, 0, 0],
-                    backgroundColor: ['#22c55e', '#f97316', '#eab308', '#dc2626'],
-                    hoverOffset: 15,
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
+                    data: [0, 0, 0],
+                    backgroundColor: ['#22c55e', '#f97316', '#dc2626'],
+                    borderWidth: 0
                 }]
             },
-            options: {
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'right',
-                        labels: {
-                            usePointStyle: true,
-                            font: { weight: 'bold', size: 9 },
-                            padding: 8,
-                            boxWidth: 8
-                        }
-                    }
-                },
-                layout: { padding: 0 },
-                responsive: true,
-                maintainAspectRatio: false
-            }
+            options: { plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } } }, maintainAspectRatio: false }
         });
 
-        // ─── Employees Listener ──────────────────────────────────────
-        db.ref('employees').on('value', snap => {
-            const list = document.getElementById('employeeList');
-            const data = snap.val();
-            employeesData = data || {};
-            list.innerHTML = '';
-            if (!data) return;
+        // --- CORE FUNCTIONS ---
+        function toggleModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.toggle('active');
+        }
 
-            document.getElementById('totalEmployees').innerText = Object.keys(data).length;
-            document.getElementById('regCount').innerText = Object.keys(data).length;
+        // 1. Staff Management
+        function saveStaff() {
+            const name = document.getElementById('staffName').value;
+            const role = document.getElementById('staffRole').value;
+            if (!name || !role) return alert("Fields cannot be empty");
 
-            Object.values(data).forEach(emp => {
-                const row = document.createElement('div');
-                row.className = "flex items-center gap-4 p-4 hover:bg-white hover:shadow-xl hover:shadow-gray-200/50 rounded-2xl cursor-pointer transition-all group mb-1";
-                row.innerHTML = `
-                    <div onclick="fetchEmployeeHistory('${emp.id}', '${emp.name}', '${emp.role}')" class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center font-black text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner">
-                        ${emp.name.charAt(0)}
-                    </div>
-                    <div onclick="fetchEmployeeHistory('${emp.id}', '${emp.name}', '${emp.role}')" class="flex-1">
-                        <p class="text-sm font-black text-gray-800">${emp.name}</p>
-                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-tighter">${emp.role}</p>
-                    </div>
-                    <button onclick="showEmployeeQR('${emp.id}', '${emp.name}')" class="opacity-0 group-hover:opacity-100 p-2 text-blue-400 hover:text-blue-600 transition-all">
-                        <i class="fa-solid fa-qrcode"></i>
-                    </button>
-                    <button onclick="editEmployee('${emp.id}', '${emp.name.replace(/'/g, "\\'")}', '${emp.role.replace(/'/g, "\\'")}', '${emp.email}', ${emp.isAdmin||false})" class="opacity-0 group-hover:opacity-100 p-2 text-amber-400 hover:text-amber-600 transition-all">
-                        <i class="fa-solid fa-pen"></i>
-                    </button>
-                    <button onclick="promptDelete('${emp.id}', '${emp.name}')" class="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-all">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                `;
-                list.appendChild(row);
+            const id = 'EMP' + Date.now().toString().slice(-6);
+            db.ref('employees/' + id).set({ id, name, role }).then(() => {
+                toggleModal('staffModal');
+                document.getElementById('staffName').value = '';
+                document.getElementById('staffRole').value = '';
             });
+        }
 
-            if (currentFrom === todayStr && currentFrom === currentTo) {
-                renderAttendanceTable(currentRawData, todayStr);
-            }
+        db.ref('employees').on('value', snap => {
+            employeesData = snap.val() || {};
+            const list = document.getElementById('employeeList');
+            list.innerHTML = '';
+            const count = Object.keys(employeesData).length;
+            document.getElementById('totalEmployees').innerText = count;
+            document.getElementById('regCount').innerText = count;
+
+            Object.values(employeesData).forEach(emp => {
+                const div = document.createElement('div');
+                div.className = "flex items-center gap-4 p-4 hover:bg-white rounded-2xl cursor-pointer transition-all group mb-1";
+                div.innerHTML = `
+                    <div onclick="showPersonalHistory('${emp.id}')" class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center font-black text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">${emp.name[0]}</div>
+                    <div onclick="showPersonalHistory('${emp.id}')" class="flex-1">
+                        <p class="text-sm font-black text-gray-800">${emp.name}</p>
+                        <p class="text-[9px] font-black text-gray-400 uppercase">${emp.role}</p>
+                    </div>
+                    <div class="flex gap-1">
+                        <button onclick="showQR('${emp.id}', '${emp.name}')" class="opacity-0 group-hover:opacity-100 p-2 text-blue-400 hover:text-blue-600 transition-all"><i class="fa-solid fa-qrcode"></i></button>
+                        <button onclick="deleteStaff('${emp.id}')" class="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            loadTodayLive();
         });
 
-        function determineStatus(log) {
-            if (!log || !log.TimeIn) return { status: 'ABSENT', class: 'status-absent' };
-            if (log.LunchOut && !log.LunchBack) return { status: 'LUNCH', class: 'status-lunch' };
-            const timeIn = log.TimeIn;
-            const [hours, minutes] = timeIn.split(':').map(Number);
-            const timeInMinutes = hours * 60 + minutes;
-            const thresholdMinutes = 9 * 60;
-            if (timeInMinutes > thresholdMinutes + 60) {
-                return { status: 'HALF DAY', class: 'status-halfday' };
+        function deleteStaff(id) {
+            if(confirm("Permanently remove this staff member and their data?")) {
+                db.ref('employees/' + id).remove();
             }
-            return { status: 'PRESENT', class: 'status-present' };
         }
 
-        function getEmployeeInfo(empId) {
-            const emp = employeesData[empId] || {};
-            return {
-                name: emp.name || 'Unknown Staff',
-                role: emp.role || '—'
-            };
+        // 2. Attendance Filtering Logic
+        function loadTodayLive() {
+            selectedEmpId = null; // Clear individual focus
+            document.getElementById('mainTitle').innerText = "Attendance Feed";
+            document.getElementById('viewLabel').innerText = "LIVE LOG";
+            document.getElementById('dateFrom').value = todayStr;
+            document.getElementById('dateTo').value = todayStr;
+            applyFilter();
         }
 
-        function renderAttendanceTable(rawData, singleDate) {
-            const tbody = document.getElementById('attendanceTable');
-            tbody.innerHTML = '';
-            let stats = { present: 0, lunch: 0, halfday: 0, absent: 0 };
-
-            if (singleDate) {
-                const employees = Object.values(employeesData);
-                if (employees.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-gray-300">No employees registered</td></tr>`;
-                    document.getElementById('presentToday').innerText = 0;
-                    globalChart.data.datasets[0].data = [0,0,0,0];
-                    globalChart.update();
-                    return;
-                }
-
-                employees.sort((a,b) => a.name.localeCompare(b.name));
-
-                employees.forEach(emp => {
-                    let log = rawData[emp.id] || { id: emp.id };
-                    const { name, role } = getEmployeeInfo(emp.id);
-
-                    const displayDate = singleDate;
-                    const statusInfo = determineStatus(log);
-
-                    if (statusInfo.status === 'PRESENT') stats.present++;
-                    else if (statusInfo.status === 'LUNCH') stats.lunch++;
-                    else if (statusInfo.status === 'HALF DAY') stats.halfday++;
-                    else if (statusInfo.status === 'ABSENT') stats.absent++;
-
-                    let complianceHtml = '<span class="text-gray-200">-</span>';
-                    let clockInHtml = log.TimeIn || '--:--';
-                    if (log.TimeIn && log.TimeIn > LATE_THRESHOLD) {
-                        clockInHtml = `<span class="text-red-600 font-black">${log.TimeIn}</span> <span class="bg-red-50 text-red-500 text-[8px] px-1 rounded">LATE</span>`;
-                    }
-
-                    if (log.LunchOut && log.LunchBack) {
-                        const dur = calculateDuration(log.LunchOut, log.LunchBack) * 60;
-                        complianceHtml = dur > 60
-                            ? `<span class="text-red-600 font-black">OVER (${Math.round(dur)}m)</span>`
-                            : `<span class="text-green-600 font-black">PASS</span>`;
-                    }
-
-                    tbody.innerHTML += `
-                        <tr class="group hover:bg-gray-50/70 transition-colors">
-                            <td class="p-3.5 font-mono text-xs text-gray-500">${displayDate}</td>
-                            <td class="p-3.5 font-black text-gray-800 flex items-center gap-3">
-                                <div>
-                                    ${name}<br>
-                                    <span class="text-[10px] text-gray-500 font-medium">${role}</span>
-                                </div>
-                                <button onclick="showAdminActions(event, '${emp.id}')" class="p-1.5 bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-500 hover:text-white transition-all">
-                                    <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
-                                </button>
-                            </td>
-                            <td class="p-3.5 font-mono font-bold text-gray-500">${clockInHtml}</td>
-                            <td class="p-3.5 text-[11px] font-bold">
-                                ${log.LunchOut ? `<span class="text-red-400">OUT: ${log.LunchOut}</span>` : ''}
-                                ${log.LunchBack ? `<br><span class="text-green-500">BACK: ${log.LunchBack}</span>` : ''}
-                            </td>
-                            <td class="p-3.5 text-center text-xs">${complianceHtml}</td>
-                            <td class="p-3.5 font-mono font-bold text-gray-500">${log.TimeOut || '--:--'}</td>
-                            <td class="p-3.5 text-center">
-                                <span class="${statusInfo.class} px-4 py-2 rounded-xl text-[10px] font-black opacity-90 whitespace-nowrap">${statusInfo.status}</span>
-                            </td>
-                        </tr>`;
-                });
-            } else {
-                // Range mode - using aggregated data
-                const entries = Object.values(rawData || {});
-                if (entries.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="py-20 text-center text-gray-300">No records found in selected range</td></tr>`;
-                    document.getElementById('presentToday').innerText = 0;
-                    globalChart.data.datasets[0].data = [0,0,0,0];
-                    globalChart.update();
-                    return;
-                }
-
-                entries.forEach(log => {
-                    const { name, role } = getEmployeeInfo(log.id);
-                    const displayDate = log._date || log.date;
-                    const statusInfo = determineStatus(log);
-
-                    if (statusInfo.status === 'PRESENT') stats.present++;
-                    else if (statusInfo.status === 'LUNCH') stats.lunch++;
-                    else if (statusInfo.status === 'HALF DAY') stats.halfday++;
-                    else if (statusInfo.status === 'ABSENT') stats.absent++;
-
-                    let complianceHtml = '<span class="text-gray-200">-</span>';
-                    let clockInHtml = log.TimeIn || '--:--';
-                    if (log.TimeIn && log.TimeIn > LATE_THRESHOLD) {
-                        clockInHtml = `<span class="text-red-600 font-black">${log.TimeIn}</span> <span class="bg-red-50 text-red-500 text-[8px] px-1 rounded">LATE</span>`;
-                    }
-
-                    if (log.LunchOut && log.LunchBack) {
-                        const dur = calculateDuration(log.LunchOut, log.LunchBack) * 60;
-                        complianceHtml = dur > 60
-                            ? `<span class="text-red-600 font-black">OVER (${Math.round(dur)}m)</span>`
-                            : `<span class="text-green-600 font-black">PASS</span>`;
-                    }
-
-                    tbody.innerHTML += `
-                        <tr class="group hover:bg-gray-50/70 transition-colors">
-                            <td class="p-3.5 font-mono text-xs text-gray-500">${displayDate}</td>
-                            <td class="p-3.5 font-black text-gray-800 flex items-center gap-3">
-                                <div>
-                                    ${name}<br>
-                                    <span class="text-[10px] text-gray-500 font-medium">${role}</span>
-                                </div>
-                                <button onclick="showAdminActions(event, '${log.id}')" class="p-1.5 bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-500 hover:text-white transition-all">
-                                    <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
-                                </button>
-                            </td>
-                            <td class="p-3.5 font-mono font-bold text-gray-500">${clockInHtml}</td>
-                            <td class="p-3.5 text-[11px] font-bold">
-                                ${log.LunchOut ? `<span class="text-red-400">OUT: ${log.LunchOut}</span>` : ''}
-                                ${log.LunchBack ? `<br><span class="text-green-500">BACK: ${log.LunchBack}</span>` : ''}
-                            </td>
-                            <td class="p-3.5 text-center text-xs">${complianceHtml}</td>
-                            <td class="p-3.5 font-mono font-bold text-gray-500">${log.TimeOut || '--:--'}</td>
-                            <td class="p-3.5 text-center">
-                                <span class="${statusInfo.class} px-4 py-2 rounded-xl text-[10px] font-black opacity-90 whitespace-nowrap">${statusInfo.status}</span>
-                            </td>
-                        </tr>`;
-                });
-            }
-
-            document.getElementById('presentToday').innerText = stats.present;
-            globalChart.data.datasets[0].data = [stats.present, stats.lunch, stats.halfday, stats.absent];
-            globalChart.update();
-        }
-
-        function loadAttendanceData(fromDate, toDate) {
-            currentFrom = fromDate;
-            currentTo = toDate;
-
-            if (attendanceListener) {
-                attendanceListener.off();
-                attendanceListener = null;
-            }
-
-            if (fromDate === toDate) {
-                attendanceListener = db.ref('attendance/' + fromDate);
-                attendanceListener.on('value', snap => {
-                    currentRawData = snap.val() || {};
-                    renderAttendanceTable(currentRawData, fromDate);
-                });
-            } else {
-                // For date range - load once and render
-                db.ref('attendance').orderByKey().startAt(fromDate).endAt(toDate).once('value').then(snap => {
-                    let combined = {};
-                    snap.forEach(child => {
-                        const dayKey = child.key;
-                        const dayData = child.val() || {};
-                        Object.keys(dayData).forEach(empId => {
-                            combined[`${dayKey}_${empId}`] = { 
-                                ...dayData[empId], 
-                                _date: dayKey,
-                                id: empId 
-                            };
-                        });
-                    });
-                    renderAttendanceTable(combined, null);
-                });
-            }
+        function showPersonalHistory(id) {
+            selectedEmpId = id;
+            const emp = employeesData[id];
+            document.getElementById('mainTitle').innerText = emp.name + "'s Records";
+            document.getElementById('viewLabel').innerText = "EMPLOYEE EXPORT VIEW";
+            applyFilter();
         }
 
         function applyFilter() {
-            let from = document.getElementById('dateFrom').value;
-            let to = document.getElementById('dateTo').value;
-            if (!from) from = todayStr;
-            if (!to || to < from) to = from;
-            loadAttendanceData(from, to);
-        }
-
-        function loadTodayLive() {
-            document.getElementById('dateFrom').value = todayStr;
-            document.getElementById('dateTo').value = todayStr;
-            loadAttendanceData(todayStr, todayStr);
-        }
-
-        // ─── Manual Entry Fix ────────────────────────────────────────
-        function saveManualEntry() {
-            if (!activeAdminId) return alert("No employee selected");
-
-            const date = document.getElementById('manualDate').value;
-            const time = document.getElementById('manualTime').value;
-            const action = document.getElementById('manualAction').value;
-
-            if (!date || !time) {
-                alert("Please select both date and time.");
-                return;
-            }
-
-            const path = `attendance/${date}/${activeAdminId}`;
-
-            // Get current data first to merge
-            db.ref(path).once('value').then(snap => {
-                let existing = snap.val() || {
-                    id: activeAdminId,
-                    name: employeesData[activeAdminId]?.name || "Unknown",
-                    date: date,
-                    day: new Date(date).toLocaleDateString('en-US', { weekday: 'long' })
-                };
-
-                let update = { 
-                    ...existing,
-                    lastAction: action + " (manual)",
-                    lastActionTime: Date.now()
-                };
-
-                if (action === 'Clock In')      update.TimeIn    = time;
-                else if (action === 'Lunch Out')  update.LunchOut  = time;
-                else if (action === 'Lunch Back') update.LunchBack = time;
-                else if (action === 'Clock Out')  update.TimeOut   = time;
-
-                db.ref(path).set(update).then(() => {
-                    alert(`Manual ${action} saved for ${date} at ${time}`);
-                    toggleModal('manualEntryModal');
-                    // Force refresh current view
-                    if (currentFrom === date && currentTo === date) {
-                        loadAttendanceData(date, date);
-                    }
-                }).catch(err => {
-                    alert("Error saving: " + err.message);
-                });
+            const from = document.getElementById('dateFrom').value;
+            const to = document.getElementById('dateTo').value;
+            
+            db.ref('attendance').orderByKey().startAt(from).endAt(to).on('value', snap => {
+                const data = snap.val() || {};
+                renderTable(data, from, to);
             });
         }
 
-        // ─── Other functions remain unchanged ───────────────────────
-        // (signInWithGoogle, scanner, PDF generation, etc.)
+        function renderTable(data, from, to) {
+            const tbody = document.getElementById('attendanceTable');
+            tbody.innerHTML = '';
+            let stats = { present: 0, lunch: 0, absent: 0 };
 
-        window.onload = () => {
-            document.getElementById('dateFrom').value = todayStr;
-            document.getElementById('dateTo').value = todayStr;
-            loadTodayLive();
-        };
+            // Generate list of dates in range
+            const dateList = [];
+            let dt = new Date(from);
+            while (dt <= new Date(to)) {
+                dateList.push(new Date(dt).toISOString().split('T')[0]);
+                dt.setDate(dt.getDate() + 1);
+            }
+            dateList.reverse(); // Newest first
+
+            const employeesToRender = selectedEmpId ? [employeesData[selectedEmpId]] : Object.values(employeesData);
+
+            dateList.forEach(dateStr => {
+                employeesToRender.forEach(emp => {
+                    if(!emp) return;
+                    const dayData = data[dateStr] ? data[dateStr][emp.id] : null;
+                    const status = dayData ? (dayData.LunchOut && !dayData.LunchBack ? 'LUNCH' : 'PRESENT') : 'ABSENT';
+                    
+                    if (dateStr === todayStr) stats[status.toLowerCase()]++;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="p-3 font-mono text-xs text-gray-400">${dateStr}</td>
+                            <td class="p-3">
+                                <div class="font-black text-gray-800">${emp.name}</div>
+                                <div class="text-[10px] text-gray-400">${emp.role}</div>
+                            </td>
+                            <td class="p-3 font-mono font-bold text-gray-600">${dayData?.TimeIn || '--:--'}</td>
+                            <td class="p-3 text-[10px]">
+                                ${dayData?.LunchOut ? `<span class="text-orange-500 font-bold">OUT: ${dayData.LunchOut}</span>` : ''}
+                                ${dayData?.LunchBack ? `<br><span class="text-green-500 font-bold">BACK: ${dayData.LunchBack}</span>` : ''}
+                            </td>
+                            <td class="p-3 font-mono font-bold text-gray-600">${dayData?.TimeOut || '--:--'}</td>
+                            <td class="p-3 text-center">
+                                <span class="status-${status.toLowerCase()} px-3 py-1 rounded-full text-[9px] font-black">${status}</span>
+                            </td>
+                            <td class="p-3 text-center">
+                                <button onclick="openManual('${emp.id}', '${emp.name}', '${dateStr}')" class="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 hover:bg-violet-600 hover:text-white transition-all">
+                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+
+            document.getElementById('presentToday').innerText = stats.present;
+            globalChart.data.datasets[0].data = [stats.present, stats.lunch, stats.absent];
+            globalChart.update();
+        }
+
+        // 3. Manual Entry
+        function openManual(id, name, date) {
+            activeManualId = id;
+            document.getElementById('manualEmpName').innerText = name;
+            document.getElementById('manualDate').value = date;
+            toggleModal('manualEntryModal');
+        }
+
+        function saveManualEntry() {
+            const date = document.getElementById('manualDate').value;
+            const time = document.getElementById('manualTime').value;
+            const field = document.getElementById('manualAction').value;
+
+            if(!time || !date) return alert("Please select both date and time");
+
+            db.ref(`attendance/${date}/${activeManualId}`).update({
+                [field]: time,
+                name: employeesData[activeManualId].name,
+                id: activeManualId
+            }).then(() => {
+                toggleModal('manualEntryModal');
+                // View updates automatically due to the .on('value') listener
+            });
+        }
+
+        // 4. QR Identification
+        function showQR(id, name) {
+            document.getElementById('qrName').innerText = name;
+            const container = document.getElementById('qrcode');
+            container.innerHTML = '';
+            new QRCode(container, { text: id, width: 180, height: 180, colorDark: "#1e1b4b" });
+            toggleModal('qrModal');
+        }
+
+        function startScanner() {
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
+                (decodedText) => {
+                    const emp = employeesData[decodedText];
+                    if (emp) {
+                        handleClockAction(decodedText, emp.name);
+                        stopScanner();
+                        toggleModal('scanModal');
+                    }
+                }
+            ).catch(err => alert("Camera error: " + err));
+        }
+
+        function stopScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => html5QrCode.clear());
+            }
+        }
+
+        function handleClockAction(id, name) {
+            const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            const ref = db.ref(`attendance/${todayStr}/${id}`);
+            
+            ref.once('value', snap => {
+                const log = snap.val();
+                let update = { id, name };
+                
+                if (!log?.TimeIn) update.TimeIn = time;
+                else if (!log?.LunchOut) update.LunchOut = time;
+                else if (!log?.LunchBack) update.LunchBack = time;
+                else if (!log?.TimeOut) update.TimeOut = time;
+                else return alert(name + " has already completed all logs for today.");
+
+                ref.update(update).then(() => alert(`${name} successfully recorded at ${time}`));
+            });
+        }
+
+        // 5. PDF Export (Standard & Personal)
+        async function generateGlobalReport() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const title = selectedEmpId ? `${employeesData[selectedEmpId].name} Attendance Report` : "Organization Attendance Report";
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(22);
+            doc.setTextColor(30, 27, 75);
+            doc.text(title, 14, 25);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Period: ${document.getElementById('dateFrom').value} to ${document.getElementById('dateTo').value}`, 14, 32);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 37);
+
+            doc.autoTable({ 
+                html: '#mainTable', 
+                startY: 45, 
+                theme: 'striped',
+                headStyles: { fillColor: [37, 99, 235], fontSize: 10, halign: 'center' },
+                columnStyles: { 5: { halign: 'center' }, 6: { display: 'none' } } // Hide action column in PDF
+            });
+            
+            const fileName = selectedEmpId ? `Report_${employeesData[selectedEmpId].name}_${todayStr}.pdf` : `Global_Report_${todayStr}.pdf`;
+            doc.save(fileName);
+        }
+
+        window.onload = loadTodayLive;
     </script>
 </body>
 </html>
