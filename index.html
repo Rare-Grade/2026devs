@@ -102,7 +102,6 @@
             </div>
         </nav>
     </header>
-
     <!-- MAIN CONTENT -->
     <main class="flex-1 flex overflow-hidden">
         <aside class="w-1/3 bg-gray-50/50 p-6 pt-2 overflow-y-auto border-r border-gray-200 flex flex-col gap-6 custom-scroll">
@@ -113,7 +112,7 @@
                 </div>
                 <div class="glass-card p-5 border-b-4 border-green-500">
                     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Present Today</p>
-                    <h2 class="text-3xl font-black text-gray-800" id="presentToday">0</h2>
+                    <h2 class="text-3xl font-black text-green-600" id="presentToday">0</h2>
                 </div>
             </div>
             <div class="glass-card p-3">
@@ -190,7 +189,6 @@
             </div>
         </section>
     </main>
-
     <!-- ALL MODALS (unchanged) -->
     <!-- Admin Login Modal -->
     <div id="adminLoginModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[90]">
@@ -208,7 +206,6 @@
             <p class="text-xs text-gray-400 mt-8">Only employees registered as Admin can enter</p>
         </div>
     </div>
-
     <!-- Sign Out Confirmation -->
     <div id="signOutConfirmModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[85]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
@@ -227,7 +224,6 @@
             </div>
         </div>
     </div>
-
     <!-- Scanner Modal -->
     <div id="scannerModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[80]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/90 backdrop-blur-md"></div>
@@ -245,7 +241,6 @@
             </div>
         </div>
     </div>
-
     <!-- Office Location Modal -->
     <div id="locationModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/40 backdrop-blur-sm"></div>
@@ -280,7 +275,6 @@
             </div>
         </div>
     </div>
-
     <!-- Stats Modal -->
     <div id="statsModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
@@ -325,7 +319,6 @@
             </div>
         </div>
     </div>
-
     <!-- Add Employee Modal -->
     <div id="addEmployeeModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/40 backdrop-blur-sm"></div>
@@ -367,7 +360,6 @@
             </div>
         </div>
     </div>
-
     <!-- Edit Employee Modal -->
     <div id="editEmployeeModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/40 backdrop-blur-sm"></div>
@@ -410,7 +402,6 @@
             </div>
         </div>
     </div>
-
     <!-- Confirm Delete Modal -->
     <div id="confirmDeleteModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[70]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
@@ -428,7 +419,6 @@
             </div>
         </div>
     </div>
-
     <!-- Success / QR Modal -->
     <div id="successModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[60]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-sm"></div>
@@ -458,7 +448,6 @@
             </div>
         </div>
     </div>
-
     <!-- Email Exists Modal -->
     <div id="emailExistsModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[75]">
         <div class="modal-overlay absolute w-full h-full bg-gray-900/60 backdrop-blur-md"></div>
@@ -476,7 +465,6 @@
             </div>
         </div>
     </div>
-
     <!-- Manual Entry Modal -->
     <div id="manualEntryModal" class="modal opacity-0 pointer-events-none fixed inset-0 flex items-center justify-center z-[65]">
         <div class="modal-overlay absolute inset-0 bg-gray-900/60 backdrop-blur-sm"></div>
@@ -507,7 +495,6 @@
             </div>
         </div>
     </div>
-
     <!-- Admin Action Menu -->
     <div id="adminActionMenu" class="action-menu py-2 overflow-hidden">
         <div onclick="adminSetAction('Clock In')" class="action-item px-4 py-2 text-xs font-black cursor-pointer border-b border-gray-50">CLOCK IN (now)</div>
@@ -516,7 +503,6 @@
         <div onclick="adminSetAction('Clock Out')" class="action-item px-4 py-2 text-xs font-black cursor-pointer border-b border-gray-50 text-red-600">CLOCK OUT (now)</div>
         <div onclick="openManualEntry()" class="action-item px-4 py-2 text-xs font-black cursor-pointer text-indigo-600 font-bold">MANUAL ENTRY...</div>
     </div>
-
     <!-- JAVASCRIPT -->
     <script>
         const firebaseConfig = {
@@ -551,11 +537,9 @@
         let currentRawData = {};
         let currentFrom = todayStr;
         let currentTo = todayStr;
-
         db.ref('settings/officeLocation').on('value', snap => {
             officeLocation = snap.val() || null;
         });
-
         const gCtx = document.getElementById('attendanceChart').getContext('2d');
         const globalChart = new Chart(gCtx, {
             type: 'pie',
@@ -587,7 +571,6 @@
                 maintainAspectRatio: false
             }
         });
-
         db.ref('employees').on('value', snap => {
             const list = document.getElementById('employeeList');
             const data = snap.val();
@@ -623,7 +606,6 @@
                 renderAttendanceTable(currentRawData, todayStr);
             }
         });
-
         function determineStatus(log) {
             if (!log || !log.TimeIn) return { status: 'ABSENT', class: 'status-absent' };
             if (log.LunchOut && !log.LunchBack) return { status: 'LUNCH', class: 'status-lunch' };
@@ -636,7 +618,6 @@
             }
             return { status: 'PRESENT', class: 'status-present' };
         }
-
         function renderAttendanceTable(rawData, singleDate) {
             const tbody = document.getElementById('attendanceTable');
             tbody.innerHTML = '';
@@ -747,7 +728,6 @@
             globalChart.data.datasets[0].data = [stats.present, stats.lunch, stats.halfday, stats.absent];
             globalChart.update();
         }
-
         function loadAttendanceData(fromDate, toDate) {
             currentFrom = fromDate;
             currentTo = toDate;
@@ -781,7 +761,6 @@
                 });
             }
         }
-
         function applyFilter() {
             let from = document.getElementById('dateFrom').value;
             let to = document.getElementById('dateTo').value;
@@ -789,13 +768,11 @@
             if (!to || to < from) to = from;
             loadAttendanceData(from, to);
         }
-
         function loadTodayLive() {
             document.getElementById('dateFrom').value = todayStr;
             document.getElementById('dateTo').value = todayStr;
             loadAttendanceData(todayStr, todayStr);
         }
-
         auth.onAuthStateChanged(async (user) => {
             const loginModal = document.getElementById('adminLoginModal');
             if (!user) {
@@ -818,7 +795,6 @@
                 }
             }
         });
-
         function signInWithGoogle() {
             auth.signInWithPopup(provider).then(async (result) => {
                 const user = result.user;
@@ -836,7 +812,6 @@
                 alert("Google sign-in failed: " + err.message);
             });
         }
-
         function showSignOutConfirm() { toggleModal('signOutConfirmModal'); }
         function confirmSignOut() { toggleModal('signOutConfirmModal'); signOutAdmin(); }
         function signOutAdmin() {
@@ -844,14 +819,12 @@
                 toggleModal('adminLoginModal');
             }).catch(err => console.log("Sign out error:", err));
         }
-
         function startScanner() {
             toggleModal('scannerModal');
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess).catch(err => console.error(err));
         }
-
         function stopScanner() {
             if (html5QrCode) {
                 html5QrCode.stop().then(() => {
@@ -866,7 +839,6 @@
                 toggleModal('scannerModal');
             }
         }
-
         function onScanSuccess(decodedText) {
             html5QrCode.pause();
             document.getElementById('scanStatus').innerText = `Processing: ${decodedText}...`;
@@ -879,7 +851,6 @@
                 }
             });
         }
-
         function haversineDistance(lat1, lon1, lat2, lon2) {
             const R = 6371000;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -888,7 +859,6 @@
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return R * c;
         }
-
         async function isWithinOfficeLocation() {
             return new Promise((resolve, reject) => {
                 if (!officeLocation) return reject(new Error("Office location not set"));
@@ -901,7 +871,6 @@
                 }, reject, { enableHighAccuracy: true, timeout: 10000 });
             });
         }
-
         async function processScanLogic(id, name) {
             try {
                 await isWithinOfficeLocation();
@@ -959,7 +928,6 @@
                 });
             });
         }
-
         function showAdminActions(e, id) {
             e.stopPropagation();
             activeAdminId = id;
@@ -968,11 +936,9 @@
             menu.style.left = (e.pageX - 10) + 'px';
             menu.style.top = (e.pageY + 10) + 'px';
         }
-
         window.onclick = () => {
             document.getElementById('adminActionMenu').style.display = 'none';
         };
-
         function adminSetAction(action) {
             if (!activeAdminId) return;
             const saveTodayStr = new Date().toISOString().split('T')[0];
@@ -985,14 +951,12 @@
             else if (action === 'Clock Out') update.TimeOut = now;
             db.ref(path).update(update);
         }
-
         function openManualEntry() {
             if (!activeAdminId) return alert("No employee selected");
             document.getElementById('manualDate').value = todayStr;
             document.getElementById('manualTime').value = "";
             toggleModal('manualEntryModal');
         }
-
         function saveManualEntry() {
             if (!activeAdminId) return;
             const date = document.getElementById('manualDate').value;
@@ -1018,13 +982,11 @@
                 alert("Error saving manual entry: " + err.message);
             });
         }
-
         function promptDelete(id, name) {
             pendingDeleteId = id;
             document.getElementById('deleteTargetName').innerText = name;
             toggleModal('confirmDeleteModal');
         }
-
         document.getElementById('finalDeleteBtn').onclick = () => {
             if (pendingDeleteId) {
                 db.ref('employees/' + pendingDeleteId).remove();
@@ -1034,13 +996,11 @@
                 });
             }
         };
-
         function timeToMinutes(timeStr) {
             if (!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) return NaN;
             const [h, m] = timeStr.split(':').map(Number);
             return h * 60 + m;
         }
-
         async function fetchEmployeeHistory(id, name, role) {
             selectedEmpId = id;
             document.getElementById('statName').innerText = name;
@@ -1080,7 +1040,6 @@
             toggleModal('statsModal');
             renderPersonalChart(chartLabels, chartData);
         }
-
         function calculateDuration(inT, outT, lunchOut = null, lunchBack = null) {
             const inMin = timeToMinutes(inT), outMin = timeToMinutes(outT);
             if (isNaN(inMin) || isNaN(outMin) || outMin <= inMin) return 0;
@@ -1093,7 +1052,6 @@
             }
             return (outMin - inMin - lunchMin) / 60;
         }
-
         function renderPersonalChart(labels, data) {
             if (personalChart) personalChart.destroy();
             personalChart = new Chart(document.getElementById('personalTrendChart').getContext('2d'), {
@@ -1128,7 +1086,6 @@
                 }
             });
         }
-
         async function downloadPersonalPDF() {
             const empName = document.getElementById('statName').innerText;
             const empIdRole = document.getElementById('statIdRole').innerText;
@@ -1199,7 +1156,6 @@
             doc.text("Attendance Trend (Last 30 Days)", 20, y + 92);
             doc.save(`Performance_${selectedEmpId}.pdf`);
         }
-
         async function generateGlobalReport() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -1289,7 +1245,6 @@
             });
             doc.save(`Monthly_Report_${monthStr.replace(/ /g,'_')}.pdf`);
         }
-
         document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('newEmpEmail').value.trim().toLowerCase();
@@ -1311,7 +1266,6 @@
                 showEmployeeQR(id, name);
             });
         });
-
         function editEmployee(id, name, role, email, isAdmin) {
             editingEmpId = id;
             document.getElementById('editEmpId').value = id;
@@ -1321,7 +1275,6 @@
             document.getElementById('editEmpType').value = isAdmin ? 'admin' : 'employee';
             toggleModal('editEmployeeModal');
         }
-
         document.getElementById('editEmployeeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!editingEmpId) return;
@@ -1345,7 +1298,6 @@
                 editingEmpId = null;
             });
         });
-
         function showEmployeeQR(id, name) {
             currentQrEmpId = id;
             currentQrEmpName = name;
@@ -1354,7 +1306,6 @@
             document.getElementById('successMessage').innerHTML = `Permanent QR for <strong>${name}</strong><br><strong>Use this same QR code every day</strong>`;
             toggleModal('successModal');
         }
-
         function generateQRCode(id, name) {
             const qrContainer = document.getElementById('qrCodeContainer');
             qrContainer.innerHTML = '';
@@ -1382,21 +1333,18 @@
                 }
             }, 300);
         }
-
         function regenerateQR() {
             if (!currentQrEmpId || !currentQrEmpName) return;
             generateQRCode(currentQrEmpId, currentQrEmpName);
             document.getElementById('successTitle').textContent = "QR Regenerated!";
             document.getElementById('successMessage').innerHTML = `Regenerated QR for <strong>${currentQrEmpName}</strong><br><strong>ID remains: ${currentQrEmpId}</strong>`;
         }
-
         function toggleModal(id) {
             const m = document.getElementById(id);
             m.classList.toggle('opacity-0');
             m.classList.toggle('pointer-events-none');
             document.body.classList.toggle('modal-active');
         }
-
         function toggleLocationModal() {
             if (officeLocation) {
                 document.getElementById('officeLat').value = officeLocation.lat || '';
@@ -1405,14 +1353,12 @@
             }
             toggleModal('locationModal');
         }
-
         function getCurrentLocationForOffice() {
             navigator.geolocation.getCurrentPosition(pos => {
                 document.getElementById('officeLat').value = pos.coords.latitude.toFixed(6);
                 document.getElementById('officeLng').value = pos.coords.longitude.toFixed(6);
             }, err => alert("Unable to retrieve location"));
         }
-
         function saveOfficeLocation() {
             const lat = parseFloat(document.getElementById('officeLat').value);
             const lng = parseFloat(document.getElementById('officeLng').value);
@@ -1423,7 +1369,6 @@
                 toggleModal('locationModal');
             });
         }
-
         window.onload = () => {
             document.getElementById('dateFrom').value = todayStr;
             document.getElementById('dateTo').value = todayStr;
